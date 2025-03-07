@@ -1,3 +1,7 @@
+; SPDX-License-Identifier: GPL-2.0
+;     DBGBOARD - a console-based debug board
+;     Copyright (C) 2025-2025 KolibriOS team
+
 format binary as ""
 use32
 org 0
