@@ -407,6 +407,7 @@ tup.append_table(img_files, {
  {"@SS", VAR_PROGS .. "/system/scrsaver/scrsaver"},
  {"@VOLUME", VAR_PROGS .. "/media/volume/volume"},
  {"HACONFIG", VAR_PROGS .. "/other/ha/HACONFIG"},
+ {"ACLOCK", VAR_PROGS .. "/demos/aclock/aclock"},
  {"APM", VAR_PROGS .. "/system/apm/apm"},
  {"CALC", VAR_PROGS .. "/other/calc/trunk/calc"},
  {"CALENDAR", VAR_PROGS .. "/system/calendar/trunk/calendar"},
@@ -441,6 +442,8 @@ tup.append_table(img_files, {
  {"TERMINAL", VAR_PROGS .. "/system/terminal/terminal"},
  {"TEST", VAR_PROGS .. "/testing/protection/trunk/test"},
  {"TINYPAD", VAR_PROGS .. "/develop/tinypad/trunk/tinypad"},
+ {"TINFO", VAR_PROGS .. "/system/tinfo/tinfo"},
+ {"TIMER", VAR_PROGS .. "/other/Timer/Timer"},
  {"UNZ", VAR_PROGS .. "/fs/unz/unz"},
  {"ZKEY", VAR_PROGS .. "/system/zkey/trunk/ZKEY"},
  {"3D/3DWAV", VAR_PROGS .. "/demos/3dwav/trunk/3dwav"},
@@ -470,10 +473,12 @@ tup.append_table(img_files, {
  {"DEVELOP/COBJ", VAR_PROGS .. "/develop/cObj/trunk/cObj"},
  {"DEVELOP/ENTROPYV", VAR_PROGS .. "/develop/entropyview/entropyview"},
  {"DEVELOP/FASM", VAR_PROGS .. "/develop/fasm/1.73/fasm"},
+ {"DEVELOP/GENFILES", VAR_PROGS .. "/testing/genfiles/GenFiles"},
  {"DEVELOP/H2D2B", VAR_PROGS .. "/develop/h2d2b/trunk/h2d2b"},
  {"DEVELOP/HEED", VAR_PROGS .. "/develop/heed/trunk/heed"},
  {"DEVELOP/KEYASCII", VAR_PROGS .. "/develop/keyascii/trunk/keyascii"},
  {"DEVELOP/MTDBG", VAR_PROGS .. "/develop/mtdbg/mtdbg"},
+ {"DEVELOP/MSTATE", VAR_PROGS .. "/develop/mstate/mstate"},
  {"DEVELOP/SCANCODE", VAR_PROGS .. "/develop/scancode/trunk/scancode"},
  {"DEVELOP/EXAMPLES/CIRCLE", VAR_PROGS .. "/develop/examples/circle/trunk/circle"},
  {"DEVELOP/EXAMPLES/COLORREF", VAR_PROGS .. "/demos/colorref/trunk/colorref"},
@@ -483,8 +488,8 @@ tup.append_table(img_files, {
  {"DEVELOP/EXAMPLES/USE_MB", VAR_PROGS .. "/demos/use_mb/use_mb"},
  {"File Managers/KFAR", VAR_PROGS .. "/fs/kfar/trunk/kfar"},
  {"File Managers/OPENDIAL", VAR_PROGS .. "/fs/opendial/opendial"},
+ {"LOD", VAR_PROGS .. "/fs/lod/lod"},
  {"GAMES/15", VAR_PROGS .. "/games/15/15"},
- {"GAMES/DINO", VAR_PROGS .. "/games/dino/dino"},
  {"GAMES/FREECELL", VAR_PROGS .. "/games/freecell/freecell"},
  {"GAMES/GOMOKU", VAR_PROGS .. "/games/gomoku/gomoku"},
  {"GAMES/LIGHTS", VAR_PROGS .. "/games/sq_game/SQ_GAME"},
@@ -499,6 +504,7 @@ tup.append_table(img_files, {
  {"GAMES/SW", VAR_PROGS .. "/games/sw/sw"},
  {"GAMES/TANKS", VAR_PROGS .. "/games/tanks/tanks"},
  {"GAMES/TETRIS", VAR_PROGS .. "/games/tetris/tetris"},
+ {"GAMES/C4", VAR_PROGS .. "/games/c4/c4"},
  {"LIB/ARCHIVER.OBJ", VAR_PROGS .. "/fs/kfar/trunk/kfar_arc/kfar_arc.obj"},
  {"LIB/BOX_LIB.OBJ", VAR_PROGS .. "/develop/libraries/box_lib/trunk/box_lib.obj"},
  {"LIB/BUF2D.OBJ", VAR_PROGS .. "/develop/libraries/buf2d/trunk/buf2d.obj"},
@@ -518,6 +524,7 @@ tup.append_table(img_files, {
  {"LIB/SORT.OBJ", VAR_PROGS .. "/develop/libraries/sorter/sort.obj"},
  {"LIB/TINYGL.OBJ", VAR_PROGS .. "/develop/libraries/TinyGL/asm_fork/tinygl.obj"},
  {"MEDIA/ANIMAGE", VAR_PROGS .. "/media/animage/trunk/animage"},
+ {"MEDIA/FILLSCR", VAR_PROGS .. "/media/FillScr/fillscr"},
  {"MEDIA/KIV", VAR_PROGS .. "/media/kiv/trunk/kiv"},
  {"MEDIA/LISTPLAY", VAR_PROGS .. "/media/listplay/trunk/listplay"},
  {"MEDIA/MIDAMP", VAR_PROGS .. "/media/midamp/trunk/midamp"},
@@ -640,22 +647,6 @@ if build_type == "ru_RU" then tup.append_table(extra_files, {
 
 end -- tup.getconfig('NO_FASM') ~= 'full'
 
--- Programs that require NASM to compile.
-if tup.getconfig('NO_NASM') ~= 'full' then
-tup.append_table(img_files, {
- {"ACLOCK", VAR_PROGS .. "/demos/aclock/trunk/aclock"},
- {"LOD", VAR_PROGS .. "/fs/lod/lod"},
- {"TIMER", VAR_PROGS .. "/other/Timer/timer"},
- {"TINFO", VAR_PROGS .. "/system/tinfo/tinfo"},
- {"DEVELOP/MSTATE", VAR_PROGS .. "/develop/mstate/mstate"},
- {"DEVELOP/GENFILES", VAR_PROGS .. "/testing/genfiles/GenFiles"},
- {"GAMES/C4", VAR_PROGS .. "/games/c4/c4"},
- {"MEDIA/FILLSCR", VAR_PROGS .. "/media/FillScr/fillscr"},
-})
-tup.append_table(extra_files, {
-})
-end -- tup.getconfig('NO_NASM') ~= 'full'
-
 -- Programs that require JWASM to compile.
 if tup.getconfig('NO_JWASM') ~= 'full' then
 tup.append_table(img_files, {
@@ -731,6 +722,7 @@ if tup.getconfig('NO_TCC') ~= 'full' then
 tup.append_table(img_files, {
  {"NETWORK/WHOIS", VAR_PROGS .. "/network/whois/whois"},
  {"SHELL", VAR_PROGS .. "/system/shell/shell"},
+ {"GAMES/DINO", VAR_PROGS .. "/games/dino/dino"},
 })
 tup.append_table(extra_files, {
  {"kolibrios/utils/thashview", VAR_PROGS .. "/other/TinyHashView/thashview"},

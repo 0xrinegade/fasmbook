@@ -1,0 +1,174 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-FileCopyrightText: 2025 KolibriOS team
+
+name: 'Build system'
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  codestyle:
+    name: "Check kernel codestyle"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup dependencies
+        run: |
+          sudo apt update && sudo apt install perl -y
+
+      - name: Check codestyle
+        run: |
+          find kernel/trunk -iname '*.asm' -or -iname '*.inc' -exec bash -c "echo {}; cat {} | perl .gitea/workflows/checker.pl" \;
+
+  build:
+    name: 'Build'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get describe
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Setup dependencies
+        run: |
+          cd /tmp
+          sudo apt update
+          sudo apt install p7zip-full fasm nasm make gcc gcc-multilib g++ g++-multilib mtools mkisofs parted gdisk -y
+          wget http://mirrors.kernel.org/ubuntu/pool/universe/t/tup/tup_0.8-1_amd64.deb
+          sudo apt install ./tup_0.8-1_amd64.deb -y
+
+      - name: Install GCC toolchain
+        run: |
+          chmod +x ${{ gitea.workspace }}/.gitea/workflows/install_kgcc
+          ${{ gitea.workspace }}/.gitea/workflows/install_kgcc
+
+      - name: Install JWasm
+        run: |
+          cd /tmp
+          wget -O JWasm211bl.zip  https://sourceforge.net/projects/jwasm/files/JWasm%20Linux%20binary/JWasm211bl.zip/download
+          unzip JWasm211bl.zip "jwasm" -d /home/autobuild/tools/win32/bin/
+          chmod +x /home/autobuild/tools/win32/bin/jwasm
+
+      - name: Build and install C--
+        run: |
+          cd ${{ gitea.workspace }}/programs/develop/cmm/
+          make -f Makefile.lin32
+          chmod +x c--
+          mv c-- /home/autobuild/tools/win32/bin/c--
+          cp ${{ gitea.workspace }}/programs/cmm/c--/c--.ini /home/autobuild/tools/win32/bin/c--.ini
+          make -f Makefile.lin32 clean
+
+      - name: Install TCC
+        run: |
+          cp ${{ gitea.workspace }}/programs/develop/ktcc/trunk/bin/kos32-tcc /home/autobuild/tools/win32/bin/kos32-tcc
+          chmod +x /home/autobuild/tools/win32/bin/kos32-tcc
+
+      - name: Compile objconv
+        run: |
+          cd ${{ gitea.workspace }}/programs/develop/objconv/
+          g++ -o /home/autobuild/tools/win32/bin/objconv -O2 *.cpp
+          chmod +x /home/autobuild/tools/win32/bin/objconv
+
+      - name: Compile kerpack
+        run: |
+          cd ${{ gitea.workspace }}/programs/other/kpack/kerpack_linux/
+          make
+          chmod +x kerpack
+          mv kerpack /home/autobuild/tools/win32/bin/.
+
+      - name: Compile kpack
+        run: |
+          cd ${{ gitea.workspace }}/programs/other/kpack/linux/
+          bash build.sh
+          chmod +x kpack
+          mv kpack /home/autobuild/tools/win32/bin/.
+
+      - name: Compile clink
+        run: |
+          cd ${{ github.workspace }}/programs/develop/clink 
+          gcc main.c -o clink
+          chmod a+x clink
+          mv clink /home/autobuild/tools/win32/bin/clink
+
+      - name: Configure tup
+        run: |
+          cd ${{ gitea.workspace }}
+          export ROOT=${{ gitea.workspace }}
+          cd $ROOT
+
+          echo "CONFIG_KPACK_CMD=&& kpack --nologo %o"                                    >  tup.config 
+          echo "CONFIG_KERPACK_CMD=&& kerpack %o"                                         >> tup.config
+          echo "CONFIG_PESTRIP_CMD=&& EXENAME=%o fasm $ROOT/data/common/pestrip.asm %o"   >> tup.config
+          echo "CONFIG_NO_MSVC=full"                                                      >> tup.config
+          echo "CONFIG_INSERT_REVISION_ID=1"                                              >> tup.config
+
+          tup -v
+          tup init
+
+      - name: Build KolibriOS (en_US)
+        run: |
+          cp tup.config tup.config.en_US
+          echo "CONFIG_LANG=en_US"                                                        >> tup.config.en_US
+          echo "CONFIG_BUILD_TYPE=en_US"                                                  >> tup.config.en_US
+
+          export PATH=/home/autobuild/tools/win32/bin:$PATH
+          tup generate --config tup.config.en_US build-en_US.sh
+          ./build-en_US.sh
+
+      - name: Upload floppy image (en_US)
+        uses: actions/upload-artifact@v3
+        with:
+          name: kolibrios-en_US-${{ steps.vars.outputs.sha_short }}.img
+          path: data/kolibri.img
+
+      - name: Upload CD image (en_US)
+        uses: actions/upload-artifact@v3
+        with:
+          name: kolibrios-en_US-${{ steps.vars.outputs.sha_short }}.iso
+          path: data/kolibri.iso
+
+      - name: Upload raw image (en_US)
+        uses: actions/upload-artifact@v3
+        with:
+          name: kolibrios-en_US-${{ steps.vars.outputs.sha_short }}.raw
+          path: data/kolibri.raw
+
+      - name: Build KolibriOS (ru_RU)
+        run: |
+          git clean -d -x -f -e tup.config
+          cp tup.config tup.config.ru_RU
+          echo "CONFIG_LANG=ru_RU"                                                        >> tup.config.ru_RU
+          echo "CONFIG_BUILD_TYPE=ru_RU"                                                  >> tup.config.ru_RU
+
+          export PATH=/home/autobuild/tools/win32/bin:$PATH
+          tup generate --config tup.config.ru_RU build-ru_RU.sh
+          ./build-ru_RU.sh
+
+      - name: Upload floppy image (ru_RU)
+        uses: actions/upload-artifact@v3
+        with:
+          name: kolibrios-ru_RU-${{ steps.vars.outputs.sha_short }}.img
+          path: data/kolibri.img
+
+      - name: Upload CD image (ru_RU)
+        uses: actions/upload-artifact@v3
+        with:
+          name: kolibrios-ru_RU-${{ steps.vars.outputs.sha_short }}.iso
+          path: data/kolibri.iso
+
+      - name: Upload raw image (ru_RU)
+        uses: actions/upload-artifact@v3
+        with:
+          name: kolibrios-ru_RU-${{ steps.vars.outputs.sha_short }}.raw
+          path: data/kolibri.raw

@@ -56,15 +56,12 @@ void TWebBrowser::SetStyle()
 	if (tag.is("tr"))         { tag_table();          return; }
 	if (tag.is("th"))         { tag_table();          return; }
 	if (tag.is("td"))         { tag_table();          return; }
-
-	if (application_mode) {
-	    if (tag.is("exit")) { ExitProcess(); return; }
-	}
 }
 
 void TWebBrowser::tag_p()
 {
-	IF (tag.prior[0] == 'h') || (streq(#tag.prior,"td")) || (streq(#tag.prior,"p")) return;
+	IF (tag.prior[0] == 'h') || (streq(#tag.prior,"td")) return;
+	if (!tag.opened) && (streq(#tag.prior,"p")) return;
 	NewLine();
 }
 
@@ -148,22 +145,6 @@ void TWebBrowser::tag_meta_xml()
 	if (streq(tag.get_value_of("http-equiv"), "refresh")) && (tag.get_value_of("content")) {
 		if (tag.value = strstri(tag.value, "url")) strcpy(#redirect, tag.value);
 	}
-	if (streq(tag.get_value_of("name"), "application")) {
-	    if (application_mode) {
-	        if (tag.get_number_of("left")) {
-                MoveSize(tag.number,-1,-1,-1);
-            }
-            if (tag.get_number_of("top")) {
-                MoveSize(-1,tag.number,-1,-1);
-            }
-            if (tag.get_number_of("width")) {
-                MoveSize(-1,-1,tag.number,-1);
-            }
-            if (tag.get_number_of("height")) {
-                MoveSize(-1,-1,-1,tag.number);
-            }
-	    }
-    }
 }
 
 signed int get_encoding_type_by_name(dword name)
@@ -264,11 +245,19 @@ void TWebBrowser::tag_h1234_caption()
 	} else {
 		style.h = tag.opened;
 		if (tag.opened) {
-			if (!style.pre) NewLine();
-			draw_y += 10;
-			list.SetFont(BASIC_CHAR_W*2, 14*2, 10011001b);
-			list.item_h = BASIC_LINE_H * 2 - 2;
-			if (tag.is("h1")) style.b = true;
+			if (!style.pre) {
+				NewLine();
+				NewLine();
+			}
+			if (tag.is("h1")) { 
+				list.SetFont(BASIC_CHAR_W*2, 14+12, 10011001b); 
+				style.b = true; 
+			} else if (tag.is("h2")) {
+				list.SetFont(BASIC_CHAR_W*2, 14+12, 10011001b); 
+			} else {
+				list.SetFont(6*2, 9+7, 10001001b);
+			}
+			style.cur_line_h = list.item_h = list.font_h + 2;
 		} else {
 			if (tag.is("h1")) style.b = false;
 			NewLine();
@@ -456,7 +445,7 @@ void TWebBrowser::tag_table()
 				}
 			} */
 
-			tallest_cell_in_row = math.max(draw_y+style.cur_line_h-list.item_h, tallest_cell_in_row);
+			tallest_cell_in_row = math.max(draw_y+style.cur_line_h-list.item_h+1, tallest_cell_in_row);
 			style.cur_line_h = list.item_h;
 			if (tag.opened) {
 				

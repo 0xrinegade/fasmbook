@@ -45,7 +45,6 @@
 bool debug_mode = false;
 bool show_images = true;
 bool source_mode = false;
-bool application_mode = false;
 
 _history history;
 
@@ -110,9 +109,6 @@ void HandleParam()
 			history.add(#param + 8);
 		} else if (!strncmp(#param, "-new ", 5)) {
 			history.add(#param + 5);
-		} else if (!strncmp(#param, "-app ", 5)) {
-          	history.add(#param + 5);
-          	application_mode = true;
         } else {
 			if (GetProcessesCount("WEBVIEW") == 1) {
 				history.add(#param);
@@ -135,14 +131,6 @@ void main()
 
 	LoadLibraries();
     HandleParam();
-
-	if (application_mode) {
-	    TOOLBAR_H = 0;
-	    PADDING = 0;
-        TSZE = 0;
-        STATUSBAR_H = 0;
-        TAB_H = 0;
-	}
 
 	omnibox_edit.left = PADDING+TSZE*2+PADDING+6;
 	omnibox_edit.top = PADDING+3;
@@ -221,15 +209,6 @@ void main()
 			if (http.transfer <= 0) break;
 			http.receive();
 
-			if (http_get_type==PAGE) {
-				CheckContentType();	
-				prbar.max = http.content_length;
-				if (prbar.value != http.content_received) {
-					prbar.value = http.content_received;	
-					DrawProgress();
-				}
-			}
-
 			if (http.receive_result != 0) break;
 			if (debug_mode) {
 				EAX = http.transfer;
@@ -248,6 +227,15 @@ void main()
 					notify("'Too many redirects.' -E");
 				}
 			} else {
+				if (http_get_type==PAGE) {
+					CheckContentType();	
+					prbar.max = http.content_length;
+					if (prbar.value != http.content_received) {
+						prbar.value = http.content_received;	
+						DrawProgress();
+					}
+				}
+				
 				// Loading the page is complete, free resources
 				redirect_count = 0;
 				if (http_get_type==PAGE) {
@@ -324,7 +312,7 @@ void ProcessKeyEvent()
 	if (key_modifier&KEY_LSHIFT) || (key_modifier&KEY_RSHIFT) 
 	{
 		if (key_scancode == SCAN_CODE_TAB) {EventActivatePreviousTab();return;}
-		if (key_scancode == SCAN_CODE_KEY_T) {EventOpenNewTab(URL_SERVICE_TEST);return;}
+		if (key_scancode == SCAN_CODE_BS) {EventOpenNewTab(URL_SERVICE_TEST);return;}
 	}
 
 	if (key_modifier&KEY_LCTRL) || (key_modifier&KEY_RCTRL) switch(key_scancode) 
@@ -349,6 +337,7 @@ void ProcessKeyEvent()
 	{
 		case SCAN_CODE_UP:    EventScrollUpAndDown(SCAN_CODE_UP); return;
 		case SCAN_CODE_DOWN:  EventScrollUpAndDown(SCAN_CODE_DOWN); return;
+		case SCAN_CODE_F2:    EventEditSource(); return;
 		case SCAN_CODE_F6:    {omnibox_edit.flags=ed_focus; DrawOmnibox();} return;
 		case SCAN_CODE_F5:    EventRefreshPage(); return;
 		case SCAN_CODE_ENTER: if (omnibox_edit.flags & ed_focus) EventSubmitOmnibox(); return;
@@ -382,23 +371,21 @@ void draw_window()
 
 	SetElementSizes();
 
-    if (!application_mode) {
-        DrawBar(0,0, Form.cwidth,PADDING, sc.work);
-        DrawBar(0,PADDING+TSZE+1, Form.cwidth,PADDING-1, sc.work);
-        DrawBar(0,TOOLBAR_H-2, Form.cwidth,1, MixColors(sc.dark, sc.work, 180));
-        DrawBar(0,TOOLBAR_H-1, Form.cwidth,1, sc.line);
-        DrawBar(0, PADDING, omnibox_edit.left-2, TSZE+1, sc.work);
-        DrawBar(omnibox_edit.left+omnibox_edit.width+18, PADDING, Form.cwidth-omnibox_edit.left-omnibox_edit.width-18, TSZE+1, sc.work);
+    DrawBar(0,0, Form.cwidth,PADDING, sc.work);
+    DrawBar(0,PADDING+TSZE+1, Form.cwidth,PADDING-1, sc.work);
+    DrawBar(0,TOOLBAR_H-2, Form.cwidth,1, MixColors(sc.dark, sc.work, 180));
+    DrawBar(0,TOOLBAR_H-1, Form.cwidth,1, sc.line);
+    DrawBar(0, PADDING, omnibox_edit.left-2, TSZE+1, sc.work);
+    DrawBar(omnibox_edit.left+omnibox_edit.width+18, PADDING, Form.cwidth-omnibox_edit.left-omnibox_edit.width-18, TSZE+1, sc.work);
 
-        DrawTopPanelButton(BACK_BUTTON, PADDING-1, PADDING, 30, false);
-        DrawTopPanelButton(FORWARD_BUTTON, PADDING+TSZE+PADDING-2, PADDING, 31, false);
-        DrawTopPanelButton(SANDWICH_BUTTON, Form.cwidth-PADDING-TSZE-3, PADDING, -1, burger_active); //burger menu
+    DrawTopPanelButton(BACK_BUTTON, PADDING-1, PADDING, 30, false);
+    DrawTopPanelButton(FORWARD_BUTTON, PADDING+TSZE+PADDING-2, PADDING, 31, false);
+    DrawTopPanelButton(SANDWICH_BUTTON, Form.cwidth-PADDING-TSZE-3, PADDING, -1, burger_active); //burger menu
 
-        DrawBar(0,Form.cheight - STATUSBAR_H, Form.cwidth,1, sc.line);
+    DrawBar(0,Form.cheight - STATUSBAR_H, Form.cwidth,1, sc.line);
 
-        DrawRectangle(WB1.list.x + WB1.list.w, WB1.list.y, scroll_wv.size_x,
-		WB1.list.h-1, scroll_wv.bckg_col);
-	}
+    DrawRectangle(WB1.list.x + WB1.list.w, WB1.list.y, scroll_wv.size_x,
+	WB1.list.h-1, scroll_wv.bckg_col);
 
 	if (!canvas.bufw) {
 		EventOpenFirstPage();
@@ -406,12 +393,9 @@ void draw_window()
 		WB1.DrawPage(); 
 		DrawOmnibox();
 	}
-	if (!application_mode) {
-	    DrawProgress();
-	    DrawStatusBar(NULL);
-        DrawTabsBar();
-	}
-
+    DrawProgress();
+    DrawStatusBar(NULL);
+    DrawTabsBar();
 }
 
 void EventOpenFirstPage()
@@ -588,7 +572,6 @@ void OpenPage(dword _open_URL)
 		history.add(#new_url);
 		WB1.custom_encoding = -1;
 		if (streq(#new_url, URL_SERVICE_HOMEPAGE)) LoadInternalPage(#buildin_page_home, sizeof(buildin_page_home));
-		else if (streq(#new_url, URL_SERVICE_HELP)) LoadInternalPage(#buildin_page_help, sizeof(buildin_page_help));
 		else if (streq(#new_url, URL_SERVICE_TEST)) LoadInternalPage(#buildin_page_test, sizeof(buildin_page_test));
 		else if (streq(#new_url, URL_SERVICE_HISTORY)) ShowHistory();
 		else LoadInternalPage(#buildin_page_error, sizeof(buildin_page_error));
@@ -757,7 +740,12 @@ void LoadInternalPage(dword _bufdata, _in_bufsize){
 			WB1.DrawPage();
 		}
 		http.hfree();
-		if (WB1.img_url.count) { GetImg(true); DrawOmnibox(); }
+		if (WB1.img_url.count) { 
+			GetImg(true);
+			DrawOmnibox(); 
+		} else {
+			PageLoaded();
+		}
 	}
 }
 
@@ -770,7 +758,6 @@ bool UrlExtIs(dword base, ext)
 void DrawProgress()
 {
 	dword pct;
-	if (application_mode) return;
 	if (!http.transfer) return;
 	if (http_get_type==PAGE) && (prbar.max) pct = prbar.value*30/prbar.max; else pct = 10;
 	if (http_get_type==IMG) pct = prbar.value * 70 / prbar.max + 30;
@@ -779,21 +766,18 @@ void DrawProgress()
 
 void EventShowPageMenu()
 {
-    if (application_mode) return;
 	open_lmenu(mouse.x, mouse.y, MENU_TOP_LEFT, NULL, #rmb_menu);
-	menu_id = VIEW_SOURCE;
+	menu_id = BACK_BUTTON;
 }
 
 void EventShowLinkMenu()
 {
-    if (application_mode) return;
 	open_lmenu(mouse.x, mouse.y, MENU_TOP_LEFT, NULL, #link_menu);
 	menu_id = IN_NEW_TAB;
 }
 
 void EventShowMainMenu()
 {
-    if (application_mode) return;
 	open_lmenu(Form.cwidth - PADDING -4, PADDING + TSZE + 3, 
 		MENU_TOP_RIGHT, NULL, #main_menu);
 	menu_id = OPEN_FILE;
@@ -801,7 +785,6 @@ void EventShowMainMenu()
 
 void EventShowEncodingsList()
 {
-    if (application_mode) return;
 	open_lmenu(Form.cwidth-4, Form.cheight - STATUSBAR_H + 12, 
 		MENU_BOT_RIGHT, WB1.cur_encoding + 1, 
 		"UTF-8\nKOI8-RU\nCP1251\nCP1252\nISO8859-5\nCP866");
@@ -824,7 +807,8 @@ void EventSeachWeb()
 {
 	char new_url[URL_SIZE+1];
 	replace_char(#editURL, ' ', '+', URL_SIZE);
-	strcpy(#new_url, "https://www.google.com/search?q=");
+	//strcpy(#new_url, "https://html.duckduckgo.com/html/?q=");
+	strcpy(#new_url, "http://bing.com/search?q=");
 	strncat(#new_url, #editURL, URL_SIZE);
 	OpenPage(#new_url);
 }
@@ -886,7 +870,6 @@ void DrawStatusBar(dword _msg)
 {
 	dword status_y = Form.cheight - STATUSBAR_H + 4;
 	dword status_w = Form.cwidth - 90;
-	if (application_mode) return;
 	if (Form.status_window>2) return;
 	DrawBar(0,Form.cheight - STATUSBAR_H+1, Form.cwidth,STATUSBAR_H-1, sc.work);
 	if (_msg) {
@@ -900,7 +883,6 @@ void DrawStatusBar(dword _msg)
 void DrawOmnibox()
 {
 	int imgxoff;
-	if (application_mode) return;
 	DrawOvalBorder(omnibox_edit.left-2, omnibox_edit.top-3, omnibox_edit.width+18, 24, sc.line, 
 		sc.line, sc.line, sc.dark);
 	DrawBar(omnibox_edit.left-1, omnibox_edit.top-2, omnibox_edit.width+18, 1, 0xD8DCD8);
@@ -919,7 +901,6 @@ void DrawOmnibox()
 
 void SetOmniboxText(dword _text)
 {
-    if (application_mode) return;
     edit_box_set_text stdcall (#omnibox_edit, _text);
     omnibox_edit.pos = omnibox_edit.flags = 0;
     DrawOmnibox();
@@ -1000,8 +981,13 @@ dword GetImg(bool _new)
 	DrawStatusBar(T_RENDERING);
 	WB1.Reparse();
 	WB1.DrawPage();
-	debugln(sprintf(#param, T_DONE_IN_SEC, GetStartTime()-render_start_time/100));
-	DrawStatusBar(NULL);
+	PageLoaded();
+}
+
+void PageLoaded()
+{
+	DrawStatusBar(sprintf(#param, T_DONE_IN_SEC, GetStartTime()-render_start_time/100, 
+		GetStartTime()-render_start_time*10));	
 }
 
 stop:
