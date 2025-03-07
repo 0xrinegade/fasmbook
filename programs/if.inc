@@ -1,5 +1,7 @@
 
+; SPDX-License-Identifier: GPL-2.0
 ; Macroinstructions for HLL-style conditional operations
+; Copyright (C) 2025 KolibriOS team
 
 macro .if [arg]
 {
