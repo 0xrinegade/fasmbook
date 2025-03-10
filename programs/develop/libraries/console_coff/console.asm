@@ -3332,7 +3332,7 @@ con.extended_numlock:
 
 cursor_esc      dd 27 + ('[' shl 8)
 
-; In the current implementation, the default values ​​are:
+; In the current implementation, the default values are:
 ; In the future, they may be read as parameters from the console.ini ini file.
 con.def_wnd_width   dd    80
 con.def_wnd_height  dd    25
