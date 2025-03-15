@@ -20,6 +20,29 @@ START:
         mcall   18, 25, 2, -1, 1
         mcall   66, 1, 1
 
+        mcall   68, 11
+
+        ; initializing 7*7 rect of pixels from screen
+        mcall   68, 12, 7*7*3
+        mov     [sel_rect], eax
+
+        ; loading and converting pipet icon from ICONS18W
+        mcall   68,   , 18*18*4
+        mov     [pip_icon], eax
+
+        mcall   68, 22, win_icons_name, , 0
+        add     eax, 39*18*18*4
+        mov     [win_icons], eax
+
+        mov     esi, eax
+        mov     edi, [pip_icon]
+        mov     ecx, 18*18
+
+        cld
+        rep movsd
+
+        call    get_pixels
+
 ;---------------------------------------------------------------------
 
 still:
@@ -28,12 +51,12 @@ still:
 
         cmp     eax, 1
         je      redraw
-        cmp     eax, 6
-        je      mouse
         cmp     eax, 2
         je      key
         cmp     eax, 3
         je      button
+        cmp     eax, 6
+        je      mouse
 
         jmp     still
 
@@ -47,21 +70,25 @@ key:
 
         cmp     ah, 1
         je      button.exit
+        cmp     ah, 25
+        je      make_pick_active
         cmp     ah, 19
-        je      draw_copied_rgb
+        je      copy_col_rgb
         cmp     ah, 46
-        je      draw_copied_hex
-                jmp     still
+        je      copy_col_hex
+        jmp     still
 
 button:
         mcall   17
 
         cmp     ah, 11
-        je      draw_copied_hex         ; copy HEX color
+        je      make_pick_active
         cmp     ah, 12
-        je      draw_copied_rgb         ; copy RGB color
+        je      copy_col_hex            ; copy HEX color
         cmp     ah, 13
-        je      draw_picked_rect        ; make pick active again
+        je      copy_col_rgb            ; copy RGB color
+        cmp     ah, 14
+        je      pick_col_cell           ; make pick active again
         cmp     ah, 1
         jne     still
 
@@ -70,11 +97,8 @@ button:
 
 mouse:
         mcall   37, 2
-        test    ax, 0x01
-        jz      mouse.move
-
-        cmp     [pick_act], 0x00
-        je      .move
+        test    ax, 0x0001
+        jz      .move
 
         mov     [pick_act], 0x00        ; left mouse button click
 
@@ -82,31 +106,90 @@ mouse:
                 cmp     [pick_act], 0x00
                 je      still
 
-                call    get_pixel
+                call    get_pixels
                 call    draw_update
 
         jmp     still
 
 ;---------------------------------------------------------------------
 
-; read pixel from screen by mouse coords
-get_pixel:
+; read array of pixels from screen by mouse coords
+get_pixels:
 
         mcall   37, 0
 
         mov     edx, eax
+
+        mcall   14
+        mov     ebx, eax
+
+        ; clamping mouse coords to stay within the screen
+        call    clamp_pixels
+
         mcall   36, sel_color, <1, 1>,
+
+        sub     edx, 0x00030003
+        mcall   36, [sel_rect], <7, 7>,
+
+        ret
+
+; clamping mouse coords to stay within the screen
+clamp_pixels:
+
+        mov     eax, edx
+        shr     eax, 16
+        mov     cx, ax
+        mov     ax, dx
+
+        push    ax
+        push    cx
+        mov     ax, bx
+        mov     di, ax
+        mov     eax, ebx
+        shr     eax, 16
+        mov     si, ax
+
+        pop     cx
+        pop     ax
+
+        .check_min_x:
+                cmp     cx, 3
+                jge     .check_min_y
+                mov     cx, 3
+        .check_min_y:
+                cmp     ax, 3
+                jge     .check_max_x
+                mov     ax, 3
+        .check_max_x:
+                mov     dx, si
+                sub     dx, 3
+                cmp     cx, dx
+                jle     .check_max_y
+                mov     cx, dx
+        .check_max_y:
+                mov     dx, di
+                sub     dx, 3
+                cmp     ax, dx
+                jle     .combine_coords
+                mov     ax, dx
+
+        .combine_coords:
+                xor     edx, edx
+                mov     dx, cx
+                rol     edx, 16
+                mov     dx, ax
 
         ret
 
 ;---------------------------------------------------------------------
 
+; window redraw function
 draw_window:
 
         mcall   12, 1
 
         mcall   48, 3, win_cols, sizeof.system_colors
-                mcall     , 4,
+        mcall     , 4,
 
         mov     ecx, eax
         add     ecx, WIN_Y * 65536 + WIN_H
@@ -115,47 +198,73 @@ draw_window:
         add     edx, 0x34000000
         mcall   0, <WIN_X, WIN_W>, , , , header
 
-                call    draw_base
+        ; icon background color conversion
+        mov     esi, [pip_icon]
+        mov     ecx, 18*18
+
+        .icon_loop:
+                mov     eax, [esi]
+                cmp     eax, [win_cols.work]
+                jne     .skip_change
+                mov     ebx, [win_cols.work_light]
+                mov     [esi], ebx
+        .skip_change:
+                add     esi, 4
+                loop    .icon_loop
+
+        call    draw_base
         call    draw_update
 
         mcall   12, 2
 
         ret
 
-
-
 ; draw basic elements of window
 draw_base:
 
-        mcall   13, <BUT_HEX_X, BUT_HEX_W>, <BUT_HEX_Y, BUT_HEX_H>, [win_cols.work_graph]
+        mcall   13, <BUT_PIP_X, BUT_PIP_H>, <BUT_PIP_Y, BUT_PIP_H>, [win_cols.work_graph]
+        mcall     , <BUT_COL_X, BUT_COL_W>, <BUT_PIP_Y, BUT_PIP_H>,
+        mcall     , <BUT_HEX_X, BUT_HEX_W>, <BUT_HEX_Y, BUT_HEX_H>,
         mcall     ,                       , <BUT_RGB_Y, BUT_HEX_H>,
         mcall     , <BUT_REC_X, BUT_REC_W>, <BUT_REC_Y, BUT_REC_H>,
 
-        mcall     , <BUT_HEX_X, BUT_HEX_W - 1>, <BUT_HEX_Y, BUT_HEX_H - 1>, [win_cols.work_dark]
+        mcall     , <BUT_PIP_X, BUT_PIP_H - 1>, <BUT_PIP_Y, BUT_PIP_H - 1>, [win_cols.work_dark]
+        mcall     , <BUT_COL_X, BUT_COL_W - 1>, <BUT_PIP_Y, BUT_PIP_H - 1>,
+        mcall     , <BUT_HEX_X, BUT_HEX_W - 1>, <BUT_HEX_Y, BUT_HEX_H - 1>,
         mcall     ,                           , <BUT_RGB_Y, BUT_HEX_H - 1>,
         mcall     , <BUT_REC_X, BUT_REC_W - 1>, <BUT_REC_Y, BUT_REC_H - 1>,
 
-        mcall     , <BUT_HEX_X + 1, BUT_HEX_W - 2>, <BUT_HEX_Y + 1, BUT_HEX_H - 2>, [win_cols.work_button_text]
+        mcall     , <BUT_PIP_X + 1, BUT_PIP_H - 2>, <BUT_PIP_Y + 1, BUT_PIP_H - 2>, [win_cols.work_light]
+        mcall     , <BUT_COL_X + 1, BUT_COL_W - 2>, <BUT_PIP_Y + 1, BUT_PIP_H - 2>, [win_cols.work_button_text]
+        mcall     , <BUT_HEX_X + 1, BUT_HEX_W - 2>, <BUT_HEX_Y + 1, BUT_HEX_H - 2>,
+        mcall     ,                               , <BUT_RGB_Y + 1, BUT_HEX_H - 2>,
         mcall     , <BUT_REC_X + 1, BUT_REC_W - 2>, <BUT_REC_Y + 1, BUT_REC_H - 2>,
 
-        ; buttons 11, 12 and 13
-        mcall    8, <BUT_HEX_X + 1, BUT_HEX_W - 3>, <BUT_HEX_Y + 1, BUT_HEX_H - 3>, 0x4000000B
-        mcall     ,                               , <BUT_RGB_Y + 1, BUT_HEX_H - 3>, 0x4000000C
-        mcall     , <BUT_REC_X + 1, BUT_REC_W - 3>, <BUT_REC_Y + 1, BUT_REC_H - 3>, 0x4000000D
+        ; buttons 11, 12, 13 and 14
+        mcall    8, <BUT_PIP_X + 1, BUT_PIP_W - 3>, <BUT_PIP_Y + 1, BUT_PIP_H - 3>, 0x4000000B
+        mcall     , <BUT_HEX_X + 1, BUT_HEX_W - 3>, <BUT_HEX_Y + 1, BUT_HEX_H - 3>, 0x4000000C
+        mcall     ,                               , <BUT_RGB_Y + 1, BUT_HEX_H - 3>, 0x4000000D
+        mcall     , <BUT_REC_X + 2, BUT_REC_W - 4>, <BUT_REC_Y + 2, BUT_REC_H - 4>, 0x6000000E
 
+        ; 18*18 pixels icon
+        mcall   65, [pip_icon], 0x00120012, 0x000B000F, 32
 
+        ret
 
 ; drawing text on buttons and colorful rect
 draw_update:
 
-        mcall   13, <BUT_REC_X + 2, BUT_REC_W - 4>, <BUT_REC_Y + 2, BUT_REC_H - 4>, [sel_color]
+        ; current color rect
+        mcall   13, <BUT_COL_X + 2, BUT_COL_W - 4>, <BUT_COL_Y + 2, BUT_COL_H - 4>, [sel_color]
+
+        ; color codes
         mcall     , <BUT_RGB_X + 1, BUT_HEX_W - 2>, <BUT_RGB_Y + 1, BUT_HEX_H - 2>, [win_cols.work_button_text]
 
-        mcall   47, 0x00060100, [sel_color], <BUT_HEX_X + 25, BUT_HEX_Y + 4>, 0x50000000, [win_cols.work_button_text]
+        mcall   47, 0x00060100, [sel_color], <BUT_HEX_X + 26, BUT_HEX_Y + 5>, 0x50000000, [win_cols.work_button_text]
 
         mov     ebx, 0x00030000
         xor     ecx, ecx
-        mov     edx, 65536 * 77 + 46
+        mov     edx, 65536 * 78 + 81
         xor     edi, edi
 
         dr_loop:
@@ -168,18 +277,80 @@ draw_update:
                 cmp     edi, 3
                 jb      dr_loop
 
+        ; 7*7 pixels grid
+        mov     eax, 13
+        mov     ebx, 118 * 65536 + 12
+        mov     ecx,  14 * 65536 + 12
+        mov     esi, [sel_rect]
+        mov     edi, 49
+
+        .du_loop_rect:
+                mcall   , , , dword [esi]
+                add     ebx,  12 * 65536
+                cmp     ebx, 196 * 65536
+                jle     .du_loop_rect_row
+                mov     ebx, 118 * 65536 + 12
+                add     ecx,  12 * 65536
+                .du_loop_rect_row:
+                add     esi, 3
+                dec     edi
+                cmp     edi, 0
+                jne     .du_loop_rect
+
+        ; selection of one pixel from 7*7 grid
+        mov     cl, [cell_act_y]
+        mov     al, 12
+        mul     cl
+        add     ax, 14
+        shl     eax, 16
+        mov     ax, 12
+        mov     ecx, eax
+
+        mov     bl, [cell_act_x]
+        mov     al, 12
+        mul     bl
+        add     ax, 118
+        shl     eax, 16
+        mov     ax, 12
+        mov     ebx, eax
+
+        mcall   13, , , 0x00FF0000
+        add     ebx, 2 * 65536 - 4
+        add     ecx, 2 * 65536 - 4
+        mcall     , , , [sel_color]
+
         ret
 
+;---------------------------------------------------------------------
+
+; making pipet active again
+make_pick_active:
+
+        mov     [pick_act], 0x01
+        mov     [cell_act_x], 0x03
+        mov     [cell_act_y], 0x03
+
+
+        mcall   13, <BUT_REC_X + 1, BUT_REC_W - 2>, <BUT_REC_Y + 1, BUT_REC_H - 2>, [win_cols.work_button_text]
+        mcall    4, <BUT_REC_X + 28, BUT_REC_Y + 37>, 0x10000000, mes_pick, 4
+
+        mcall    5, 50
+
+        mcall   13, <BUT_PIP_X + 1, BUT_PIP_W - 2>, <BUT_PIP_Y + 1, BUT_PIP_H - 2>, [win_cols.work_light]
+        mcall   65, [pip_icon], 0x00120012, 0x000B000F, 32
+
+        call    draw_update
+        jmp     still
 
 ; copy color HEX code
-draw_copied_hex:
+copy_col_hex:
 
         mcall   13, <BUT_HEX_X + 2, BUT_HEX_W - 4>, <BUT_HEX_Y + 2, BUT_HEX_H - 4>, [win_cols.work_button_text]
 
         mov     ebx, [sel_color]
         mov     ecx, 6
 
-        ch_loop:                                ; iterate over all HEX-color digits
+        ch_loop:                                ; iterate over all hex-digits of color
                 mov     al, bl
                 and     al, 0x0F
                 add     al, 0x30
@@ -195,7 +366,7 @@ draw_copied_hex:
 
         mcall   54, 2, color_hex.end - color_hex, color_hex
 
-        mcall    4, <BUT_HEX_X + 1, BUT_HEX_Y + 4>, 0x10000000, mes_copy, 12
+        mcall    4, <BUT_HEX_X + 1, BUT_HEX_Y + 5>, 0x10000000, mes_copy, 12
 
         mcall    5, 50
 
@@ -204,12 +375,10 @@ draw_copied_hex:
         call    draw_update
         jmp     still
 
+; copy color RGB code
+copy_col_rgb:
 
-
-; copy color RBG code
-draw_copied_rgb:
-
-        mcall   13, <BUT_RGB_X + 2, BUT_HEX_W - 4>, <BUT_RGB_Y + 2, BUT_HEX_H - 4>, [win_cols.work_button_text]
+        mcall   13, <BUT_HEX_X + 2, BUT_HEX_W - 4>, <BUT_RGB_Y + 2, BUT_HEX_H - 4>, [win_cols.work_button_text]
 
         mov     bl, 10
         mov     edx, [sel_color]
@@ -239,52 +408,85 @@ draw_copied_rgb:
 
         mcall   54, 2, color_rgb.end - color_rgb, color_rgb
 
-        mcall    4, <9, 46>, 0x10000000, mes_copy, 12
+        mcall    4, <BUT_HEX_X + 1, BUT_RGB_Y + 5>, 0x10000000, mes_copy, 12
 
         mcall    5, 50
 
-        mcall   13, <BUT_RGB_X + 1, BUT_HEX_W - 2>, <BUT_RGB_Y + 1, BUT_HEX_H - 2>, [win_cols.work_button_text]
+        mcall   13, <BUT_HEX_X + 1, BUT_HEX_W - 2>, <BUT_RGB_Y + 1, BUT_HEX_H - 2>, [win_cols.work_button_text]
 
         call    draw_update
         jmp     still
 
+; picking one color cell from 7*7 grid
+pick_col_cell:
 
+        mcall   37, 1
 
-; make color picking active again
-draw_picked_rect:
+        push    eax
+        sub     ax, 14
+        mov     bl, 12
+        div     bl
+        mov     [cell_act_y], al
 
-        mcall   13, <BUT_REC_X + 2, BUT_REC_W - 4>, <BUT_REC_Y + 2, BUT_REC_H - 4>, [win_cols.work_button_text]
+        pop     eax
+        shr     eax, 16
+        sub     ax, 118
+        div     bl
+        mov     [cell_act_x], al
 
-        mcall    4, <BUT_REC_X + 9, BUT_REC_Y + 18>, 0x10000000, mes_pick, 4
+        xor     ebx, ebx
+        mov     bl, [cell_act_y]
+        mov     al, 7
+        mul     bl
+        add     al, [cell_act_x]
+        mov     bx, 3
+        mul     bx
+        add     eax, [sel_rect]
 
-        mov     [pick_act], 0x01
-
-        mcall    5, 50
-
-        mcall   13, <BUT_REC_X + 1, BUT_REC_W - 2>, <BUT_REC_Y + 1, BUT_REC_H - 2>, [win_cols.work_button_text]
+        mov     ebx, dword [eax]
+        and     ebx, 0x00FFFFFF
+        mov     [sel_color], ebx
 
         call    draw_update
-        jmp     still
+        jmp still
 
 ;---------------------------------------------------------------------
 
 WIN_X           = 100
-WIN_W           = 183
+WIN_W           = 221
 WIN_Y           = 100
-WIN_H           = 77
+WIN_H           = 112
+
+BUT_PIP_X       = 8
+BUT_PIP_W       = 24
+BUT_PIP_Y       = 12
+BUT_PIP_H       = 24
+
+BUT_COL_X       = 40
+BUT_COL_W       = 68
+BUT_COL_Y       = 12
+BUT_COL_H       = 24
+
 
 BUT_HEX_X       = 8
-BUT_HEX_W       = 98
-BUT_HEX_Y       = 12
-BUT_HEX_H       = 22
+BUT_HEX_W       = 100
+BUT_HEX_Y       = 44
+BUT_HEX_H       = 24
 
 BUT_RGB_X       = 8
-BUT_RGB_Y       = 42
+BUT_RGB_Y       = 76
 
-BUT_REC_X       = 114
-BUT_REC_W       = 52
+BUT_REC_X       = 116
+BUT_REC_W       = 88
 BUT_REC_Y       = 12
-BUT_REC_H       = 52
+BUT_REC_H       = 88
+
+;---------------------------------------------------------------------
+
+win_cols        system_colors
+win_icons_name  db "ICONS18W", 0
+win_icons       dd 0x00000000
+pip_icon        dd 0x00000000
 
 if lang eq ru_RU
                 header  db 'Пипетка', 0
@@ -297,16 +499,16 @@ endf
 mes_copy        db '   Copied   '
 mes_pick        db 'Pick'
 
-win_cols        system_colors
-win_header      db 24
-
 rgb_cols:
                 dd 0x000000FF
                 dd 0x00008000
                 dd 0x00FF0000
 
 pick_act        db 0x01
+cell_act_x      db 0x03
+cell_act_y      db 0x03
 
+sel_rect        dd 0x00000000
 sel_color:
                 db 0xCF
                 db 0xD7
