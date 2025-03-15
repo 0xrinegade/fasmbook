@@ -223,7 +223,7 @@ draw_window:
 draw_base:
 
         mcall   13, <BUT_PIP_X, BUT_PIP_H>, <BUT_PIP_Y, BUT_PIP_H>, [win_cols.work_graph]
-        mcall     , <BUT_COL_X, BUT_COL_W>, <BUT_PIP_Y, BUT_PIP_H>,
+        mcall     , <BUT_COL_X, BUT_COL_W>, 
         mcall     , <BUT_HEX_X, BUT_HEX_W>, <BUT_HEX_Y, BUT_HEX_H>,
         mcall     ,                       , <BUT_RGB_Y, BUT_HEX_H>,
         mcall     , <BUT_REC_X, BUT_REC_W>, <BUT_REC_Y, BUT_REC_H>,
@@ -489,7 +489,7 @@ win_icons       dd 0x00000000
 pip_icon        dd 0x00000000
 
 if lang eq ru_RU
-                header  db 'Пипетка', 0
+                header  db '����⪠', 0
 else if lang eq es_ES
                 header  db "Pipeta", 0
 else
