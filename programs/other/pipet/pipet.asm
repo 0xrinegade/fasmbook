@@ -175,10 +175,11 @@ draw_base:
         mcall               , <BUT_REC_X, BUT_REC_W - 1>, <BUT_REC_Y, BUT_REC_H - 1>,
 
         mcall               , <BUT_PIP_X + 1, BUT_PIP_H - 2>, <BUT_PIP_Y + 1, BUT_PIP_H - 2>, [win_cols.work_light]
-        mcall               , <BUT_COL_X + 1, BUT_COL_W - 2>,                               , [win_cols.work_button_text]
-        mcall               , <BUT_HEX_X + 1, BUT_HEX_W - 2>, <BUT_HEX_Y + 1, BUT_HEX_H - 2>,
-        mcall               ,                               , <BUT_RGB_Y + 1, BUT_HEX_H - 2>,
+        mcall               , <BUT_COL_X + 1, BUT_COL_W - 2>,                               ,
         mcall               , <BUT_REC_X + 1, BUT_REC_W - 2>, <BUT_REC_Y + 1, BUT_REC_H - 2>,
+        mcall               , <BUT_HEX_X + 1, BUT_HEX_W - 2>, <BUT_HEX_Y + 1, BUT_HEX_H - 2>, 0x00FFFFFF
+        mcall               ,                               , <BUT_RGB_Y + 1, BUT_HEX_H - 2>,
+        
 
         ; buttons 11, 12, 13 and 14
         mcall    SF_DEFINE_BUTTON, <BUT_PIP_X + 1, BUT_PIP_W - 3>, <BUT_PIP_Y + 1, BUT_PIP_H - 3>, 0x4000000B
