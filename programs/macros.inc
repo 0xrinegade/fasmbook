@@ -443,7 +443,7 @@ macro define@lstruct name,[field]
    common   \} }
 
 ;usecase
-define@lstruct area,X,Y,W,H
+define@lstruct RECT,X,Y,W,H
 
 struct BOX
   left   dd ?
