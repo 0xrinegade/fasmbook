@@ -482,7 +482,7 @@ pip_icon        dd 0x00000000
 col_white       dd 0x00FFFFFF
 
 if lang eq ru_RU
-                header  db 'я┐╜я┐╜я┐╜я┐╜тка', 0
+                header  db 'Пипетка', 0
 else if lang eq es_ES
                 header  db 'Pipeta', 0
 else
