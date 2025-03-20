@@ -43,17 +43,28 @@ Commit message body, if needed
 ```
 
 - Commit message header and body should reflect changes made in commit
-- Commit message header should start with a capital letter
 - Commit message body should be separated from the header by one empty line
 
 ### Length
 
 Maximum number of characters in a commit header is **72** (standard for **Git**). Also, **72** is the maximum length of a line in a commit body.
 
-## Merge commits
+### Multiple authors
+
+If you are making a commit together with another developer, you need to add:
+
+```
+Co-authored-by: ANOTHER-NAME <ANOTHER-NAME@EXAMPLE.COM>
+```
+
+to the end commit message body on a new line.
+
+### Merge commits
 
 > [!WARNING]
 > Merge commits are **prohibited** in the project
+
+Use **rebase** to keep your branch up to date.
 
 ## Conclusion
 
