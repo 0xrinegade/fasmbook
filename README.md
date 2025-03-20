@@ -1,7 +1,7 @@
 # KolibriOS
 
 [![License](https://img.shields.io/badge/License-GPL%202.0-green)](./COPYING.TXT)
-[![Build system](https://git.kolibrios.org/KolibriOS/kolibrios/actions/workflows/build.yaml/badge.svg)](https://git.kolibrios.org/KolibriOS/kolibrios/actions/workflows/build.yaml)
+[![Build system](https://git.kolibrios.org/KolibriOS/kolibrios/actions/workflows/build.yaml/badge.svg)](https://git.kolibrios.org/KolibriOS/kolibrios/actions)
 
 KolibriOS is a hobby operating system for x86-compatible computers, which is currently being developed by a small teem of enthusiasts.
 
