@@ -20,9 +20,3 @@ Common list of tasks, issues and enhancement proposals can be found on [this pag
 ## Special thanks
 
 The KolibriOS team expresses special thanks to the author of the 32-bit **MenuetOS**, [Ville Turjanmaa](https://www.menuetos.net/contact.htm). We also want to note that all **MenuetOS** copyrights have been preserved.
-
-## License
-
-Contents of this repository are licensed under the terms of **GNU GPL 2.0** unless otherwise specified.
-
-See [this](./COPYING.TXT) file for details.
