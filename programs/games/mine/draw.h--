@@ -102,14 +102,14 @@ void draw_square(int x, y)
 
       SWITCH (get_mark(x, y))
       {
-        CASE 2: tcolor = 0x121288; tchar = '?'; BREAK;
-        CASE 1: tcolor = 0xd04444; tchar = 'P';
+        CASE 2: tcolor = 0x10121288; tchar = '?'; BREAK;
+        CASE 1: tcolor = 0x10d04444; tchar = 'P';
       }
 
       IF (get_mark(x,y))
       {
         EBX = xl + 6 << 16 + yt + 4;
-        sys_write_text(EBX, tcolor + 0x10000000, #tchar, 1);
+        sys_write_text(EBX, tcolor, #tchar, 1);
         EBX += 0x00010000;
         /*  Second run - registers are saved  */
         sys_write_text(EBX, ECX, EDX, ESI);
@@ -122,16 +122,16 @@ void draw_square(int x, y)
       {
         IF (tval == MINE)
         {
-          tcolor = 0xee1111;
+          tcolor = 0x10ee1111;
           tchar = '*';
         }
         ELSE
         {
           tchar = tval + '0';
-          tcolor = num_colors[tval-1];
+          tcolor = num_colors[tval-1]+0x10000000;
         }
         EBX = xl + 7 << 16 + yt + 4;
-        sys_write_text(EBX, tcolor+0x10000000, #tchar, 1);
+        sys_write_text(EBX, tcolor, #tchar, 1);
         EBX += 0x00010000;
         sys_write_text(EBX, ECX, EDX, ESI);
       }

@@ -213,17 +213,15 @@ inline fastcall dword sys_put_image(dword EBX, ECX, EDX)
   $int 0x40
 }
 
-:void sys_put_palette_image(dword inbuf,wh,xy,bits,pal)
+inline fastcall void sys_put_palette_image(dword EBX,ECX,EDX,ESI,EDI)
 {
+  $push ebp
   EAX = 65;
-  EBX = inbuf;
-  ECX = wh;
-  EDX = xy;
-  ESI = bits;
-  EDI = pal;
   EBP = 0;
   $int 0x40
+  $pop ebp
 }
+
 
 /*********************************************************
 08 = DEFINE BUTTON
@@ -1129,7 +1127,7 @@ inline fastcall dword sys_debug_read_char(dword EBX)
 }
 
 
-inline fastcall dword window_move_size(dword EBX,ECX,EDX,ESI){
+inline fastcall dword sys_window_move_size(dword EBX,ECX,EDX,ESI){
 	EAX = 67;
 	$int 0x40
 }
