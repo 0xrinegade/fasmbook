@@ -26,16 +26,25 @@
 //? define DEBUG 1
 
 ? print "\nЪДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДї"
-? print "\nі          KolibriOS MineSweeper v0.61         і"
+? print "\nі          KolibriOS MineSweeper v0.62         і"
 ? print "\nі (C)   Leency  (leency@mail.ru)     2010-2025 і"
 ? print "\nі (C) Ivan Poddubny (ivan-yar@bk.ru) 2003,2004 і"
 ? print "\nАДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДЩ\n\n"
 
-/************************************** DATA **************************************/
+/************************************* DEFINES *************************************/
+
+?define HEADER_Y 5
+?define BTNSIZE 21
+?define CENTER_POS xsize / 2 - 10
+
+?define XST 5       // offset of first pixel X - смещение поля от границы окна
+?define YST 32
 
 ? define XPX 21      // X pixels by square - размер клетки в пикселях
 ? define YPX 21      // Y pixels by square
 ? define MINE 255    // в клетке мина, если value = MINE
+
+/************************************** DATA **************************************/
 
 struct
 {
@@ -57,9 +66,6 @@ struct
   byte   y_size;
   byte   nmines;
 } stdmodes[3] = {9,9,10, 16,16,40, 30,16,99}; // {x,y,m}
-
-?define XST 5       // offset of first pixel X - смещение поля от границы окна
-?define YST 30
 
 int ncx,             // number of squares in X  - размер поля
     ncy,
