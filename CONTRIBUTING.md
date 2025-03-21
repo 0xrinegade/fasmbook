@@ -2,19 +2,19 @@
 
 ## Type of contributing
 
-There are two main types of contributions accepted in KolibriOS:
+There are two main types of contributions accepted to the main KolibriOS repository:
 
 - Submitting issues about problems in the project
 - Submitting code to the project via pull requests
 
-Each of these types is described in detail below.
+Both these types are described in detail below.
 
 ## Issues
 
 You can help us by submitting issues about problems found in the system. Currently, there are two main ways of submitting an issue in the project: **Bug Reports** and **Feature Requests**:
 
 - Bug Reports are suitable if you find a **bug** (crash, error, unexpected behavior) in some part of the system (kernel, drivers, apps, etc.) and want to report it
-- Feature Request are used, when you want to propose some **improvement** to the system (missing features, improved  user experience, etc.)
+- Feature Requests are used, when you want to propose some **improvement** to the system (missing features, improved user experience, etc.)
 
 ## Pull requests
 
@@ -28,11 +28,11 @@ You can also help us by submitting code via pull requests. The process of submit
 6. Create and submit a pull request into `main` branch
 7. Wait for CI/CD pipelines and code review to pass
 
-When a pull request is submitted, at least two project participants must conduct a code review, after which the proposed changes can be corrected (if it's necessary) and merged into the project.
+When a pull request is submitted, at least two project participants must conduct a code review, after which the proposed changes need to be corrected (if requested) and merged into the project.
 
 ## Commit style
 
-### Pattern
+### Message pattern
 
 The commit message should look like this:
 
@@ -68,4 +68,4 @@ Use **rebase** to keep your branch up to date.
 
 ## Conclusion
 
-We hope this small instructions will help you to get familiar  with KolibriOS contribution rules and inspire you to participate in the work of this project.
+We hope this small instructions will help you to get familiar with KolibriOS contribution rules and inspire you to participate in the life of our project.
