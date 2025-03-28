@@ -5,4 +5,4 @@ then C_LANG = "LANG_RUS"
 else C_LANG = "LANG_ENG" -- this includes default case without config
 end
 
-tup.rule("Eolite.c", "c-- /D=$(C_LANG) %f" .. tup.getconfig("KPACK_CMD"), "Eolite.com")
+tup.rule("Eolite.c", "c-- /D=$(C_LANG) /OPATH=%o %f" .. tup.getconfig("KPACK_CMD"), "Eolite.com")
