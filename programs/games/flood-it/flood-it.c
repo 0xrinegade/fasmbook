@@ -29,18 +29,16 @@ char BOARD_SIZES[] = "S\0L";
 
 #ifdef LANG_RUS
 	char *BUTTON_CAPTIONS[]={ " Заново [F2]", " Помощь [F1]", " Выход [Esc]", 0}; 
-	char CLICKS_TEXT[]=" Клики:   /";
+	char CLICKS_TEXT[]="Кликов:   /";
 	char LEVELS_TEXT[]=" Поле:";
 	
 	char HELP_WINDOW_CAPTION[]="Помощь";
 	char *HELP_TEXT[]={	"Как играть во Flood-it?",
 	"",
-	"Заполните поле одним цветом за ограниченное число ходов.",
-	"Игра начинается с верхней левой клетки. Выберите цвет, нажав на один из",
-	"квадратиков слева, и клетки окрасятся этим цветом - так вы присоедините",
-	"соседние клетки той же окраски. Захватить поле нужно за минимальное",
-	"число ходов. Пошаговая стратегия с интересным принципом - изменись,",
-	"чтобы победить!",
+	"Выберите цвет, нажав на один из квадратиков. Клетки окрасятся",
+	"этим цветом НАЧИНАЯ С ВЕРХНЕЙ ЛЕВОЙ - так вы присоедините",
+	"соседние клетки той же окраски. Захватить поле нужно за",
+	"ограниченное число ходов. Доступно два размера доски.",
 	"",
 	"Играть также можно клавишами:",
 	"[Q] [W] [E]",
@@ -59,7 +57,7 @@ char BOARD_SIZES[] = "S\0L";
 	"vajutades nuppudele vasakul. Kui sa muudad vфrvi pragusel alal,",
 	"siis iga kokkupuutuv sama vфrv muutub samaks. Nii saad ujutada",
 	"teised alad mфnguvфljal №le. Valida saad 2 mфnguvфlja suuruse",
-	"vahel. Proovi vфli №le ujutada etteandtud kфikude arvuga!",
+	"vahel.",
 	"",
 	"Mфngida saab ka klaviatuuriga:",
 	"[Q] [W] [E]",
@@ -73,11 +71,10 @@ char BOARD_SIZES[] = "S\0L";
 	char HELP_WINDOW_CAPTION[]="Help";
 	char *HELP_TEXT[]={	"How to play Flood-it?",
 	"",
-	"Flood the whole board with one color within the allowed steps.",
-	"You start from the top left corner and progress by selecting one",
+	"You start from the TOP LEFT corner and progress by selecting one",
 	"of the colored buttons on the left. When you change your current area",
 	"color, every adjacent square with the same color also changes, that",
-	"way you can flood other areas of the board. Select from 3 sizes of",
+	"way you can flood other areas of the board. Select from 2 sizes of",
 	"the board and try to flood-it in the least amount of steps!",
 	"",
 	"You can also play with keyboard:",
