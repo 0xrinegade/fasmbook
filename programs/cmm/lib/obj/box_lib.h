@@ -17,7 +17,7 @@ dword box_lib_init   = #aboxlib_init;
 
 dword edit_box_draw     = #aEdit_box_draw;
 dword edit_box_key      = #aEdit_box_key;
-//dword edit_box_key_safe = #aEdit_box_key_safe;
+dword edit_box_key_c    = #aEdit_box_key_c;
 dword edit_box_mouse    = #aEdit_box_mouse;
 dword edit_box_set_text = #aEdit_box_set_text;
 
@@ -38,7 +38,7 @@ $DD 2 dup 0
 
 char aEdit_box_draw []    = "edit_box";
 char aEdit_box_key  []    = "edit_box_key";
-//char aEdit_box_key_safe[] = "edit_box_key_safe"; //edit_box_key_stdcall
+char aEdit_box_key_c[]    = "edit_box_key_safe";
 char aEdit_box_mouse[]    = "edit_box_mouse";
 char aEdit_box_set_text[] = "edit_box_set_text";
 
