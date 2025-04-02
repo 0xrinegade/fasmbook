@@ -375,7 +375,7 @@ endl
 	add     eax, pathOut
 	cmpne   [eax - 1], byte '/', @f
 	mov     [eax - 1], byte 0
-	dec	    dword[edtUnpPath.size]
+	dec     dword[edtUnpPath.size]
 @@:
 	mcall	30,4,pathOut,1
 .n:
