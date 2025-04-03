@@ -1,7 +1,7 @@
 ; SPDX-License-Identifier: GPL-2.0-only
 ; SPDX-FileCopyrightText:  2025 KolibriOS Team
-; SPDX-FileContributor:    UTF-8 to UTF-16 by Doczom
-; SPDX-FileContributor:    Charset Checker by Burer
+; KOSL-FileContributor:    Charset Checker by Burer
+; KOSL-FileContributor:    UTF-8 to UTF-16 by Doczom
 
 use32
 org 0
