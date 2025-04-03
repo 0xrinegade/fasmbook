@@ -1,7 +1,7 @@
 ; SPDX-License-Identifier: GPL-2.0-only
-; SPDX-FileCopyrightText: 2025 KolibriOS Team
-; FileContributor: UTF-8 to UTF-16 by Doczom
-; FileContributor: Charset Checker by Burer
+; SPDX-FileCopyrightText:  2025 KolibriOS Team
+; SPDX-FileContributor:    UTF-8 to UTF-16 by Doczom
+; SPDX-FileContributor:    Charset Checker by Burer
 
 use32
 org 0
@@ -1190,7 +1190,7 @@ char_code_hex:
 ; ===================================================================
 
 I_END:
-        rb      0
+        rb      512
         align   16
 STACKTOP:
 
