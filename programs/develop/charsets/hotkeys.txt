@@ -1,3 +1,5 @@
+Control hotkeys
+
 - Navigate inside charpage:
   - Arrows
   - Num2/4/6/8
@@ -8,4 +10,3 @@
 
 - Change symbol scale:
   - Num- and Num+
-  

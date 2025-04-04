@@ -8,6 +8,11 @@
 
 ; ================================================================
 
+use32
+org 0
+
+; ================================================================
+
 db      'MENUET01'
 dd      1
 dd      START
@@ -718,9 +723,18 @@ draw_base:
         mcall     , <LB_SC_DN.X, LB_SC_DN.Y>, , bt_smaller
         mcall     , <LB_SC_UP.X, LB_SC_UP.Y>, , bt_bigger
 
-        call draw_charpage_buttons
+        cmp     [charset], 0x90
+        jle     .cp_bt_cp
 
-        ret
+        .cp_bt_utf:
+                call    draw_charpage_buttons
+                jmp     .cp_bt_end
+
+        .cp_bt_cp:
+                call    draw_charpage_delete
+
+        .cp_bt_end:
+                ret
 
 
 ; changable data: current charset, charpage, chars, selection
