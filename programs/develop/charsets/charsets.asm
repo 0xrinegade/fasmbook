@@ -1151,4 +1151,72 @@ else if lang eq es_ES
 else
 
         title   db "Charsets Viewer 0.4.2", 0
-        lb_size db "Scale:"
+        lb_size db "Scale:", 0
+        lb_asci db "ASCII-code", 0
+        lb_scan db "Scan-code", 0
+        bt_read db "   Start keyboard input   ", 0
+        bt_stop db "    End keyboard input    ", 0
+
+endf
+
+lb_cp6x9        db "CP866 6x9  ", 0
+lb_cp8x16       db "CP866 8x16 ", 0
+lb_utf16        db "UTF-16 8x16", 0
+lb_utf8         db "UTF-8 8x16 ", 0
+
+lb_curr         dd lb_utf8
+
+lb_hex          db "HEX", 0
+lb_dec          db "DEC", 0
+
+bt_res          db "00", 0
+bt_dec          db "<", 0
+bt_inc          db ">", 0
+
+bt_smaller      db "-", 0
+bt_bigger       db "+", 0
+
+; ===================================================================
+
+win_cols        system_colors
+
+; ===================================================================
+
+reading         db 0x00
+
+header          dw 0x30FF, 0            ; "-0" symbols
+letter          dw 0x0000, 0            ; buffer for chars in page table
+letutf          dd 0x00000000, 0        ; same, but for UTF-8 chars
+
+charset         db 0xB0
+page            db 0x00
+page_utf        db 0x00
+char            db 0x00
+scale           db 0x07
+
+char_ascii      dw 0x0000, 0            ; current char ASCII/CP866 code
+char_scan       dw 0x0000, 0            ; current char SCAN-code
+char_utf        dd 0x00000000, 0        ; current char UTF-8 code
+
+char_code_dec:
+                dd char_code_dec.end - char_code_dec
+                dd 0
+                dd 1
+                db '00000'
+.end:
+
+char_code_hex:
+                dd char_code_hex.end - char_code_hex
+                dd 0
+                dd 1
+                db '0000'
+.end:
+
+; ===================================================================
+
+I_END:
+        rb      512
+        align   16
+STACKTOP:
+
+MEM:

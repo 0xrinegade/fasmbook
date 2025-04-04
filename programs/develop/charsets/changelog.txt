@@ -32,7 +32,6 @@ Development history
 - Symbol highlight UI tweaks
 - Fixed rolled up bug
 
-
 30.03.2025 - 0.4.0
 - Localization for all system languages
 - Display all character scales
