@@ -43,3 +43,8 @@ Development history
 
 03.04.2025 - 0.4.1
 - Fixed bug with codes color subscription
+
+04.04.2025 - 0.4.2
+- Fixed bug with resetting UTF charpage to zero on double charset swap to CP866
+- Improved charpage blocking for CP866 UX 
+- Improved char codes copying UI

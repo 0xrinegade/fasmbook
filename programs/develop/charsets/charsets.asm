@@ -8,11 +8,6 @@
 
 ; ================================================================
 
-use32
-org 0
-
-; ================================================================
-
 db      'MENUET01'
 dd      1
 dd      START
@@ -37,11 +32,11 @@ event_wait:
 
         mcall   SF_WAIT_EVENT
 
-        cmp     eax, 1
+        cmp     al, 1
         je      red
-        cmp     eax, 2
+        cmp     al, 2
         je      key
-        cmp     eax, 3
+        cmp     al, 3
         je      button
 
         jmp     event_wait
@@ -55,7 +50,7 @@ key:
         mcall   SF_GET_KEY
 
         ; no input
-        cmp     eax, 1
+        cmp     al, 1
         je      event_wait
 
         ; if not reading - skip
@@ -66,7 +61,7 @@ key:
         shr     eax, 16
 
         .key_pagedown:
-                cmp     ax, 81
+                cmp     al, 81
                 jne     .key_pageup
 
                 call    logic_charpage_dec
@@ -74,7 +69,7 @@ key:
                 jmp     .key_end
 
         .key_pageup:
-                cmp     ax, 73
+                cmp     al, 73
                 jne     .key_pagezero
 
                 call    logic_charpage_inc
@@ -82,7 +77,7 @@ key:
                 jmp     .key_end
 
         .key_pagezero:
-                cmp     ax, 82
+                cmp     al, 82
                 jne     .key_arr_left
 
                 call    logic_charpage_zero
@@ -90,7 +85,7 @@ key:
                 jmp     .key_end
 
         .key_arr_left:
-                cmp     ax, 75
+                cmp     al, 75
                 jne     .key_arr_right
 
                 call    logic_char_left
@@ -98,7 +93,7 @@ key:
                 jmp     .key_end
 
         .key_arr_right:
-                cmp     ax, 77
+                cmp     al, 77
                 jne     .key_arr_down
 
                 call    logic_char_right
@@ -106,7 +101,7 @@ key:
                 jmp     .key_end
 
         .key_arr_down:
-                cmp     ax, 72
+                cmp     al, 72
                 jne     .key_arr_up
 
                 call    logic_char_down
@@ -114,7 +109,7 @@ key:
                 jmp     .key_end
 
         .key_arr_up:
-                cmp     ax, 80
+                cmp     al, 80
                 jne     .key_scale_down
 
                 call    logic_char_up
@@ -122,7 +117,7 @@ key:
                 jmp     .key_end
 
         .key_scale_down:
-                cmp     ax, 74
+                cmp     al, 74
                 jne     .key_scale_up
 
                 call    logic_scale_down
@@ -130,7 +125,7 @@ key:
                 jmp     .key_end
 
         .key_scale_up:
-                cmp     ax, 78
+                cmp     al, 78
                 jne     .key_home
 
                 call    logic_scale_up
@@ -138,7 +133,7 @@ key:
                 jmp     .key_end
 
         .key_home:
-                cmp     ax, 71
+                cmp     al, 71
                 jne     .key_end
 
                 call    logic_charpage_zero
@@ -177,15 +172,12 @@ button:
                 jne     .button_b
 
                 mcall   SF_MOUSE_GET, SSF_WINDOW_POSITION
-                push    eax
-                sub     ax, 34
+                sub     eax, 0x00220022
                 mov     bl, 24
                 div     bl
                 mov     cl, al
                 shl     cl, 4
-                pop     eax
                 shr     eax, 16
-                sub     ax, 34
                 div     bl
                 add     cl, al
                 mov     [char], cl
@@ -197,31 +189,33 @@ button:
                 cmp     ah, 0x0B
                 jne     .button_c
 
-                mov     al, [page]
-                mov     [page_utf], al
+                call    draw_charpage_delete
+
                 mov     [page], 0x00
 
                 mov     [charset], 0x80
                 mov     [lb_curr], lb_cp6x9
 
-                call    .button_end
+                jmp    .button_end
 
         .button_c:                      ; 0C - charset CP866 8x16
                 cmp     ah, 0x0C
                 jne     .button_d
 
-                mov     al, [page]
-                mov     [page_utf], al
+                call    draw_charpage_delete
+
                 mov     [page], 0x00
 
                 mov     [charset], 0x90
                 mov     [lb_curr], lb_cp8x16
 
-                call    .button_end
+                jmp    .button_end
 
         .button_d:                      ; 0D - charset UTF-16 8x16
                 cmp     ah, 0x0D
                 jne     .button_e
+
+                call    draw_charpage_buttons
 
                 mov     al, [page_utf]
                 mov     [page], al
@@ -229,11 +223,13 @@ button:
                 mov     [charset], 0xA0
                 mov     [lb_curr], lb_utf16
 
-                call    .button_end
+                jmp    .button_end
 
         .button_e:                      ; 0E - charset UTF-8 8x16
                 cmp     ah, 0x0E
                 jne     .button_f
+
+                call    draw_charpage_buttons
 
                 mov     al, [page_utf]
                 mov     [page], al
@@ -631,20 +627,9 @@ draw_base:
         mcall                   , <BT_CS_03.X, BT_CS_03.W>,                         , 0x0000000D,
         mcall                   , <BT_CS_04.X, BT_CS_04.W>,                         , 0x0000000E,
 
-        ; charpage change buttons
-        mcall                   , <BT_CP_ZR.X, BT_CP_ZR.W>, <BT_CP_ZR.Y, BT_CP_ZR.H>, 0x0000000F,
-        mcall                   , <BT_CP_DN.X, BT_CP_DN.W>,                         , 0x00000010,
-        mcall                   , <BT_CP_UP.X, BT_CP_UP.W>,                         , 0x00000011,
-
         ; character scale buttons
         mcall                   , <BT_SC_DN.X, BT_SC_DN.W>, <BT_SC_DN.Y, BT_SC_DN.H>, 0x00000013,
         mcall                   , <BT_SC_UP.X, BT_SC_UP.W>,                         , 0x00000014,
-
-        ; character codes copy buttons
-        mcall                   , <BT_CP_AD.X, BT_CP_AD.W>, <BT_CP_AD.Y, BT_CP_AD.H>, 0x40000015,
-        mcall                   ,                         , <BT_CP_SD.Y, BT_CP_SD.H>, 0x40000016,
-        mcall                   , <BT_CP_AH.X, BT_CP_AH.W>, <BT_CP_AH.Y, BT_CP_AH.H>, 0x40000017,
-        mcall                   ,                         , <BT_CP_SH.Y, BT_CP_SH.H>, 0x40000018,
 
         ; tables
         ; 16x16 characters table
@@ -656,12 +641,6 @@ draw_base:
         mcall               , <LN_SN_02.X, LN_SN_02.W>, <LN_SN_02.Y, LN_SN_02.H>,
         mcall               ,                         , <LN_SN_03.Y, LN_SN_03.H>,
         mcall               ,                         , <LN_SN_04.Y, LN_SN_04.H>,
-        mcall               ,                         , <LN_SN_05.Y, LN_SN_05.H>,
-        mcall               ,                         , <LN_SN_06.Y, LN_SN_06.H>,
-        mcall               , <LN_SN_07.X, LN_SN_07.W>, <LN_SN_07.Y, LN_SN_07.H>,
-        mcall               , <LN_SN_08.X, LN_SN_08.W>,                         ,
-        mcall               , <LN_SN_09.X, LN_SN_09.W>, <LN_SN_09.Y, LN_SN_09.H>,
-        mcall               , <LN_SN_10.X, LN_SN_10.W>,                         ,
 
         ; headers
         ; horizontal page table headers
@@ -738,6 +717,8 @@ draw_base:
         ; character scale buttons subscriptions
         mcall     , <LB_SC_DN.X, LB_SC_DN.Y>, , bt_smaller
         mcall     , <LB_SC_UP.X, LB_SC_UP.Y>, , bt_bigger
+
+        call draw_charpage_buttons
 
         ret
 
@@ -986,10 +967,23 @@ draw_update_single:
         ; singe character codes
         .codes:
 
-                mov     esi, [win_cols.work_button]
-                add     esi, 0x50000000
+                ; character codes copy buttons
+                mcall   SF_DEFINE_BUTTON, <BT_CP_AD.X, BT_CP_AD.W>, <BT_CP_AD.Y, BT_CP_AD.H>, 0x00000015, [win_cols.work_button]
+                mcall                   ,                         , <BT_CP_SD.Y, BT_CP_SD.H>, 0x00000016,
+                mcall                   , <BT_CP_AH.X, BT_CP_AH.W>, <BT_CP_AH.Y, BT_CP_AH.H>, 0x00000017,
+                mcall                   ,                         , <BT_CP_SH.Y, BT_CP_SH.H>, 0x00000018,
+
+                ; lines to overlap button's borders
+                mcall   SF_DRAW_RECT, <LN_SN_02.X, LN_SN_02.W>, <LN_SN_05.Y, LN_SN_05.H>,
+                mcall               ,                         , <LN_SN_06.Y, LN_SN_06.H>,
+                mcall               ,                         , <LN_SN_06.Y + BT_CP_SH.H, LN_SN_06.H>,
+                mcall               , <LN_SN_07.X, LN_SN_07.W>, <LN_SN_07.Y, LN_SN_07.H>,
+                mcall               , <LN_SN_08.X, LN_SN_08.W>,                         ,
+                mcall               , <LN_SN_08.X + BT_CP_SH.W, LN_SN_08.W>,                         ,
 
                 xor     ecx, ecx
+                mov     esi, [win_cols.work_button_text]
+                add     esi, 0x10000000
 
                 mov     cx, [char_ascii]
                 mcall   SF_DRAW_NUMBER, 0x00050000, , <DT_CD_AD.X, DT_CD_AD.Y>,
@@ -1017,8 +1011,7 @@ draw_update_single:
 ; redraw keyboard input toggle button
 draw_toggle:
 
-        mov     al, [reading]
-        cmp     al, 0x01
+        cmp     [reading], 0x01
 
         je      .stop
 
@@ -1041,6 +1034,35 @@ draw_toggle:
 
                 ret
 
+
+; draw charpage change buttons
+draw_charpage_buttons:
+
+        mcall   SF_DEFINE_BUTTON, <BT_CP_ZR.X, BT_CP_ZR.W>, <BT_CP_ZR.Y, BT_CP_ZR.H>, 0x0000000F, [win_cols.work_button]
+        mcall                   , <BT_CP_DN.X, BT_CP_DN.W>,                         , 0x00000010,
+        mcall                   , <BT_CP_UP.X, BT_CP_UP.W>,                         , 0x00000011,
+
+        mov      ecx, [win_cols.work_button_text]
+        add      ecx, 0xB0000000
+
+        ; page swap buttons subscriptions
+        mcall   SF_DRAW_TEXT, <LB_CP_ZR.X, LB_CP_ZR.Y>, , bt_res
+        mcall               , <LB_CP_DN.X, LB_CP_DN.Y>, , bt_dec
+        mcall               , <LB_CP_UP.X, LB_CP_UP.Y>, , bt_inc
+
+        ret
+
+; delete charpage change buttons
+draw_charpage_delete:
+
+        mcall   SF_DEFINE_BUTTON, , , 0x8000000F
+        mcall                   , , , 0x80000010
+        mcall                   , , , 0x80000011
+
+        mcall   SF_DRAW_RECT, <BT_CP_ZR.X, BT_CP_ZR.W + BT_CP_DN.W + BT_CP_UP.W + 19>, <BT_CP_ZR.Y, BT_CP_ZR.H + 1>, [win_cols.work]
+
+        ret
+
 ; ===================================================================
 
 WN_RECT         RECT    100, 100, 686, 494      ; window
@@ -1062,10 +1084,10 @@ BT_CP_UP        RECT    395, 427,  23,  23
 BT_SC_DN        RECT    618,   8,  25,  25      ; char scale buttons
 BT_SC_UP        RECT    643,   8,  25,  25
 
-BT_CP_AD        RECT    563, 369,  55,  23      ; char code copy buttons
-BT_CP_SD        RECT    563, 394,  55,  23
-BT_CP_AH        RECT    620, 369,  47,  23
-BT_CP_SH        RECT    620, 394,  47,  23
+BT_CP_AD        RECT    562, 368,  57,  25      ; char code copy buttons
+BT_CP_SD        RECT    562, 393,  57,  25
+BT_CP_AH        RECT    619, 368,  49,  25
+BT_CP_SH        RECT    619, 393,  49,  25
 
 BT_RD_ST        RECT    427, 459, 241,  23      ; key input read/stop button
 
@@ -1080,8 +1102,6 @@ LN_SN_05        RECT    427, 368, 242,   1
 LN_SN_06        RECT    427, 393, 242,   1
 LN_SN_07        RECT    562, 343,   1,  75
 LN_SN_08        RECT    619, 343,   1,  75
-LN_SN_09        RECT    618,   9,   1,  24
-LN_SN_10        RECT    643,   9,   1,  24
 
 LB_SN_SCL       RECT    436,  14,   0,   0      ; single table subscriptions
 LB_SN_DEC       RECT    579, 349,   0,   0
@@ -1113,7 +1133,7 @@ HD_TABL         RECT     38,  14,   0,   0      ; char table headers
 
 if lang eq ru_RU
 
-        title   cp866 "Таблицы Символов 0.4.0", 0
+        title   cp866 "Таблицы Символов 0.4.2", 0
         lb_size cp866 "Масштаб:", 0
         lb_asci cp866 "ASCII-код", 0
         lb_scan cp866 "Скан-код", 0
@@ -1122,7 +1142,7 @@ if lang eq ru_RU
 
 else if lang eq es_ES
 
-        title   db "Tablas de Simbolos 0.4.0", 0
+        title   db "Tablas de Simbolos 0.4.2", 0
         lb_size db "Escala:", 0
         lb_asci db "Codigo ASCII", 0
         lb_scan db "Codigo scan", 0
@@ -1130,73 +1150,5 @@ else if lang eq es_ES
         bt_stop db "Detener entrada de teclano", 0
 else
 
-        title   db "Charsets Viewer 0.4.0", 0
-        lb_size db "Scale:", 0
-        lb_asci db "ASCII-code", 0
-        lb_scan db "Scan-code", 0
-        bt_read db "   Start keyboard input   ", 0
-        bt_stop db "    End keyboard input    ", 0
-
-endf
-
-lb_cp6x9        db "CP866 6x9  ", 0
-lb_cp8x16       db "CP866 8x16 ", 0
-lb_utf16        db "UTF-16 8x16", 0
-lb_utf8         db "UTF-8 8x16 ", 0
-
-lb_curr         dd lb_utf8
-
-lb_hex          db "HEX", 0
-lb_dec          db "DEC", 0
-
-bt_res          db "00", 0
-bt_dec          db "<", 0
-bt_inc          db ">", 0
-
-bt_smaller      db "-", 0
-bt_bigger       db "+", 0
-
-; ===================================================================
-
-win_cols        system_colors
-
-; ===================================================================
-
-reading         db 0x00
-
-header          dw 0x30FF, 0            ; "-0" symbols
-letter          dw 0x0000, 0            ; buffer for chars in page table
-letutf          dd 0x00000000, 0        ; same, but for UTF-8 chars
-
-charset         db 0xB0
-page            db 0x00
-page_utf        db 0x00
-char            db 0x00
-scale           db 0x07
-
-char_ascii      dw 0x0000, 0            ; current char ASCII/CP866 code
-char_scan       dw 0x0000, 0            ; current char SCAN-code
-char_utf        dd 0x00000000, 0        ; current char UTF-8 code
-
-char_code_dec:
-                dd char_code_dec.end - char_code_dec
-                dd 0
-                dd 1
-                db '00000'
-.end:
-
-char_code_hex:
-                dd char_code_hex.end - char_code_hex
-                dd 0
-                dd 1
-                db '0000'
-.end:
-
-; ===================================================================
-
-I_END:
-        rb      512
-        align   16
-STACKTOP:
-
-MEM:
+        title   db "Charsets Viewer 0.4.2", 0
+        lb_size db "Scale:"
