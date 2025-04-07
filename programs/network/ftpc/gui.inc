@@ -372,7 +372,6 @@ gui: ;//////////////////////////////////////////////////////////////////////////
         sub     ecx, 2 ; 0a0d is not included
         call    write_to_file
 
-      @@:
         popad
         ret     4
 
@@ -392,13 +391,16 @@ gui: ;//////////////////////////////////////////////////////////////////////////
 ;< none                                                                                           ;;
 ;;================================================================================================;;
 
-        push    edx
-        push    eax
+        cmp     eax, 1
+        jl      data_loop
+        push    edx eax
         ; check if any incomplete entry to be parsed
         cmp     byte[remote_list_buf], 0
         je      .no_backlog
+
         ; find end of remote_list_buf
         mov     edi, remote_list_buf
+        mov     ecx, 1024 ;buffer size
         mov     al, 0
         repne   scasb
         ; copy rest of the incomplete entry to remote_list_buf
@@ -494,9 +496,9 @@ gui: ;//////////////////////////////////////////////////////////////////////////
 
       .store_last_entry:
         ; find index of the last incomplete entry
-        mov     ecx, -1
         mov     eax, [esp]
         lea     edi, [buf_buffer2+eax-2]
+        mov     ecx, eax
         mov     al, 0x0a
         std
         repne   scasb
@@ -514,8 +516,7 @@ gui: ;//////////////////////////////////////////////////////////////////////////
         stdcall [tl_cur_beg], tree2
         or dword[tree2.style], 8
         call    .draw ; to update tree list immediately in case of "auto_list"
-        pop     eax
-        pop     edx
+        pop     eax edx
         jmp     data_loop
 
         ; clear tree list and add ".." node before executing "LIST"
