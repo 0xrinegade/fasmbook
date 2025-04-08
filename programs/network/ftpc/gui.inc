@@ -7,6 +7,7 @@ include '../../load_lib.mac'
  
 icon_tl_sys dd 0
 icon_tl_nod dd 0
+icon_buttons dd 0
 lbl_after_enter dd 0
 show_log    db 0 ; 0 - hide log, 1 - show log
 
@@ -108,6 +109,12 @@ gui: ;//////////////////////////////////////////////////////////////////////////
         m2m     dword[tree1.data_img], dword[icon_tl_nod]
         m2m     dword[tree2.data_img], dword[icon_tl_nod]
 
+        ; initialize icon buttons
+        mov     ecx, 18*18*4*2
+        mcall   SF_SYS_MISC, SSF_MEM_ALLOC
+        mov     [icon_buttons], eax
+        stdcall copy_icon_w, eax,esi, 4 ;disconnect
+        stdcall copy_icon_w, eax,esi,49 ;search
       @@:
         call    .draw
         ; create initial tree list for root_dir
@@ -121,7 +128,7 @@ gui: ;//////////////////////////////////////////////////////////////////////////
         jmp     cmd_list
 
     .redraw:
-        call     .draw
+        call    .draw
 
     align 4
     .still:
@@ -166,9 +173,12 @@ gui: ;//////////////////////////////////////////////////////////////////////////
         mcall   SF_DRAW_RECT, , ted_wnd_t
 
         ; draw "disconnect" button
-        mcall   SF_DEFINE_BUTTON, <50,95>, <25,25>, 3, BT_COL
+        mcall   SF_DEFINE_BUTTON, <50,114>, <25,25>, 3, BT_COL
+        ; icon
+        mcall   SF_PUT_IMAGE_EXT, [icon_buttons], <18, 18>, <54, 29>, 32,, 0
         ; string "disconnect"
-        mcall   SF_DRAW_TEXT, <50+5,25+5>, 0xb0000000+STR_COL, str_disconnect
+        mcall   SF_DRAW_TEXT, <50+18+10,25+5>, 0xb0000000+STR_COL, str_disconnect
+
         ; draw "Show|Hide log" button
         mcall   SF_DEFINE_BUTTON, <50,79>, <326,25>, 10, BT_COL
         ; string "Show|Hide log"
@@ -189,9 +199,13 @@ gui: ;//////////////////////////////////////////////////////////////////////////
         mcall   SF_DRAW_TEXT, <129+10,326+5>, 0xb0000000+STR_COL, str_copy
         @@:
         ; draw "Search" button
-        mcall   SF_DEFINE_BUTTON, <TLIST2_X+TLIST_SZ-55,55>, <20,25>, 5, BT_COL
+        mcall   SF_DEFINE_BUTTON, <TLIST2_X+TLIST_SZ-25,25>, <20,25>, 5, BT_COL
+        ; icon
+        mov     ebx, [icon_buttons]
+        add     ebx, 18*18*4
+        mcall   SF_PUT_IMAGE_EXT,, <18, 18>, <730, 24>, 32,, 0
         ; string "Search"
-        mcall   SF_DRAW_TEXT, <TLIST2_X+TLIST_SZ-55+5,20+5>, 0xb0000000+STR_COL, str_search
+        ;mcall   SF_DRAW_TEXT, <TLIST2_X+TLIST_SZ-55+5,20+5>, 0xb0000000+STR_COL, str_search
 
         ; draw "LIST" button
         mcall   SF_DEFINE_BUTTON, <TLIST2_X+TLIST_SZ-4*BT_SZ_X-15,BT_SZ_X>, <50,25>, 12, BT_COL
@@ -987,6 +1001,37 @@ popad
 endp
 
 
+align 4
+proc copy_icon_w uses ecx esi edi, buf_d:dword, buf_s:dword, ind:dword
+;;------------------------------------------------------------------------------------------------;;
+;> buf_d = pointer to destination buffer 32-bit
+;> buf_s = pointer to source buffer 32-bit (with icons)
+;> ind   = icon index
+;;------------------------------------------------------------------------------------------------;;
+;< eax   = pointer to destination buffer + icon size
+;;------------------------------------------------------------------------------------------------;;
+    mov     edi, [buf_d]
+    mov     ecx, 18*18
+    mov     esi, [ind]
+    imul    esi, ecx
+    shl     esi, 2
+    add     esi, [buf_s]
+    rep     movsd
+    mov     eax, edi
+
+    mov     ecx, 18*18
+    mov     edi, [buf_d]
+    mov     esi, [edi] ;copy transparent color
+  .cycle0:
+    cmp     [edi], esi
+    jne     @f
+    mov     dword[edi], BT_COL
+  @@:
+    add     edi, 4
+    loop    .cycle0
+    ret
+endp
+
 ;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ;hed             db 'FTP Client for KolibriOS',0
@@ -1000,7 +1045,7 @@ str_dele        db 'DELE',0
 str_rdir        db 'RDIR',0
 str_rmd         db 'RMD',0
 str_abort       db 'Cancel',0
-str_search      db 'Search',0
+;str_search      db 'Search',0
 str_list        db 'LIST',0
 str_null        db 0
 
@@ -1010,11 +1055,11 @@ str_icon_18 db 'ICONS18',0
 ; tree list elements
 ;----------------------
 tree1 tree_list 64, 500, tl_list_box_mode, 18+ICON_LEFT_B, 18+ICON_TOP_B, \
-    0xffffff, BT_COL, 0x10000000, TLIST1_X, 105, TLIST_SZ-16, 185, 14, 4,\
+    0xffffff, BT_COL, 0x10000000, TLIST1_X, 105, TLIST_SZ-16, 185, 15, 4,\
     0, el_focus, wScr, fun_on_enter
 
 tree2 tree_list 64, 500, tl_list_box_mode, 18+ICON_LEFT_B, 18+ICON_TOP_B, \
-    0xffffff, BT_COL, 0x10000000, TLIST2_X, 105, TLIST_SZ-16, 185, 14, 4, \
+    0xffffff, BT_COL, 0x10000000, TLIST2_X, 105, TLIST_SZ-16, 185, 15, 4, \
     0, el_focus, wScr2, fun_on_enter2
 
 ; editbox for mkd
@@ -1026,7 +1071,7 @@ edit_volume edit_box TLIST_SZ-60, TLIST1_X, 80, 0xffffff, 0x94AECE, 0, \
     0xAABBCC, 0x10000000, 99, root_dir, mouse_dd, 0
 
 ; editbox for search
-edit_search edit_box TLIST_SZ-60, TLIST2_X, 22, 0xffffff, 0x94AECE, 0, \
+edit_search edit_box TLIST_SZ-30, TLIST2_X, 22, 0xffffff, 0x94AECE, 0, \
     0xAABBCC, 0x10000000, 99, filter,mouse_dd, 0
  
 ; A subsidiary structure for scrolling
