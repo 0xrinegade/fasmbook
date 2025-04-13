@@ -720,7 +720,7 @@ scn             system_colors_internal
 sc              system_colors
 
 f70_calc:
-        dd      7
+        dd      SSF_START_APP
         dd      0
         dd      0
         dd      0
