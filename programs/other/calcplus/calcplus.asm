@@ -666,7 +666,7 @@ endp
 
 if lang eq ru_RU
 
-        engineering_str db      "Инженерный режим"
+        engineering_str cp866   "Инженерный режим"
         engineering_len         = 16
 
 else if lang eq es_ES
@@ -675,7 +675,7 @@ else if lang eq es_ES
         engineering_len         = 16
 else
 
-        engineering_str cp866   "Engineering calc"
+        engineering_str db      "Engineering calc"
         engineering_len         = 16
 
 endf
