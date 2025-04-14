@@ -6,14 +6,14 @@
 00 Multimeedia        >  |@4
 00 Emulators*         >  |@18
 00 Arendus            >  |@5
-00 S�steem            >  |@7
-00 Andmet��tlus       >  |@11
-00 V�rk               >  |@12
+00 S?steem            >  |@7
+00 Andmet??tlus       >  |@11
+00 V?rk               >  |@12
 00 Teised             >  |@15
 16 Game center           |allgames
 60 System panel          |syspanel
 18 Abi                   |docpack
-53 K�ivita programm      |run
+53 K?ivita programm      |run
 04 Sule                  |end
 #1    **** DEMOS ****
 16 Circle                |demos/circle
@@ -56,16 +56,16 @@
 16 Silumisaken           |develop/board
 16 Silur                 |develop/mtdbg
 16 Hex2Dec2Bin           |develop/h2d2b
-16 M�rgistiku tabel      |develop/ASCIIVju
+16 M?rgistiku tabel      |develop/ASCIIVju
 16 ASCII-koodid          |develop/keyascii
 16 SCAN-koodid           |develop/scancode
 #6    **** EXAMPLES ****
 #7    **** SYSTEM ****
-00 T�� failidega      >  |@10
-00 H�lbustus seaded   >  |@17
+00 T?? failidega      >  |@10
+00 H?lbustus seaded   >  |@17
 16 Virtual disks         |tmpdisk
 16 SHELL konsool         |shell
-16 Salvesta RD t�mmis    |rdsave
+16 Salvesta RD t?mmis    |rdsave
 16 Silumisaken           |develop/board
 16 Clipboard viewer      |develop/clipview
 16 Terminal              |terminal
@@ -89,8 +89,8 @@
 #12    **** NET ****
 00 Teenused           >  |@13
 00 Kliendid           >  |@14
-16 V�rgu seadistus       |network/netcfg
-16 V�rgu staatus         |network/netstat
+16 V?rgu seadistus       |network/netcfg
+16 V?rgu staatus         |network/netstat
 #13    **** SERVERS ****
 24 FTP daemon            |network/ftpd
 #14   **** CLIENTS ****
@@ -103,12 +103,12 @@
 24 DNS otsing            |network/nslookup
 61 VNC Viewer            |network/vncc
 33 Interneti allalaadija |network/downloader
-12 Tekstip�hine brauser  |network/webview
+12 Tekstip?hine brauser  |network/webview
 #15    **** OTHER ****
 16 Analoogkell           |aclock
 16 Digitaalne kell       |demos/bcdclk
 16 Taimer                |timer
-16 Ekraani t�mmis        |scrshoot
+16 Ekraani t?mmis        |scrshoot
 62 Kalender              |calendar
 03 RTF faili lugeja      |rtfread
 #16    **** SYSTEM TESTS ****

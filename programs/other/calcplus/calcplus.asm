@@ -7,7 +7,7 @@
 ; Contributor Leency  - Code refactoring and UX/UI update
 ; Contributor Burer   - Code refactoring and UI update
 
-; ================================================================
+; ====================================================================
 
 use32
 org     0
@@ -288,7 +288,7 @@ ev_button:
 
 ; ====================================================================
 
- ev_mouse:
+ev_mouse:
         mcall   SF_GET_KEY
 
         invoke  editbox.mouse, edb1
@@ -607,10 +607,10 @@ proc draw_list
         jmp     .next_txt
 
         .set_color_to_2_txt:
-                mov     ecx, LIST_ITEM_TEXT1
+        mov     ecx, LIST_ITEM_TEXT1
 
         .next_txt:
-                or      ecx, 1 shl 31
+        or      ecx, 1 shl 31
 
         dec     edi
         cmp     edi, 0
@@ -666,21 +666,31 @@ endp
 
 if lang eq ru_RU
 
-        engineering_str cp866   "Инженерный режим"
-        engineering_len         = 16
+        engineering_str         cp866 "Инженерный режим"
+        engineering_len         = $ - engineering_str
 
 else if lang eq es_ES
 
-        engineering_str db      " Modo ingeniero "
-        engineering_len         = 16
+        engineering_str         db " Modo ingeniero "
+        engineering_len         = $ - engineering_str
 else
 
-        engineering_str db      "Engineering calc"
-        engineering_len         = 16
+        engineering_str         db "Engineering calc"
+        engineering_len         = $ - engineering_str
 
 endf
 
 ; ====================================================================
+
+f70_calc:
+        dd      SSF_START_APP
+        dd      0
+        dd      0
+        dd      0
+        dd      0
+        db      '/sys/calc', 0
+
+
 
 I_END:
 
@@ -718,13 +728,5 @@ struc system_colors_internal {
 
 scn             system_colors_internal
 sc              system_colors
-
-f70_calc:
-        dd      SSF_START_APP
-        dd      0
-        dd      0
-        dd      0
-        dd      0
-        db      '/sys/calc', 0
 
 MEM:
