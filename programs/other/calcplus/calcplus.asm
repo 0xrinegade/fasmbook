@@ -182,14 +182,13 @@ ev_button:
         mov     [eax], cl
         inc     eax
         jmp     @b
-        
+
         @@:
         dec     [edb1.pos]
         dec     [edb1.size]
         m2m     [edb1.shift], [edb1.pos]
         jmp     .redraw
-        
-        
+
         .not_del:
 
         ; CALCULATE
@@ -238,10 +237,10 @@ ev_button:
         dec     eax
         inc     [edb1.pos]
         jmp     @b
-        
+
         @@:
         jmp     .redraw
-        
+
         .not_list:
 
         ; KEYBOARD
@@ -258,7 +257,7 @@ ev_button:
         cmp     dh, 30
         jl      @f
         add     ebx, 2
-  
+
         @@:
         cmp     ebx, ecx
         je      @f
@@ -410,7 +409,7 @@ proc draw_textbox
 
         ; border
         mcall   SF_DRAW_RECT, <LIST_X, LIST_ITEM_W>, <  8,  30>, [sc.work_graph]
-    
+
         ; background
         mov     edx, [scn.gui_face]
         cmp     [error_n], 0
@@ -454,7 +453,6 @@ proc draw_textbox
 
         @@:
         invoke  editbox.draw, edb1
-
         ret
 
 endp
@@ -538,7 +536,7 @@ proc draw_list
         mov     ecx, LIST_Y shl 16 + LIST_ITEM_H
         mov     edx, [sc.work_light]
         mov     edi, LIST_ITEM_COUNT
-        
+
         @@:
         mcall
         ; draw separator {
@@ -549,7 +547,7 @@ proc draw_list
         ; }
         pop     edx ecx
         add     ecx, LIST_ITEM_H shl 16
-        
+
         .next:
         dec     edi
         cmp     edi, 0
@@ -626,7 +624,7 @@ proc str_len uses ebx, str
 
         xor     eax, eax
         mov     ebx, [str]
-        
+
         @@:
         cmp     [ebx], byte 0
         je      @f
@@ -635,7 +633,6 @@ proc str_len uses ebx, str
         jmp     @b
         
         @@:
-
         ret
 
 endp
@@ -655,7 +652,7 @@ proc str_cpy uses eax ebx ecx, from, to
         inc     eax
         inc     ebx
         jmp     @b
-        
+
         @@:
         mov     [ebx], byte 0
         ret
@@ -666,7 +663,7 @@ endp
 
 if lang eq ru_RU
 
-        engineering_str         cp866 "Ð˜Ð½Ð¶ÐµÐ½ÐµÑ€Ð½Ñ‹Ð¹ Ñ€ÐµÐ¶Ð¸Ð¼"
+        engineering_str         cp866 "ˆ­¦¥­¥à­ë© à¥¦¨¬"
         engineering_len         = $ - engineering_str
 
 else if lang eq es_ES
@@ -690,7 +687,15 @@ f70_calc:
         dd      0
         db      '/sys/calc', 0
 
+; system colors internal
+scn:
+        .gui_tb_in_shd  dd 0x00CED0D0
+        .gui_face       dd 0x00FAF8FA
+        .gui_text       dd 0x10373C42
+        .gui_intext     dd 0x005F5F5F
+        .gui_select     dd 0x00C7C9C9
 
+; ====================================================================
 
 I_END:
 
@@ -718,15 +723,6 @@ txt_size        rd 1
 history         rb 512 * LIST_ITEM_COUNT
                 rb 512
 
-struc system_colors_internal {
-        .gui_tb_in_shd  dd 0x00CED0D0
-        .gui_face       dd 0x00FAF8FA
-        .gui_text       dd 0x10373C42
-        .gui_intext     dd 0x005F5F5F
-        .gui_select     dd 0x00C7C9C9
-}
-
-scn             system_colors_internal
 sc              system_colors
 
 MEM:
