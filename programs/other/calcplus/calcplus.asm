@@ -663,7 +663,7 @@ endp
 
 if lang eq ru_RU
 
-        engineering_str         cp866 "ˆ­¦¥­¥à­ë© à¥¦¨¬"
+        engineering_str         cp866 "Ð˜Ð½Ð¶ÐµÐ½ÐµÑ€Ð½Ñ‹Ð¹ Ñ€ÐµÐ¶Ð¸Ð¼"
         engineering_len         = $ - engineering_str
 
 else if lang eq es_ES
