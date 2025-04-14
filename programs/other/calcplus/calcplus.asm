@@ -64,7 +64,7 @@ WIN_W           = LIST_ITEM_W + KEYBOARD_W + 7
 WIN_H           = LIST_H + 60
 
 sz_head         db "Calc+", 0
-btn_clr         db ""
+btn_clr         db "" ; "Enter" symbol, curved arrow in input area
 buttons         db "|%^*/-+)(=7894561230"
 edb1            edit_box 0, 14, 12, 0xFFFFFF, 0x94AECE, 0xFFC90E, 0xCACACA, 0x10000000, \
                          480, exp, group, ed_always_focus + ed_focus, 0, 0
