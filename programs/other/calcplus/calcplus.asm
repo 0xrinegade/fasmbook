@@ -310,7 +310,7 @@ calc:
         stdcall convert_to_str, eax, ans.buffer + 3
         add     eax, 3
         mov     edi, eax
-        imul    eax, 8                          ; char_w
+        imul    eax, 8 ; char_w
         add     eax, 9
         mov     [ans.size], eax
 
@@ -372,7 +372,7 @@ calc:
         je      .err_3
         cmp     [error_n], 5
         je      .err_5
-        
+
         .err_1:
                 mov     [ans.buffer +  0], dword "Div."
                 mov     [ans.buffer +  4], dword " by "
@@ -441,7 +441,7 @@ proc draw_textbox
         cmp     ebx, 24
         jg      @f
         mov     ebx, 24
-  
+
         @@:
         mov     [edb1.width], ebx
         m2m     [edb1.color]             , [scn.gui_face]
@@ -469,7 +469,7 @@ proc draw_button, x, y
         shl     ebx, 16
         add     ebx, [y]
         add     ebx, KEYB_BTN_H/2 - 6
-        or      [but_tc], 0x01000000                            ;use bigger font
+        or      [but_tc], 0x01000000 ; use bigger font
         mcall   SF_DRAW_TEXT, , [but_tc], [txt_id], [txt_size]
 
         mov     eax, [txt_size]
@@ -577,7 +577,7 @@ proc draw_list
         mov     ebx, (LIST_X + LIST_X) shl 16 + LIST_Y + LIST_TEXT_Y + 1
         mov     ecx, [sc.work_text]
         mov     edi, LIST_ITEM_COUNT
-  
+
         @@:
         or      ecx, 1 shl 31
         mov     edx, history
@@ -631,7 +631,7 @@ proc str_len uses ebx, str
         inc     eax
         inc     ebx
         jmp     @b
-        
+
         @@:
         ret
 
