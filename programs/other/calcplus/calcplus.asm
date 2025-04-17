@@ -206,6 +206,12 @@ ev_button:
         add     ebx, 482
         stdcall str_len, ebx
 
+        ; skip first (space) character
+        test    eax, eax
+        jz      .redraw
+        dec     eax
+        inc     ebx
+
         mov     edx, exp
         add     edx, [edb1.size]
         add     edx, eax
