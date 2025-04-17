@@ -561,7 +561,7 @@ proc draw_list
         mov     eax, SF_DEFINE_BUTTON
         mov     ebx, LIST_X shl 16 + (LIST_ITEM_W - 1)
         mov     ecx, LIST_Y shl 16 + LIST_ITEM_H
-        mov     edx, 60 + BT_HIDE
+        mov     edx, 0x60 + BT_HIDE
         mov     edi, LIST_ITEM_COUNT
 
         @@:
