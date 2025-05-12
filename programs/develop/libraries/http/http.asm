@@ -2021,15 +2021,15 @@ str_head        db 'HEAD ', 0
 str_post        db 'POST ', 0
 
 bits_must_escape:
-dd      0xffffffff                                                                              ;00-1F
-dd      1 shl 0 + 1 shl 2 + 1 shl 3 + 1 shl 5 + 1 shl 6 + 1 shl 11 + 1 shl 28 + 1 shl 30        ; "#%&+<>
-dd      1 shl 27 + 1 shl 28 + 1 shl 29 + 1 shl 30                                               ;[\]^
-dd      1 shl 0 + 1 shl 27 + 1 shl 28 + 1 shl 29 + 1 shl 31                                     ;`{|} DEL
-
-dd      0xffffffff
-dd      0xffffffff
-dd      0xffffffff
-dd      0xffffffff
+;       bit 31 <========   ========> bit 0      ; bit 0 ===> bit 31
+dd      0xffffffff                              ;00-1F
+dd      0b11111100000000001001111111111111      ; !"#$%&'()*+,/:;<=>?
+dd      0b01111000000000000000000000000001      ;@[\]^
+dd      0b10111000000000000000000000000001      ;`{|} DEL
+dd      0xffffffff                              ;80-9F
+dd      0xffffffff                              ;A0-BF
+dd      0xffffffff                              ;C0-DF
+dd      0xffffffff                              ;E0-FF
 
 str_hex:
 db '0123456789ABCDEF'
