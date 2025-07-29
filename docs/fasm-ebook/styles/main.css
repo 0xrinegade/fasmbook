@@ -1,0 +1,525 @@
+/* Main CSS for FASM eBook */
+:root {
+    --bg-color: #ffffff;
+    --text-color: #000000;
+    --border-color: #e0e0e0;
+    --accent-color: #333333;
+    --highlight-color: #f0f0f0;
+    --font-family: 'Georgia', 'Times New Roman', serif;
+    --font-size: 16px;
+    --line-height: 1.6;
+    --nav-width: 300px;
+    --header-height: 60px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    display: flex;
+    min-height: 100vh;
+    transition: all 0.3s ease;
+}
+
+/* Navigation Panel */
+.nav-panel {
+    width: var(--nav-width);
+    background-color: var(--bg-color);
+    border-right: 2px solid var(--border-color);
+    height: 100vh;
+    overflow-y: auto;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.nav-panel.hidden {
+    transform: translateX(-100%);
+}
+
+.nav-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-color);
+    z-index: 10;
+}
+
+.nav-header h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.nav-toggle {
+    background: none;
+    border: 1px solid var(--border-color);
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 1.2rem;
+}
+
+.nav-content {
+    padding: 1rem;
+}
+
+.nav-content h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Table of Contents */
+.toc-list, .bookmarks-list, .history-list {
+    list-style: none;
+    margin-bottom: 2rem;
+}
+
+.toc-list li, .bookmarks-list li, .history-list li {
+    margin-bottom: 0.25rem;
+}
+
+.toc-list a, .bookmarks-list a, .history-list a {
+    text-decoration: none;
+    color: var(--text-color);
+    display: block;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.toc-list a:hover, .bookmarks-list a:hover, .history-list a:hover {
+    background-color: var(--highlight-color);
+}
+
+.toc-list a.current {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}
+
+/* Progress Bar */
+.progress-section {
+    margin-bottom: 2rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--accent-color);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+#progress-text {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+}
+
+/* Main Content */
+.main-content {
+    margin-left: var(--nav-width);
+    flex: 1;
+    padding: 2rem;
+    max-width: none;
+    transition: margin-left 0.3s ease;
+}
+
+.main-content.expanded {
+    margin-left: 0;
+}
+
+/* Chapter Navigation */
+.chapter-nav, .page-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.page-nav {
+    margin-top: 3rem;
+    margin-bottom: 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: none;
+}
+
+.nav-btn, .page-btn {
+    background: none;
+    border: 2px solid var(--accent-color);
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover, .page-btn:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}
+
+.nav-btn:disabled, .page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chapter-info, .page-info {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* Chapter Content */
+.chapter-content {
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: var(--line-height);
+}
+
+.chapter-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.chapter-content h2 {
+    font-size: 2rem;
+    margin: 2rem 0 1rem 0;
+    line-height: 1.3;
+}
+
+.chapter-content h3 {
+    font-size: 1.5rem;
+    margin: 1.5rem 0 0.75rem 0;
+    line-height: 1.3;
+}
+
+.chapter-content h4 {
+    font-size: 1.25rem;
+    margin: 1.25rem 0 0.5rem 0;
+    line-height: 1.4;
+}
+
+.chapter-content p {
+    margin-bottom: 1.5rem;
+    text-align: justify;
+}
+
+.chapter-content ul, .chapter-content ol {
+    margin: 1rem 0 1.5rem 2rem;
+}
+
+.chapter-content li {
+    margin-bottom: 0.5rem;
+}
+
+.chapter-content blockquote {
+    margin: 2rem 0;
+    padding: 1rem 2rem;
+    border-left: 4px solid var(--accent-color);
+    background-color: var(--highlight-color);
+    font-style: italic;
+}
+
+.chapter-content code {
+    background-color: var(--highlight-color);
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.chapter-content pre {
+    background-color: var(--highlight-color);
+    padding: 1.5rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color);
+}
+
+.chapter-content pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Drawing Canvas */
+.drawing-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 500;
+}
+
+.drawing-canvas.active {
+    pointer-events: all;
+    cursor: crosshair;
+}
+
+/* AI Helper */
+.ai-helper {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1500;
+}
+
+.ai-toggle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-color);
+    background-color: var(--bg-color);
+    font-size: 2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.ai-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.ai-window {
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    width: 400px;
+    height: 500px;
+    background-color: var(--bg-color);
+    border: 2px solid var(--accent-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    display: none;
+    flex-direction: column;
+}
+
+.ai-window.visible {
+    display: flex;
+}
+
+.ai-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--highlight-color);
+}
+
+.ai-header h3 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.ai-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+}
+
+.ai-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.ai-chat {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ai-message {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 4px;
+    background-color: var(--highlight-color);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.ai-input {
+    padding: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ai-input input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.ai-send {
+    padding: 0.75rem 1.5rem;
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+/* Settings Panel */
+.settings-panel {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 1400;
+}
+
+.settings-toggle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-color);
+    background-color: var(--bg-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.settings-content {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    width: 300px;
+    background-color: var(--bg-color);
+    border: 2px solid var(--accent-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    display: none;
+}
+
+.settings-content.visible {
+    display: block;
+}
+
+.settings-content h3 {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.setting-group {
+    margin-bottom: 1rem;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.setting-group select,
+.setting-group input[type="range"] {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.setting-group input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    :root {
+        --nav-width: 280px;
+        --font-size: 14px;
+    }
+    
+    .nav-panel {
+        transform: translateX(-100%);
+    }
+    
+    .nav-panel.visible {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+    
+    .chapter-content {
+        max-width: 100%;
+    }
+    
+    .chapter-nav, .page-nav {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .ai-window {
+        width: 90vw;
+        height: 70vh;
+    }
+    
+    .settings-content {
+        width: 90vw;
+        max-width: 300px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .nav-panel,
+    .ai-helper,
+    .settings-panel,
+    .chapter-nav,
+    .page-nav {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 0;
+    }
+    
+    .chapter-content {
+        max-width: 100%;
+    }
+}

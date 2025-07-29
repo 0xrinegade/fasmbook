@@ -1,0 +1,347 @@
+/* eInk-friendly styles for devices like reMarkable */
+.eink-mode {
+    --bg-color: #ffffff;
+    --text-color: #000000;
+    --border-color: #cccccc;
+    --accent-color: #333333;
+    --highlight-color: #f5f5f5;
+    --font-family: 'Charter', 'Georgia', 'Times New Roman', serif;
+    --font-size: 16px;
+    --line-height: 1.8;
+}
+
+.eink-mode * {
+    /* Disable animations and transitions for better eInk performance */
+    animation: none !important;
+    transition: none !important;
+}
+
+.eink-mode body {
+    /* Optimize for eInk refresh rates */
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    
+    /* Better text rendering for eInk */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.eink-mode .chapter-content {
+    /* Larger margins for better readability */
+    max-width: 700px;
+    padding: 0 2rem;
+}
+
+.eink-mode .chapter-content p {
+    /* Better paragraph spacing for eInk reading */
+    margin-bottom: 2rem;
+    text-align: left; /* Left align for better eInk readability */
+    
+    /* Prevent orphans and widows */
+    orphans: 3;
+    widows: 3;
+}
+
+.eink-mode .chapter-content h1,
+.eink-mode .chapter-content h2,
+.eink-mode .chapter-content h3,
+.eink-mode .chapter-content h4 {
+    /* Better heading spacing */
+    page-break-after: avoid;
+    break-after: avoid;
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+.eink-mode .chapter-content h1 {
+    font-size: 2.2rem;
+    line-height: 1.1;
+    margin-top: 2rem;
+}
+
+.eink-mode .chapter-content h2 {
+    font-size: 1.8rem;
+    line-height: 1.2;
+}
+
+.eink-mode .chapter-content h3 {
+    font-size: 1.4rem;
+    line-height: 1.3;
+}
+
+.eink-mode .chapter-content code {
+    /* High contrast for code in eInk */
+    background-color: #f0f0f0;
+    border: 1px solid #d0d0d0;
+    padding: 0.3rem 0.5rem;
+    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.eink-mode .chapter-content pre {
+    /* Better code block styling for eInk */
+    background-color: #f8f8f8;
+    border: 2px solid #e0e0e0;
+    padding: 2rem;
+    margin: 2rem 0;
+    border-radius: 0; /* No rounded corners for eInk */
+    
+    /* Prevent code blocks from breaking across pages */
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.eink-mode .chapter-content pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.eink-mode .chapter-content blockquote {
+    /* Enhanced blockquotes for eInk */
+    background-color: #f9f9f9;
+    border-left: 6px solid #333333;
+    padding: 1.5rem 2rem;
+    margin: 2.5rem 0;
+    font-style: italic;
+    font-size: 1.05em;
+    line-height: 1.7;
+}
+
+.eink-mode .chapter-content ul,
+.eink-mode .chapter-content ol {
+    /* Better list spacing */
+    margin: 1.5rem 0 2rem 2.5rem;
+}
+
+.eink-mode .chapter-content li {
+    margin-bottom: 0.75rem;
+    line-height: 1.7;
+}
+
+/* Navigation optimizations for eInk */
+.eink-mode .nav-panel {
+    border-right: 3px solid #cccccc;
+}
+
+.eink-mode .nav-toggle,
+.eink-mode .nav-btn,
+.eink-mode .page-btn,
+.eink-mode .ai-toggle,
+.eink-mode .settings-toggle {
+    border-width: 2px;
+    border-style: solid;
+    border-color: #333333;
+    background-color: #ffffff;
+    color: #000000;
+    border-radius: 0; /* No rounded corners for eInk */
+    
+    /* Larger touch targets for stylus/finger */
+    min-height: 44px;
+    min-width: 44px;
+}
+
+.eink-mode .nav-btn,
+.eink-mode .page-btn {
+    padding: 1rem 2rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* AI Helper optimizations */
+.eink-mode .ai-toggle {
+    width: 70px;
+    height: 70px;
+    font-size: 2.5rem;
+    box-shadow: none; /* No shadows for eInk */
+}
+
+.eink-mode .ai-window {
+    border: 3px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: #ffffff;
+}
+
+.eink-mode .ai-header {
+    background-color: #f0f0f0;
+    border-bottom: 2px solid #cccccc;
+}
+
+.eink-mode .ai-message {
+    background-color: #f8f8f8;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    line-height: 1.6;
+}
+
+/* Settings panel optimizations */
+.eink-mode .settings-toggle {
+    width: 60px;
+    height: 60px;
+    font-size: 1.8rem;
+    box-shadow: none;
+}
+
+.eink-mode .settings-content {
+    border: 3px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: #ffffff;
+}
+
+.eink-mode .setting-group select,
+.eink-mode .setting-group input {
+    border: 2px solid #cccccc;
+    border-radius: 0;
+    font-size: 1rem;
+    padding: 0.75rem;
+}
+
+/* Progress bar for eInk */
+.eink-mode .progress-bar {
+    border: 2px solid #cccccc;
+    border-radius: 0;
+    height: 12px;
+}
+
+.eink-mode .progress-fill {
+    background-color: #333333;
+}
+
+/* Table of contents optimizations */
+.eink-mode .toc-list a,
+.eink-mode .bookmarks-list a,
+.eink-mode .history-list a {
+    padding: 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.eink-mode .toc-list a.current {
+    background-color: #333333;
+    color: #ffffff;
+}
+
+/* Drawing canvas optimizations for stylus input */
+.eink-mode .drawing-canvas.active {
+    cursor: crosshair;
+    /* Optimize for stylus pressure sensitivity */
+    touch-action: none;
+}
+
+/* Page break optimizations */
+.eink-mode .chapter-content {
+    /* Better page breaks for eInk readers */
+    page-break-inside: auto;
+    break-inside: auto;
+}
+
+.eink-mode .chapter-content h1,
+.eink-mode .chapter-content h2 {
+    page-break-before: always;
+    break-before: page;
+}
+
+.eink-mode .chapter-content h3,
+.eink-mode .chapter-content h4 {
+    page-break-before: avoid;
+    break-before: avoid;
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+/* Typography optimizations for eInk displays */
+.eink-mode {
+    /* Better font stack for eInk devices */
+    font-variant-ligatures: none; /* Disable ligatures for clarity */
+    font-feature-settings: "liga" 0; /* Alternative ligature disable */
+}
+
+.eink-mode .chapter-content {
+    /* Optimized typography settings */
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    hyphenate-limit-chars: 6 3 3;
+    hyphenate-limit-lines: 2;
+    hyphenate-limit-last: always;
+    hyphenate-limit-zone: 8%;
+}
+
+/* Selection styles for eInk */
+.eink-mode ::selection {
+    background-color: #d0d0d0;
+    color: #000000;
+}
+
+.eink-mode ::-moz-selection {
+    background-color: #d0d0d0;
+    color: #000000;
+}
+
+/* Focus styles for better accessibility */
+.eink-mode *:focus {
+    outline: 3px solid #333333;
+    outline-offset: 2px;
+}
+
+/* Responsive adjustments for eInk devices */
+@media (max-width: 768px) {
+    .eink-mode {
+        --font-size: 15px;
+        --line-height: 1.7;
+    }
+    
+    .eink-mode .chapter-content {
+        padding: 0 1rem;
+    }
+    
+    .eink-mode .chapter-content h1 {
+        font-size: 1.8rem;
+    }
+    
+    .eink-mode .chapter-content h2 {
+        font-size: 1.5rem;
+    }
+    
+    .eink-mode .ai-toggle {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+    
+    .eink-mode .settings-toggle {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+}
+
+/* Landscape orientation optimizations */
+@media (orientation: landscape) {
+    .eink-mode .chapter-content {
+        max-width: 800px;
+        columns: 2;
+        column-gap: 3rem;
+        column-rule: 1px solid #e0e0e0;
+    }
+    
+    .eink-mode .chapter-content h1,
+    .eink-mode .chapter-content h2 {
+        column-span: all;
+    }
+    
+    .eink-mode .chapter-content pre,
+    .eink-mode .chapter-content blockquote {
+        column-span: all;
+    }
+}
