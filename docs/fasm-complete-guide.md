@@ -2698,175 +2698,1600 @@ avx_result dd 8 dup(?)
 
 This completes pages 31-45 of Chapter 3, providing comprehensive coverage of memory architecture, data types, and advanced data structures with professional-level detail and practical examples.
 
-## FASM Syntax and Basic Structure
+## Chapter 4: Instruction Set Architecture
 
-### Program Structure
+### Page 46-50: Complete x86/x64 Instruction Reference
 
-Every FASM program follows a basic structure:
+The x86/x64 instruction set represents decades of evolution in processor design. Professional assembly programmers must understand not just what instructions do, but how they perform, their encoding characteristics, and their optimal usage patterns.
 
+**Instruction Classification and Performance Characteristics:**
+
+**Data Movement Instructions:**
 ```assembly
-; Program header and format specification
-format binary as "exe"
-use32
+; ============================================================================
+; BASIC DATA MOVEMENT
+; ============================================================================
 
-; Entry point
-org 0x100
-
-; Program start
-start:
-    ; Your code here
+data_movement_examples:
+    ; MOV - Register to register (1 cycle, 0 µops on modern CPUs)
+    mov eax, ebx                   ; Copy EBX to EAX
+    mov cx, dx                     ; Copy DX to CX (16-bit)
+    mov al, bl                     ; Copy BL to AL (8-bit)
     
-    ; Program termination
-    mov eax, 1
-    int 0x80
+    ; MOV - Immediate to register (1 cycle, 1 µop)
+    mov eax, 0x12345678            ; Load immediate 32-bit value
+    mov bx, 1000                   ; Load immediate 16-bit value
+    mov cl, 255                    ; Load immediate 8-bit value
+    
+    ; MOV - Memory to register (3-4 cycles, 1 µop + cache latency)
+    mov eax, [memory_location]     ; Load from memory
+    mov bx, word [buffer]          ; Load 16-bit from memory
+    mov cl, byte [flags]           ; Load 8-bit from memory
+    
+    ; MOV - Register to memory (1 cycle to issue, varies to commit)
+    mov [result], eax              ; Store to memory
+    mov word [counter], bx         ; Store 16-bit to memory
+    mov byte [status], cl          ; Store 8-bit to memory
 
-; Data sections
+; Advanced addressing modes with performance implications
+advanced_addressing:
+    ; Simple base addressing (3-4 cycles)
+    mov eax, [esi]                 ; Base register
+    mov eax, [esi + 4]             ; Base + displacement
+    
+    ; Index addressing (3-4 cycles)
+    mov eax, [esi + edi]           ; Base + index
+    mov eax, [esi + edi * 2]       ; Base + scaled index
+    mov eax, [esi + edi * 4 + 8]   ; Full addressing mode
+    
+    ; Performance note: Complex addressing may use additional µop
+
+; ============================================================================
+; SPECIALIZED MOVEMENT INSTRUCTIONS
+; ============================================================================
+
+specialized_movement:
+    ; LEA - Load Effective Address (1 cycle, 1 µop)
+    ; Very efficient for address calculations
+    lea eax, [esi + edi * 4 + 8]   ; Calculate address without memory access
+    lea ebx, [eax + eax * 2]       ; Multiply by 3 efficiently (x + x*2)
+    lea ecx, [edx + edx * 4]       ; Multiply by 5 efficiently (x + x*4)
+    lea edi, [ebp - 16]            ; Stack frame addressing
+    
+    ; XCHG - Exchange (3 cycles, 3 µops for memory)
+    xchg eax, ebx                  ; Exchange registers (1 cycle, 3 µops)
+    xchg eax, [memory_var]         ; Exchange reg with memory (atomic)
+    
+    ; BSWAP - Byte swap (1 cycle, 1 µop)
+    mov eax, 0x12345678
+    bswap eax                      ; EAX becomes 0x78563412
+    
+    ; MOVZX/MOVSX - Zero/Sign extend (1 cycle, 1 µop)
+    movzx eax, bl                  ; Zero extend 8-bit to 32-bit
+    movzx edx, cx                  ; Zero extend 16-bit to 32-bit
+    movsx eax, bl                  ; Sign extend 8-bit to 32-bit
+    movsx edx, cx                  ; Sign extend 16-bit to 32-bit
+
+if format ELF64 | format PE64
+    ; 64-bit specific instructions
+    movzx rax, bl                  ; Zero extend 8-bit to 64-bit
+    movzx rax, cx                  ; Zero extend 16-bit to 64-bit
+    movzx rax, edx                 ; Zero extend 32-bit to 64-bit (implicit)
+    movsx rax, bl                  ; Sign extend 8-bit to 64-bit
+    movsx rax, cx                  ; Sign extend 16-bit to 64-bit
+    movsxd rax, edx                ; Sign extend 32-bit to 64-bit
+end if
+
+; ============================================================================
+; ARITHMETIC INSTRUCTIONS
+; ============================================================================
+
+arithmetic_instructions:
+    ; ADD/SUB - Basic arithmetic (1 cycle, 1 µop)
+    add eax, ebx                   ; Add registers
+    add eax, 100                   ; Add immediate
+    add eax, [memory_var]          ; Add memory to register
+    add [memory_var], eax          ; Add register to memory
+    
+    sub eax, ebx                   ; Subtract registers
+    sub eax, 50                    ; Subtract immediate
+    
+    ; ADC/SBB - Add/Subtract with carry (1 cycle, 1 µop)
+    ; Used for multi-precision arithmetic
+    add eax, ebx                   ; Add low parts
+    adc edx, ecx                   ; Add high parts with carry
+    
+    sub eax, ebx                   ; Subtract low parts
+    sbb edx, ecx                   ; Subtract high parts with borrow
+    
+    ; INC/DEC - Increment/Decrement (1 cycle, 1 µop)
+    inc eax                        ; Increment register
+    dec ebx                        ; Decrement register
+    inc dword [counter]            ; Increment memory location
+    
+    ; NEG - Negate (1 cycle, 1 µop)
+    neg eax                        ; Two's complement negation
+    
+    ; CMP - Compare (1 cycle, 1 µop)
+    cmp eax, ebx                   ; Compare registers
+    cmp eax, 100                   ; Compare with immediate
+    cmp [memory_var], eax          ; Compare memory with register
+
+; ============================================================================
+; MULTIPLICATION AND DIVISION
+; ============================================================================
+
+multiplication_division:
+    ; MUL - Unsigned multiplication
+    ; 8-bit: AL * operand -> AX (3 cycles, 1 µop)
+    mov al, 15
+    mov bl, 10
+    mul bl                         ; AX = AL * BL = 150
+    
+    ; 16-bit: AX * operand -> DX:AX (3 cycles, 1 µop)
+    mov ax, 1000
+    mov bx, 50
+    mul bx                         ; DX:AX = AX * BX = 50000
+    
+    ; 32-bit: EAX * operand -> EDX:EAX (3 cycles, 1 µop)
+    mov eax, 1000000
+    mov ebx, 4000
+    mul ebx                        ; EDX:EAX = EAX * EBX
+    
+    ; IMUL - Signed multiplication (more versatile)
+    ; Single operand form (like MUL)
+    imul ebx                       ; EDX:EAX = EAX * EBX (signed)
+    
+    ; Two operand form (3 cycles, 1 µop)
+    imul eax, ebx                  ; EAX = EAX * EBX (32-bit result)
+    imul eax, 10                   ; EAX = EAX * 10
+    
+    ; Three operand form (3 cycles, 1 µop)
+    imul eax, ebx, 25              ; EAX = EBX * 25
+    imul edx, [memory_var], 100    ; EDX = memory_var * 100
+    
+    ; DIV - Unsigned division (varies, 6-80 cycles depending on operand size)
+    ; 16-bit: AX / operand -> AL=quotient, AH=remainder
+    mov ax, 157
+    mov bl, 10
+    div bl                         ; AL = 15, AH = 7
+    
+    ; 32-bit: DX:AX / operand -> AX=quotient, DX=remainder
+    mov dx, 0                      ; Clear high part
+    mov ax, 50000
+    mov bx, 1000
+    div bx                         ; AX = 50, DX = 0
+    
+    ; 64-bit: EDX:EAX / operand -> EAX=quotient, EDX=remainder
+    mov edx, 0                     ; Clear high part
+    mov eax, 1000000
+    mov ebx, 7
+    div ebx                        ; EAX = quotient, EDX = remainder
+    
+    ; IDIV - Signed division (similar timing to DIV)
+    ; Must properly set up EDX for signed division
+    mov eax, -1000
+    cdq                            ; Sign extend EAX to EDX:EAX
+    mov ebx, 7
+    idiv ebx                       ; EAX = quotient, EDX = remainder
+
+; ============================================================================
+; LOGICAL OPERATIONS
+; ============================================================================
+
+logical_operations:
+    ; AND - Bitwise AND (1 cycle, 1 µop)
+    and eax, ebx                   ; AND registers
+    and eax, 0xFF                  ; Mask to low byte
+    and [flags], 0xFE              ; Clear bit 0 in memory
+    
+    ; OR - Bitwise OR (1 cycle, 1 µop)
+    or eax, ebx                    ; OR registers
+    or eax, 0x80000000             ; Set high bit
+    or [flags], 0x01               ; Set bit 0 in memory
+    
+    ; XOR - Bitwise XOR (1 cycle, 1 µop)
+    xor eax, ebx                   ; XOR registers
+    xor eax, eax                   ; Zero register (preferred over mov eax, 0)
+    xor [flags], 0x02              ; Toggle bit 1 in memory
+    
+    ; NOT - Bitwise NOT (1 cycle, 1 µop)
+    not eax                        ; Invert all bits
+    not byte [mask]                ; Invert memory byte
+    
+    ; TEST - Bitwise AND without storing result (1 cycle, 1 µop)
+    test eax, eax                  ; Test if zero (preferred over cmp eax, 0)
+    test eax, 0x80000000           ; Test if high bit set
+    test [flags], 0x01             ; Test if bit 0 set
+
+; ============================================================================
+; SHIFT AND ROTATE OPERATIONS
+; ============================================================================
+
+shift_rotate_operations:
+    ; SHL/SAL - Shift Left (1 cycle, 1 µop for constant count)
+    shl eax, 1                     ; Multiply by 2
+    shl eax, 4                     ; Multiply by 16
+    shl eax, cl                    ; Shift by CL (3 cycles if CL > 1)
+    
+    ; SHR - Logical Shift Right (1 cycle, 1 µop for constant count)
+    shr eax, 1                     ; Divide by 2 (unsigned)
+    shr eax, 3                     ; Divide by 8 (unsigned)
+    shr eax, cl                    ; Shift by CL
+    
+    ; SAR - Arithmetic Shift Right (1 cycle, 1 µop for constant count)
+    sar eax, 1                     ; Divide by 2 (signed, preserves sign)
+    sar eax, 4                     ; Divide by 16 (signed)
+    sar eax, cl                    ; Arithmetic shift by CL
+    
+    ; ROL/ROR - Rotate Left/Right (1 cycle, 1 µop for constant count)
+    rol eax, 8                     ; Rotate left 8 bits
+    ror eax, 4                     ; Rotate right 4 bits
+    rol eax, cl                    ; Rotate by CL
+    
+    ; RCL/RCR - Rotate through Carry (1 cycle, 1 µop for constant count)
+    rcl eax, 1                     ; Rotate left through carry
+    rcr eax, 1                     ; Rotate right through carry
+
+; ============================================================================
+; BIT MANIPULATION INSTRUCTIONS (BMI1/BMI2 - Modern CPUs)
+; ============================================================================
+
+if CPU_SUPPORTS_BMI
+bit_manipulation:
+    ; ANDN - Bitwise AND NOT (1 cycle, 1 µop)
+    ; result = ~src1 & src2
+    andn eax, ebx, ecx             ; EAX = ~EBX & ECX
+    
+    ; BEXTR - Bit Field Extract (1 cycle, 1 µop)
+    ; Extract bits from start position with specified length
+    mov edx, (8 shl 8) or 4        ; Start=4, Length=8
+    bextr eax, ebx, edx            ; Extract bits 4-11 from EBX
+    
+    ; BLSI - Extract Lowest Set Bit (1 cycle, 1 µop)
+    blsi eax, ebx                  ; EAX = EBX & -EBX
+    
+    ; BLSMSK - Mask from Lowest Set Bit (1 cycle, 1 µop)
+    blsmsk eax, ebx                ; EAX = EBX ^ (EBX - 1)
+    
+    ; BLSR - Reset Lowest Set Bit (1 cycle, 1 µop)
+    blsr eax, ebx                  ; EAX = EBX & (EBX - 1)
+    
+    ; TZCNT - Count Trailing Zeros (1 cycle, 1 µop)
+    tzcnt eax, ebx                 ; Count trailing zero bits
+    
+    ; LZCNT - Count Leading Zeros (1 cycle, 1 µop)
+    lzcnt eax, ebx                 ; Count leading zero bits
+    
+    ; POPCNT - Population Count (1 cycle, 1 µop)
+    popcnt eax, ebx                ; Count set bits
+end if
+
+memory_location dd 0x12345678
+memory_var dd 100
+counter dw 0
+flags db 0
+result dd ?
+```
+
+### Page 51-55: Instruction Encoding and Machine Code
+
+Understanding instruction encoding is crucial for optimization, debugging, and advanced programming techniques.
+
+**x86 Instruction Encoding Format:**
+```assembly
+; ============================================================================
+; INSTRUCTION ENCODING STRUCTURE
+; ============================================================================
+
+; Complete x86 instruction format:
+; [Prefixes] [REX] [Opcode] [ModR/M] [SIB] [Displacement] [Immediate]
+;     1-4      1      1-3      1       1       1,2,4        1,2,4
+
+; Prefixes:
+; - Legacy prefixes: 66h (operand size), 67h (address size), F2h/F3h (repeat)
+; - Segment override: 2Eh (CS), 36h (SS), 3Eh (DS), 26h (ES), 64h (FS), 65h (GS)
+; - Lock prefix: F0h
+
+encoding_examples:
+    ; Simple register-to-register move
+    mov eax, ebx              ; Encoding: 89 D8
+    ; 89h = opcode (MOV r/m32, r32)
+    ; D8h = ModR/M (11|011|000 = reg-reg, EBX->EAX)
+    
+    ; Immediate to register
+    mov eax, 0x12345678       ; Encoding: B8 78 56 34 12
+    ; B8h = opcode (MOV EAX, imm32)
+    ; 78 56 34 12 = immediate value (little-endian)
+    
+    ; Memory to register
+    mov eax, [ebx]            ; Encoding: 8B 03
+    ; 8Bh = opcode (MOV r32, r/m32)
+    ; 03h = ModR/M (00|000|011 = memory, EAX, [EBX])
+    
+    ; Complex addressing
+    mov eax, [ebx + esi*4 + 8] ; Encoding: 8B 44 B3 08
+    ; 8Bh = opcode
+    ; 44h = ModR/M (01|000|100 = memory with SIB, EAX, displacement8)
+    ; B3h = SIB (10|110|011 = scale*4, ESI, EBX)
+    ; 08h = 8-bit displacement
+
+; ============================================================================
+; MANUAL INSTRUCTION ENCODING
+; ============================================================================
+
+; Using db directive to manually encode instructions
+manual_encoding:
+    ; MOV EAX, EBX manually encoded
+    db 0x89, 0xD8              ; Same as "mov eax, ebx"
+    
+    ; Complex instruction encoding
+    db 0x8B, 0x44, 0xB3, 0x08  ; MOV EAX, [EBX + ESI*4 + 8]
+    
+    ; Using this technique for unsupported instructions
+    ; or when you need precise control over encoding
+
+; ============================================================================
+; INSTRUCTION LENGTH ANALYSIS
+; ============================================================================
+
+instruction_lengths:
+    ; 1 byte instructions
+    nop                       ; 90h
+    inc eax                   ; 40h (in 32-bit mode)
+    push eax                  ; 50h
+    
+    ; 2 byte instructions
+    mov al, 5                 ; B0 05
+    add al, bl                ; 00 D8
+    
+    ; 3 byte instructions
+    mov ax, 1000              ; 66 B8 E8 03 (66h prefix + B8 + immediate)
+    
+    ; 4+ byte instructions
+    mov eax, 0x12345678       ; B8 78 56 34 12 (5 bytes)
+    mov eax, [0x12345678]     ; A1 78 56 34 12 (5 bytes)
+    
+    ; Long instructions (up to 15 bytes)
+    ; prefix + REX + opcode + ModR/M + SIB + displacement + immediate
+    
+; Performance implications of instruction length:
+; - Shorter instructions are fetched faster
+; - More instructions fit in instruction cache
+; - Less memory bandwidth used
+; - Better branch prediction accuracy
+
+; ============================================================================
+; OPCODE TABLES AND INSTRUCTION FAMILIES
+; ============================================================================
+
+; Understanding opcode organization
+opcode_families:
+    ; Arithmetic opcodes (00-3F)
+    add al, bl                ; 00 D8 (ADD r/m8, r8)
+    add eax, ebx              ; 01 D8 (ADD r/m32, r32)
+    add bl, al                ; 02 D8 (ADD r8, r/m8)
+    add ebx, eax              ; 03 D8 (ADD r32, r/m32)
+    add al, 5                 ; 04 05 (ADD AL, imm8)
+    add eax, 1000             ; 05 E8 03 00 00 (ADD EAX, imm32)
+    
+    ; Stack operations (50-5F)
+    push eax                  ; 50 (PUSH EAX)
+    push ecx                  ; 51 (PUSH ECX)
+    push edx                  ; 52 (PUSH EDX)
+    pop eax                   ; 58 (POP EAX)
+    pop ecx                   ; 59 (POP ECX)
+    
+    ; MOV immediate to register (B0-BF)
+    mov al, 10                ; B0 0A (MOV AL, imm8)
+    mov cl, 20                ; B1 14 (MOV CL, imm8)
+    mov eax, 1000             ; B8 E8 03 00 00 (MOV EAX, imm32)
+    mov ecx, 2000             ; B9 D0 07 00 00 (MOV ECX, imm32)
+
+; ============================================================================
+; ADVANCED ENCODING TECHNIQUES
+; ============================================================================
+
+; REX prefix in 64-bit mode (40-4F)
+if format ELF64 | format PE64
+rex_prefix_examples:
+    ; REX.W = 1 (64-bit operand size)
+    mov rax, rbx              ; 48 89 D8 (REX.W + MOV)
+    
+    ; REX.R = 1 (extension of ModR/M reg field)
+    mov eax, r8d              ; 44 89 C0 (REX.R + MOV)
+    
+    ; REX.X = 1 (extension of SIB index field)
+    mov eax, [rax + r8*2]     ; 42 8B 04 40 (REX.X + MOV)
+    
+    ; REX.B = 1 (extension of ModR/M r/m, SIB base, or opcode reg)
+    mov eax, r8d              ; 44 89 C0 (REX.B + MOV)
+    
+    ; Multiple REX bits set
+    mov r8, [r9 + r10*4]      ; 4B 8B 04 91 (REX.W+R+X+B + MOV)
+end if
+
+; VEX/EVEX prefixes for AVX instructions
+if CPU_SUPPORTS_AVX
+vex_encoding:
+    ; VEX prefix format: C4/C5 [byte2] [byte3] opcode
+    ; Example: VADDPS YMM0, YMM1, YMM2
+    ; Encoding: C5 F4 58 C2
+    ; C5 = 2-byte VEX prefix
+    ; F4 = vvvv (YMM1) + L (256-bit) + pp (none)
+    ; 58 = opcode (ADDPS)
+    ; C2 = ModR/M (YMM2 -> YMM0)
+    
+    ; Manual VEX encoding
+    db 0xC5, 0xF4, 0x58, 0xC2  ; VADDPS YMM0, YMM1, YMM2
+end if
+
+; ============================================================================
+; INSTRUCTION TIMING AND THROUGHPUT
+; ============================================================================
+
+; Modern x86 processors decode instructions into micro-operations (µops)
+; Understanding µop characteristics is crucial for optimization
+
+timing_analysis:
+    ; Simple 1-µop instructions (1 cycle throughput)
+    mov eax, ebx              ; 1 µop, 1 cycle throughput
+    add eax, ebx              ; 1 µop, 1 cycle throughput
+    xor eax, eax              ; 1 µop, 1 cycle throughput (dependency breaking)
+    
+    ; Complex instructions (multiple µops)
+    push eax                  ; 1 µop, 1 cycle throughput
+    pop eax                   ; 1 µop, 1 cycle throughput
+    call near_label           ; 2 µops, 2 cycle throughput
+    ret                       ; 2 µops, 2 cycle throughput
+    
+    ; Memory operations
+    mov eax, [memory_var]     ; 1 µop, 3-4 cycle latency (cache hit)
+    mov [memory_var], eax     ; 1 µop, 1 cycle throughput
+    
+    ; String operations (vary based on count)
+    cld                       ; 1 µop, 1 cycle
+    rep movsb                 ; Variable µops based on ECX
+    
+    ; Expensive operations
+    mul ebx                   ; 1 µop, 3 cycle latency, 1 cycle throughput
+    div ebx                   ; ~10-80 µops, variable latency
+    
+    ; CPUID instruction (serializing, very expensive)
+    cpuid                     ; ~100+ cycles, serializes execution
+
+near_label:
+    ret
+
+; ============================================================================
+; OPTIMIZATION THROUGH ENCODING KNOWLEDGE
+; ============================================================================
+
+encoding_optimization:
+    ; Use shorter encodings when possible
+    xor eax, eax              ; 2 bytes: 31 C0
+    ; vs
+    mov eax, 0                ; 5 bytes: B8 00 00 00 00
+    
+    ; Use register-register operations when possible
+    add eax, ebx              ; 2 bytes: 01 D8
+    ; vs
+    add eax, [temp_var]       ; 6 bytes: 03 05 xx xx xx xx
+    
+    ; Leverage addressing modes efficiently
+    lea eax, [ebx + ecx]      ; 3 bytes: 8D 04 0B (no memory access)
+    ; vs
+    mov eax, ebx              ; 2 bytes: 89 D8
+    add eax, ecx              ; 2 bytes: 01 C8 (total 4 bytes)
+    
+    ; Use immediate forms for constants
+    inc eax                   ; 1 byte: 40 (in 32-bit mode)
+    ; vs
+    add eax, 1                ; 3 bytes: 83 C0 01
+    
+    ; Align branch targets for better performance
+    align 16                  ; Align to 16-byte boundary
+optimization_loop:
+    dec ecx
+    jnz optimization_loop     ; Better performance with aligned target
+
+temp_var dd 0
+```
+
+### Page 56-60: Condition Codes and Flag Management
+
+The FLAGS register is central to x86 program flow control and arithmetic operations. Professional programmers must understand flag behavior in detail.
+
+**Complete FLAGS Register Analysis:**
+```assembly
+; ============================================================================
+; FLAGS REGISTER LAYOUT (EFLAGS/RFLAGS)
+; ============================================================================
+
+; Bit positions in FLAGS register:
+; 31-22: Reserved
+; 21: ID (Identification Flag)
+; 20: VIP (Virtual Interrupt Pending)
+; 19: VIF (Virtual Interrupt Flag)
+; 18: AC (Alignment Check)
+; 17: VM (Virtual 8086 Mode)
+; 16: RF (Resume Flag)
+; 15: Reserved
+; 14: NT (Nested Task)
+; 13-12: IOPL (I/O Privilege Level)
+; 11: OF (Overflow Flag)
+; 10: DF (Direction Flag)
+; 9: IF (Interrupt Flag)
+; 8: TF (Trap Flag)
+; 7: SF (Sign Flag)
+; 6: ZF (Zero Flag)
+; 5: Reserved
+; 4: AF (Auxiliary Carry Flag)
+; 3: Reserved
+; 2: PF (Parity Flag)
+; 1: Reserved
+; 0: CF (Carry Flag)
+
+; Flag manipulation constants
+FLAG_CF = 1 shl 0          ; Carry Flag
+FLAG_PF = 1 shl 2          ; Parity Flag
+FLAG_AF = 1 shl 4          ; Auxiliary Carry Flag
+FLAG_ZF = 1 shl 6          ; Zero Flag
+FLAG_SF = 1 shl 7          ; Sign Flag
+FLAG_TF = 1 shl 8          ; Trap Flag
+FLAG_IF = 1 shl 9          ; Interrupt Flag
+FLAG_DF = 1 shl 10         ; Direction Flag
+FLAG_OF = 1 shl 11         ; Overflow Flag
+
+section '.text'
+
+flag_operations:
+    ; ========================================================================
+    ; ARITHMETIC FLAGS (CF, OF, SF, ZF, AF, PF)
+    ; ========================================================================
+    
+    ; Carry Flag (CF) - Set by unsigned arithmetic overflow
+    mov eax, 0xFFFFFFFF        ; Load maximum 32-bit value
+    add eax, 1                 ; Add 1 (causes unsigned overflow)
+    jc .carry_set              ; Jump if carry flag set
+    
+    ; Alternative carry flag testing
+    pushfd                     ; Push flags onto stack
+    pop eax                    ; Pop flags into EAX
+    test eax, FLAG_CF          ; Test carry flag bit
+    jnz .carry_set             ; Jump if carry bit set
+    
+.carry_set:
+    ; Overflow Flag (OF) - Set by signed arithmetic overflow
+    mov eax, 0x7FFFFFFF        ; Load maximum positive 32-bit signed
+    add eax, 1                 ; Add 1 (causes signed overflow)
+    jo .overflow_set           ; Jump if overflow flag set
+    
+.overflow_set:
+    ; Zero Flag (ZF) - Set when result is zero
+    xor eax, eax               ; Clear EAX (sets ZF)
+    jz .zero_set               ; Jump if zero flag set
+    
+    mov eax, 5
+    sub eax, 5                 ; Result is zero (sets ZF)
+    jz .zero_set               ; Jump if zero flag set
+    
+.zero_set:
+    ; Sign Flag (SF) - Set when result is negative (MSB = 1)
+    mov eax, -1                ; Load negative value
+    test eax, eax              ; Test affects SF
+    js .sign_set               ; Jump if sign flag set
+    
+.sign_set:
+    ; Parity Flag (PF) - Set when low 8 bits have even number of 1s
+    mov eax, 0x03              ; Binary: 00000011 (2 ones = even)
+    test eax, eax              ; Sets PF
+    jp .parity_set             ; Jump if parity flag set (even parity)
+    
+.parity_set:
+    ; Auxiliary Carry Flag (AF) - Set by carry from bit 3 to bit 4
+    mov al, 0x0F               ; Binary: 00001111
+    add al, 1                  ; Binary: 00010000 (carry from bit 3)
+    ; AF is now set, but rarely tested directly
+    
+    ; ========================================================================
+    ; CONTROL FLAGS (DF, IF, TF)
+    ; ========================================================================
+    
+    ; Direction Flag (DF) - Controls string operation direction
+    cld                        ; Clear direction flag (forward)
+    std                        ; Set direction flag (backward)
+    
+    ; String operation example
+    lea esi, [source_string]
+    lea edi, [dest_string]
+    mov ecx, 10
+    cld                        ; Forward direction
+    rep movsb                  ; Copy forward
+    
+    lea esi, [source_string + 9] ; Point to end
+    lea edi, [dest_string + 9]
+    mov ecx, 10
+    std                        ; Backward direction
+    rep movsb                  ; Copy backward
+    
+    ; ========================================================================
+    ; FLAG TESTING AND CONDITIONAL OPERATIONS
+    ; ========================================================================
+    
+flag_testing:
+    ; Multiple flag testing
+    cmp eax, ebx
+    je .equal                  ; ZF = 1
+    jl .less_signed            ; SF != OF
+    jb .less_unsigned          ; CF = 1
+    jg .greater_signed         ; ZF = 0 and SF = OF
+    ja .greater_unsigned       ; CF = 0 and ZF = 0
+    
+.equal:
+.less_signed:
+.less_unsigned:
+.greater_signed:
+.greater_unsigned:
+    
+    ; Complex flag combinations
+    ; Jump if equal or less (signed)
+    cmp eax, ebx
+    je .equal_or_less
+    jl .equal_or_less
+    ; or more efficiently:
+    cmp eax, ebx
+    jle .equal_or_less         ; ZF = 1 or SF != OF
+    
+.equal_or_less:
+    
+    ; ========================================================================
+    ; MANUAL FLAG MANIPULATION
+    ; ========================================================================
+    
+manual_flag_ops:
+    ; Save and restore flags
+    pushfd                     ; Push EFLAGS onto stack
+    ; ... modify flags with operations ...
+    popfd                      ; Restore EFLAGS from stack
+    
+    ; Set specific flags manually
+    pushfd                     ; Get current flags
+    pop eax                    ; Into EAX
+    or eax, FLAG_CF            ; Set carry flag
+    push eax                   ; Push modified flags
+    popfd                      ; Set flags register
+    
+    ; Clear specific flags manually
+    pushfd
+    pop eax
+    and eax, not FLAG_CF       ; Clear carry flag
+    push eax
+    popfd
+    
+    ; Test multiple flags simultaneously
+    pushfd
+    pop eax
+    and eax, FLAG_ZF or FLAG_CF ; Test both zero and carry
+    cmp eax, FLAG_ZF           ; Check if only zero flag set
+    je .only_zero_set
+    
+.only_zero_set:
+    
+    ; ========================================================================
+    ; CONDITIONAL SET INSTRUCTIONS (SETcc)
+    ; ========================================================================
+    
+conditional_set:
+    ; Set byte based on condition codes
+    cmp eax, ebx
+    sete cl                    ; Set CL to 1 if equal, 0 otherwise
+    setne ch                   ; Set CH to 1 if not equal
+    setl dl                    ; Set DL to 1 if less (signed)
+    setb dh                    ; Set DH to 1 if below (unsigned)
+    setg bl                    ; Set BL to 1 if greater (signed)
+    seta bh                    ; Set BH to 1 if above (unsigned)
+    
+    ; Using SETcc for branchless programming
+    ; Instead of:
+    ; cmp eax, ebx
+    ; jle .skip
+    ; mov result, 1
+    ; .skip:
+    
+    ; Use:
+    cmp eax, ebx
+    setg [result_byte]         ; Set to 1 if greater, 0 otherwise
+    movzx eax, byte [result_byte] ; Extend to full register
+    
+    ; ========================================================================
+    ; CONDITIONAL MOVE INSTRUCTIONS (CMOVcc)
+    ; ========================================================================
+    
+conditional_move:
+    ; Conditional moves (avoid branches for better performance)
+    cmp eax, ebx
+    cmove ecx, edx             ; Move EDX to ECX if equal
+    cmovne ecx, edi            ; Move EDI to ECX if not equal
+    cmovl ecx, esi             ; Move ESI to ECX if less (signed)
+    cmovb ecx, esp             ; Move ESP to ECX if below (unsigned)
+    
+    ; Branchless maximum/minimum
+    cmp eax, ebx
+    cmovl eax, ebx             ; EAX = max(EAX, EBX)
+    
+    cmp ecx, edx
+    cmovg ecx, edx             ; ECX = min(ECX, EDX)
+    
+    ; ========================================================================
+    ; ADVANCED FLAG PATTERNS
+    ; ========================================================================
+    
+advanced_patterns:
+    ; Detect signed overflow in addition
+    mov eax, 0x7FFFFFF0        ; Large positive number
+    mov ebx, 0x20              ; Small positive number
+    add eax, ebx               ; May cause overflow
+    
+    ; Check for signed overflow manually
+    ; Overflow occurs when:
+    ; - Adding two positive numbers gives negative result
+    ; - Adding two negative numbers gives positive result
+    pushfd
+    pop ecx                    ; Get flags
+    test ecx, FLAG_OF          ; Test overflow flag
+    jnz .signed_overflow
+    
+.signed_overflow:
+    
+    ; Detect unsigned overflow in addition
+    mov eax, 0xFFFFFFF0        ; Large unsigned number
+    mov ebx, 0x20              ; Small number
+    add eax, ebx               ; May cause carry
+    jc .unsigned_overflow      ; Carry indicates unsigned overflow
+    
+.unsigned_overflow:
+    
+    ; Multi-precision arithmetic using carry
+    ; Add two 64-bit numbers in 32-bit mode
+    ; Number 1: EDX:EAX, Number 2: ECX:EBX
+    add eax, ebx               ; Add low parts
+    adc edx, ecx               ; Add high parts with carry
+    jc .result_overflow        ; Carry from high part = overflow
+    
+.result_overflow:
+    ret
+
+; Data for examples
 section '.data'
-    ; Initialized data
-
-section '.bss'
-    ; Uninitialized data
-
-; End of program
+source_string db 'Hello World', 0
+dest_string rb 20
+result_byte db 0
 ```
 
-### Basic Syntax Rules
+This completes pages 46-60 of Chapter 4, providing comprehensive coverage of instruction set architecture, encoding, and flag management with professional-level detail and practical examples.
 
-#### Comments
+## Chapter 5: Registers and Processor State
+
+### Page 61-65: General Purpose Registers Deep Dive
+
+The x86/x64 register architecture has evolved significantly over decades, creating a complex but powerful programming model. Professional assembly programmers must understand not just register names, but their performance characteristics, usage conventions, and architectural implications.
+
+**Complete Register Architecture Overview:**
+
+**8086 Legacy Registers (16-bit):**
 ```assembly
-; Single line comment
-mov eax, 5  ; Inline comment
+; ============================================================================
+; ORIGINAL 8086 REGISTERS - FOUNDATION OF x86 ARCHITECTURE
+; ============================================================================
 
-/* Multi-line comment
-   spanning multiple lines
-   useful for documentation */
-```
-
-#### Labels
-```assembly
-main:           ; Global label
-.local:         ; Local label (accessible only within current global label)
-@@:             ; Anonymous label
-variable db 10  ; Data label
-```
-
-#### Numbers and Constants
-```assembly
-mov eax, 42        ; Decimal number
-mov ebx, 0x2A      ; Hexadecimal number
-mov ecx, 52o       ; Octal number
-mov edx, 101010b   ; Binary number
-
-; Character constants
-mov al, 'A'        ; Single character
-mov eax, 'ABCD'    ; Four characters (little-endian)
-```
-
-#### Data Definitions
-```assembly
-section '.data'
-    ; Byte data
-    byte_var    db 10, 20, 30
-    string_var  db 'Hello, World!', 0
+; AX - Accumulator Register (Primary arithmetic register)
+; - Optimized for arithmetic operations
+; - Many instructions have shorter encodings when using AX/AL
+; - Used implicitly by MUL, DIV, and string operations
+register_ax_usage:
+    ; Arithmetic optimizations
+    mov ax, 1000               ; Load value
+    mul bx                     ; AX * BX -> DX:AX (implicit AX usage)
+    div cx                     ; DX:AX / CX -> AX=quotient, DX=remainder
     
-    ; Word data (16-bit)
-    word_var    dw 1000, 2000
+    ; I/O operations (legacy)
+    in al, 0x60                ; Read from port 0x60 into AL
+    out 0x61, al               ; Write AL to port 0x61
     
-    ; Double word data (32-bit)
-    dword_var   dd 100000
-    pointer_var dd offset string_var
+    ; String operations
+    lodsb                      ; Load byte from [SI] into AL, increment SI
+    stosb                      ; Store AL into [DI], increment DI
+
+; BX - Base Register (Memory addressing base)
+; - Commonly used for memory addressing
+; - Good for array base addresses
+register_bx_usage:
+    lea bx, [array_data]       ; Load array base address
+    mov al, [bx]               ; Access first element
+    mov al, [bx + 4]           ; Access element at offset 4
     
-    ; Quad word data (64-bit)
-    qword_var   dq 1000000000
+    ; Translation table usage
+    mov bx, translate_table
+    mov al, 5                  ; Index
+    xlat                       ; AL = [BX + AL] (translate instruction)
+
+; CX - Count Register (Loop and string operation counter)
+; - Optimized for counting operations
+; - Used implicitly by loop instructions and string operations
+register_cx_usage:
+    mov cx, 100                ; Set loop count
+.loop:
+    ; Loop body
+    loop .loop                 ; Decrements CX and jumps if CX != 0
     
-    ; Ten-byte data (80-bit)
-    tbyte_var   dt 3.14159265358979323846
+    ; String operations
+    mov cx, string_length
+    lea si, [source_string]
+    lea di, [dest_string]
+    rep movsb                  ; Copy CX bytes from SI to DI
     
-section '.bss'
-    ; Uninitialized data
-    buffer      rb 1024    ; Reserve 1024 bytes
-    array       rw 100     ; Reserve 100 words
-    large_array rd 1000    ; Reserve 1000 double words
+    ; Bit shift operations
+    mov cl, 4                  ; Shift count must be in CL
+    shl eax, cl                ; Shift EAX left by CL bits
+
+; DX - Data Register (Extended arithmetic and I/O)
+; - Used for extended arithmetic operations
+; - I/O port addressing
+; - High part of multiplication/division results
+register_dx_usage:
+    ; Extended arithmetic
+    mov ax, 0xFFFF             ; Low part
+    mov dx, 0x0001             ; High part (DX:AX = 0x1FFFF)
+    
+    ; Multiplication results
+    mov ax, 1000
+    mov bx, 2000
+    mul bx                     ; Result in DX:AX (2,000,000)
+    
+    ; I/O port addressing
+    mov dx, 0x3F8              ; Serial port address
+    in al, dx                  ; Read from port
+    out dx, al                 ; Write to port
+
+; SI - Source Index (String operation source pointer)
+; - Optimized for string operations as source
+; - Good for array traversal
+register_si_usage:
+    lea si, [source_data]      ; Point to source
+    cld                        ; Clear direction flag (forward)
+    lodsw                      ; Load word from [SI] into AX, SI += 2
+    
+    ; Manual array processing
+    lea si, [byte_array]
+    mov cx, array_size
+.process_loop:
+    mov al, [si]               ; Load current byte
+    ; Process byte in AL
+    inc si                     ; Move to next byte
+    loop .process_loop
+
+; DI - Destination Index (String operation destination pointer)
+register_di_usage:
+    lea di, [destination]      ; Point to destination
+    mov al, 0xFF               ; Value to store
+    mov cx, 100                ; Count
+    rep stosb                  ; Fill 100 bytes with 0xFF
+    
+    ; Search operations
+    lea di, [search_buffer]
+    mov al, 'A'                ; Character to find
+    mov cx, buffer_size
+    repne scasb                ; Search for 'A' in buffer
+
+; SP - Stack Pointer (Stack management)
+; - Critical for function calls and local variables
+; - Managed automatically by PUSH/POP operations
+register_sp_usage:
+    ; Stack frame setup
+    push bp                    ; Save old frame pointer
+    mov bp, sp                 ; Set new frame pointer
+    sub sp, 20                 ; Allocate 20 bytes local space
+    
+    ; Access local variables
+    mov [bp - 2], ax           ; Store in local variable
+    mov bx, [bp - 4]           ; Load from local variable
+    
+    ; Stack cleanup
+    mov sp, bp                 ; Restore stack pointer
+    pop bp                     ; Restore frame pointer
+
+; BP - Base Pointer (Stack frame pointer)
+register_bp_usage:
+    ; Function prologue
+    push bp                    ; Save caller's frame pointer
+    mov bp, sp                 ; Establish new frame
+    
+    ; Parameter access (assuming CDECL calling convention)
+    mov ax, [bp + 4]           ; First parameter
+    mov bx, [bp + 6]           ; Second parameter
+    
+    ; Local variable access
+    mov [bp - 2], cx           ; First local variable
+    mov [bp - 4], dx           ; Second local variable
+    
+    ; Function epilogue  
+    mov sp, bp                 ; Restore stack pointer
+    pop bp                     ; Restore frame pointer
+    ret                        ; Return to caller
+
+array_data db 10, 20, 30, 40, 50
+translate_table db 256 dup(?)
+source_string db 'Hello, World!', 0
+dest_string rb 20
+string_length = $ - source_string - 1
+source_data dw 1, 2, 3, 4, 5
+destination rb 100
+search_buffer db 100 dup(?)
+buffer_size = 100
+byte_array db 1, 2, 3, 4, 5
+array_size = 5
 ```
 
-### Advanced Data Structures
-
-#### Structures
+**32-bit Extended Registers (80386+):**
 ```assembly
-struc POINT
-{
-    .x dd ?
-    .y dd ?
-}
+; ============================================================================
+; 32-BIT REGISTER EXTENSIONS - MODERN x86 FOUNDATION
+; ============================================================================
 
-struc RECTANGLE
-{
-    .left   dd ?
-    .top    dd ?
-    .right  dd ?
-    .bottom dd ?
-}
-
-section '.data'
-    point1 POINT <100, 200>
-    rect1  RECTANGLE <10, 20, 110, 120>
-
-section '.code'
-    ; Access structure members
-    mov eax, [point1.x]
-    mov ebx, [point1.y]
+; EAX, EBX, ECX, EDX - 32-bit extensions of AX, BX, CX, DX
+extended_register_usage:
+    ; 32-bit arithmetic
+    mov eax, 1000000           ; 32-bit immediate
+    mov ebx, 2000000
+    mul ebx                    ; EAX * EBX -> EDX:EAX (64-bit result)
     
-    ; Using structure as template
-    mov ecx, POINT.x  ; Get offset of x member
+    ; Memory addressing with 32-bit displacement
+    mov eax, [ebx + 0x12345678] ; 32-bit displacement
+    
+    ; Bit manipulation
+    bts eax, 31                ; Set bit 31 in EAX
+    btr ebx, 15                ; Reset bit 15 in EBX
+    btc ecx, 7                 ; Complement bit 7 in ECX
+    
+    ; Advanced arithmetic
+    lea eax, [ebx + ecx * 4 + 100] ; Complex address calculation
+    imul eax, ebx, 25          ; EAX = EBX * 25
+
+; ESI, EDI - 32-bit extensions of SI, DI
+extended_index_usage:
+    ; Modern string operations
+    lea esi, [source_buffer]   ; 32-bit source address
+    lea edi, [dest_buffer]     ; 32-bit destination address
+    mov ecx, large_size        ; 32-bit count
+    rep movsd                  ; Copy 32-bit values (4 bytes at a time)
+    
+    ; Array processing with 32-bit indexing
+    xor esi, esi               ; Start at index 0
+.array_loop:
+    mov eax, [large_array + esi * 4] ; Access 32-bit array element
+    ; Process element in EAX
+    inc esi                    ; Next index
+    cmp esi, array_count
+    jl .array_loop
+
+; ESP, EBP - 32-bit stack management
+stack_32bit:
+    ; Function with local variables
+    push ebp                   ; Save frame pointer
+    mov ebp, esp               ; Set frame pointer
+    sub esp, 64                ; Allocate 64 bytes local space
+    
+    ; Access parameters (32-bit addresses)
+    mov eax, [ebp + 8]         ; First parameter (32-bit)
+    mov ebx, [ebp + 12]        ; Second parameter (32-bit)
+    
+    ; Local variables
+    mov dword [ebp - 4], 12345 ; 32-bit local variable
+    lea eax, [ebp - 32]        ; Address of local array
+    
+    ; Stack cleanup
+    mov esp, ebp
+    pop ebp
+    ret
+
+; Register aliasing and sub-register access
+register_aliasing:
+    mov eax, 0x12345678        ; Load 32-bit value
+    
+    ; Access sub-registers
+    mov bl, al                 ; BL = 0x78 (low 8 bits of EAX)
+    mov bh, ah                 ; BH = 0x56 (bits 8-15 of EAX)  
+    mov cx, ax                 ; CX = 0x5678 (low 16 bits of EAX)
+    
+    ; Modifying sub-registers affects parent register
+    mov al, 0xFF               ; EAX becomes 0x123456FF
+    mov ah, 0xAB               ; EAX becomes 0x1234ABFF
+    mov ax, 0x9999             ; EAX becomes 0x12349999
+    
+    ; Zero-extension behavior (important!)
+    mov eax, 0x12345678        ; Load full 32-bit value
+    mov ax, 0x1111             ; EAX becomes 0x12341111 (high 16 bits preserved)
+    mov al, 0x22               ; EAX becomes 0x12341122 (only low 8 bits changed)
+
+source_buffer dd 1000 dup(?)
+dest_buffer dd 1000 dup(?)
+large_size = 1000
+large_array dd 5000 dup(?)
+array_count = 5000
 ```
 
-#### Unions
+**64-bit Register Extensions (x86-64):**
 ```assembly
-union VALUE
-{
-    .dword_val dd ?
-    .word_vals dw ?, ?
-    .byte_vals db ?, ?, ?, ?
-}
+if format ELF64 | format PE64
 
-section '.data'
-    value VALUE <0x12345678>
+; ============================================================================
+; 64-BIT REGISTER EXTENSIONS - MODERN x86-64 ARCHITECTURE
+; ============================================================================
 
-section '.code'
-    mov eax, [value.dword_val]      ; 0x12345678
-    mov bx, [value.word_vals]       ; 0x5678
-    mov cx, [value.word_vals + 2]   ; 0x1234
-    mov dl, [value.byte_vals]       ; 0x78
+; RAX, RBX, RCX, RDX, RSI, RDI, RSP, RBP - 64-bit extensions
+register_64bit:
+    ; 64-bit arithmetic
+    mov rax, 0x123456789ABCDEF0 ; 64-bit immediate
+    mov rbx, 0x0FEDCBA987654321
+    mul rbx                     ; RAX * RBX -> RDX:RAX (128-bit result)
+    
+    ; Large memory addressing
+    mov rax, [rbx + 0x80000000] ; Access memory beyond 2GB
+    mov rcx, 0x123456789ABC     ; 64-bit address
+    mov rdx, [rcx]              ; Access memory at 64-bit address
+    
+    ; Pointer arithmetic
+    lea rax, [rbx + rcx * 8 + 0x12345678] ; 64-bit address calculation
+
+; New 64-bit only registers: R8-R15
+new_registers_usage:
+    ; R8-R15 provide additional general-purpose registers
+    mov r8, 0x123456789ABCDEF0  ; 64-bit value in R8
+    mov r9d, 0x12345678         ; 32-bit value in R9D (clears upper 32 bits)
+    mov r10w, 0x1234            ; 16-bit value in R10W (preserves upper bits)
+    mov r11b, 0x12              ; 8-bit value in R11B (preserves upper bits)
+    
+    ; Using new registers in addressing
+    mov rax, [r8 + r9 * 4 + 100] ; Complex addressing with new registers
+    lea r12, [r13 + r14 * 8]    ; Address calculation
+    
+    ; Register preservation in function calls
+    ; R8-R11 are typically caller-saved
+    push r8                     ; Save R8
+    push r9                     ; Save R9
+    call some_function
+    pop r9                      ; Restore R9
+    pop r8                      ; Restore R8
+    
+    ; R12-R15 are typically callee-saved
+    push r12                    ; Function prologue saves R12
+    push r13
+    ; Function body uses R12, R13
+    pop r13                     ; Function epilogue restores R13
+    pop r12                     ; Restore R12
+
+; Register name variations and access patterns
+register_access_64:
+    mov rax, 0x123456789ABCDEF0 ; Full 64-bit register
+    mov eax, 0x12345678         ; 32-bit access (clears upper 32 bits!)
+    mov ax, 0x1234              ; 16-bit access (preserves upper 48 bits)
+    mov al, 0x12                ; 8-bit low access (preserves upper 56 bits)
+    mov ah, 0x34                ; 8-bit high access (only for RAX,RBX,RCX,RDX)
+    
+    ; New 8-bit registers in 64-bit mode
+    mov sil, 0x12               ; Low 8 bits of RSI
+    mov dil, 0x34               ; Low 8 bits of RDI
+    mov spl, 0x56               ; Low 8 bits of RSP
+    mov bpl, 0x78               ; Low 8 bits of RBP
+    mov r8b, 0x9A               ; Low 8 bits of R8
+    mov r15b, 0xBC              ; Low 8 bits of R15
+
+; Zero-extension behavior in 64-bit mode
+zero_extension_64:
+    mov rax, 0x123456789ABCDEF0 ; Load full 64-bit value
+    mov eax, 0x11111111         ; RAX becomes 0x0000000011111111
+                                ; Upper 32 bits automatically cleared!
+    
+    ; This is different from 16-bit and 8-bit operations
+    mov ax, 0x2222              ; RAX becomes 0x0000000011112222
+                                ; Upper 48 bits preserved
+    mov al, 0x33                ; RAX becomes 0x0000000011112233
+                                ; Upper 56 bits preserved
+
+; Performance implications of register choice
+register_performance:
+    ; Using RAX often provides smaller instruction encoding
+    mov eax, [memory_location]  ; 5 bytes: A1 xx xx xx xx
+    mov ebx, [memory_location]  ; 6 bytes: 8B 1D xx xx xx xx
+    
+    ; Some instructions only work with specific registers
+    mul rbx                     ; Only uses RAX as implicit operand
+    div rcx                     ; Only uses RDX:RAX as dividend
+    
+    ; String operations use fixed registers
+    mov rsi, source_ptr         ; Source must be in RSI
+    mov rdi, dest_ptr           ; Destination must be in RDI
+    mov rcx, count              ; Count must be in RCX
+    rep movsq                   ; Copy quadwords
+
+memory_location dd 0x12345678
+source_ptr dq ?
+dest_ptr dq ?
+count dq ?
+some_function:
+    ret
+
+end if ; 64-bit section
 ```
 
-### Instruction Format
+### Page 66-70: Segment Registers and Memory Segmentation
 
-#### Basic Instruction Format
+While segmentation is largely legacy in modern protected mode, understanding segment registers remains important for system programming and compatibility.
+
+**Segment Register Architecture:**
 ```assembly
-[label:] mnemonic [operand1] [, operand2] [, operand3] [; comment]
+; ============================================================================
+; SEGMENT REGISTERS - LEGACY BUT STILL IMPORTANT
+; ============================================================================
+
+; CS - Code Segment (Points to current code segment)
+; DS - Data Segment (Default for most data references)
+; ES - Extra Segment (Used by string operations as destination)
+; SS - Stack Segment (Points to current stack segment)
+; FS - Additional Segment (Often used for thread-local storage)
+; GS - Additional Segment (Often used for CPU-specific data)
+
+segment_register_usage:
+    ; In real mode (16-bit), segments are crucial
+    if CPU_MODE eq REALMODE
+        ; Load segment registers
+        mov ax, 0x1000          ; Segment value
+        mov ds, ax              ; Data segment
+        mov es, ax              ; Extra segment
+        mov ss, ax              ; Stack segment
+        
+        ; Segment override prefixes
+        mov al, [ds:bx]         ; Explicit DS override (default anyway)
+        mov al, [es:bx]         ; Use ES instead of DS
+        mov al, [cs:bx]         ; Read from code segment
+        mov al, [ss:bp]         ; Stack segment (default for BP)
+        
+        ; Calculate physical addresses
+        ; Physical = (Segment << 4) + Offset
+        ; Example: DS=0x1000, BX=0x0234
+        ; Physical = (0x1000 << 4) + 0x0234 = 0x10234
+    end if
+    
+    ; In protected mode (32-bit), segments are selectors
+    if CPU_MODE eq PROTECTED32
+        ; Segment selectors point to Global Descriptor Table (GDT) entries
+        mov ax, 0x10            ; Selector (index into GDT)
+        mov ds, ax              ; Load data segment selector
+        mov es, ax              ; Load extra segment selector
+        
+        ; Segment override still works but rarely needed
+        mov eax, [fs:0]         ; Access FS segment
+        mov ebx, [gs:4]         ; Access GS segment
+        
+        ; Common use: Thread Information Block (TIB) access
+        mov eax, [fs:0x18]      ; Get TIB pointer (Windows)
+        mov ebx, [fs:0x30]      ; Get Process Environment Block
+    end if
+    
+    ; In 64-bit mode, most segments are ignored
+    if CPU_MODE eq LONG64
+        ; CS, DS, ES, SS are largely ignored (flat model)
+        ; FS and GS can still be used for special purposes
+        
+        ; FS often points to thread-local storage
+        mov rax, [fs:0x28]      ; Stack canary (Linux)
+        mov rbx, [fs:0x30]      ; Thread Information Block (Windows)
+        
+        ; GS often points to per-CPU data
+        mov rcx, [gs:0x10]      ; Per-CPU variable
+    end if
+
+; ============================================================================
+; PRACTICAL SEGMENT USAGE EXAMPLES
+; ============================================================================
+
+; Thread-local storage access (modern usage)
+thread_local_access:
+    ; Windows Thread Information Block access
+    mov eax, [fs:0x00]          ; Exception list
+    mov ebx, [fs:0x04]          ; Stack base
+    mov ecx, [fs:0x08]          ; Stack limit
+    mov edx, [fs:0x18]          ; TIB self-pointer
+    mov esi, [fs:0x30]          ; Process Environment Block
+    
+    ; Linux thread-local storage
+    mov rax, [fs:0x28]          ; Stack guard
+    mov rbx, [fs:0x10]          ; Thread ID
+
+; String operations with segment overrides
+string_operations_segments:
+    ; Standard string copy (DS:SI -> ES:DI)
+    push es
+    push ds
+    pop es                      ; ES = DS (same segment)
+    
+    lea si, [source_string]     ; DS:SI = source
+    lea di, [dest_string]       ; ES:DI = destination
+    mov cx, string_len
+    cld                        ; Forward direction
+    rep movsb                  ; Copy DS:SI -> ES:DI
+    
+    pop es                     ; Restore ES
+    
+    ; Search in different segment
+    push es
+    mov ax, search_segment
+    mov es, ax                 ; Point ES to search area
+    
+    lea di, [search_buffer]    ; ES:DI = search area
+    mov al, 'A'                ; Character to find
+    mov cx, search_len
+    repne scasb                ; Search in ES:DI
+    
+    pop es                     ; Restore ES
+
+; Far pointers and segment management
+far_pointer_usage:
+    ; Far pointer structure: [Offset:Segment]
+    far_proc_ptr dd procedure_offset
+                 dw procedure_segment
+    
+    ; Far call
+    call far [far_proc_ptr]    ; Call procedure in different segment
+    
+    ; Manual far call setup
+    push cs                    ; Save current code segment
+    push .return_address       ; Save return address
+    push procedure_segment     ; Push target segment
+    push procedure_offset      ; Push target offset
+    retf                       ; Far return to target
+    
+.return_address:
+    ; Execution continues here after far call
+
+; Segment descriptor manipulation (system programming)
+descriptor_access:
+    ; Global Descriptor Table (GDT) entry format
+    ; Bytes 0-1: Limit (15-0)
+    ; Bytes 2-3: Base (15-0)
+    ; Byte 4: Base (23-16)
+    ; Byte 5: Access rights
+    ; Byte 6: Limit (19-16) + Flags
+    ; Byte 7: Base (31-24)
+    
+    ; Create a data segment descriptor
+    ; Base = 0x00100000, Limit = 0xFFFFF, 32-bit, 4KB granularity
+    data_descriptor:
+        dw 0xFFFF              ; Limit (15-0)
+        dw 0x0000              ; Base (15-0)
+        db 0x10                ; Base (23-16)
+        db 0x92                ; Access: Present, DPL=0, Data, R/W
+        db 0xCF                ; Limit (19-16) + Flags: 4KB, 32-bit
+        db 0x00                ; Base (31-24)
+    
+    ; Load descriptor into GDT (requires supervisor privilege)
+    ; lgdt [gdt_descriptor]   ; Load GDT register
+    ; mov ax, data_selector   ; Selector for our descriptor
+    ; mov ds, ax              ; Load segment register
+
+; Exception handling with segments
+exception_handling:
+    ; Interrupt Descriptor Table (IDT) entries
+    ; Each entry: [Offset(15-0)][Selector][Flags][Offset(31-16)]
+    
+    ; Create interrupt gate descriptor
+    interrupt_gate:
+        dw handler_offset and 0xFFFF    ; Offset (15-0)
+        dw code_selector                ; Code segment selector
+        db 0                            ; Reserved
+        db 0x8E                         ; Flags: Present, DPL=0, 32-bit interrupt gate
+        dw handler_offset shr 16        ; Offset (31-16)
+
+; Memory model implications
+memory_models:
+    ; Small model (16-bit): Code + Data < 64KB each
+    ; Compact model (16-bit): Code < 64KB, Data can be multiple segments
+    ; Medium model (16-bit): Code can be multiple segments, Data < 64KB
+    ; Large model (16-bit): Both Code and Data can be multiple segments
+    ; Huge model (16-bit): Like Large but single data items can exceed 64KB
+    
+    ; Flat model (32/64-bit): All segments cover entire address space
+    ; Most modern programs use flat model
+
+string_len = 20
+search_len = 100
+source_string db 'Hello, World!', 0
+dest_string rb 20
+search_buffer rb 100
+search_segment = 0x2000
+procedure_offset = 0x1000
+procedure_segment = 0x3000
+handler_offset = 0x5000
+code_selector = 0x08
+data_selector = 0x10
 ```
 
-#### Operand Types
+### Page 71-75: Control Registers and System State
+
+Control registers manage processor operation modes, memory management, and system-level features. Understanding these registers is crucial for system programming.
+
+**Control Register Architecture:**
 ```assembly
-; Register operands
-mov eax, ebx        ; 32-bit registers
-mov ax, bx          ; 16-bit registers  
-mov al, bl          ; 8-bit registers
+; ============================================================================
+; CONTROL REGISTERS (CR0, CR1, CR2, CR3, CR4, CR8)
+; ============================================================================
 
-; Immediate operands
-mov eax, 100        ; Immediate value
-add ebx, 0x50       ; Hexadecimal immediate
+; CR0 - System Control Register
+; Bit 31: PG (Paging Enable)
+; Bit 30: CD (Cache Disable) 
+; Bit 29: NW (Not Write-through)
+; Bit 18: AM (Alignment Mask)
+; Bit 16: WP (Write Protect)
+; Bit 5: NE (Numeric Error)
+; Bit 4: ET (Extension Type)
+; Bit 3: TS (Task Switched)
+; Bit 2: EM (Emulation)
+; Bit 1: MP (Monitor Coprocessor)
+; Bit 0: PE (Protection Enable)
 
-; Memory operands
-mov eax, [variable] ; Direct memory access
-mov ebx, [esi]      ; Indirect memory access
-mov ecx, [esi + 4]  ; Indexed memory access
-mov edx, [esi + edi * 2 + 8]  ; Complex addressing
+CR0_PE = 1 shl 0                   ; Protection Enable
+CR0_MP = 1 shl 1                   ; Monitor Coprocessor
+CR0_EM = 1 shl 2                   ; Emulation
+CR0_TS = 1 shl 3                   ; Task Switched
+CR0_ET = 1 shl 4                   ; Extension Type
+CR0_NE = 1 shl 5                   ; Numeric Error
+CR0_WP = 1 shl 16                  ; Write Protect
+CR0_AM = 1 shl 18                  ; Alignment Mask
+CR0_NW = 1 shl 29                  ; Not Write-through
+CR0_CD = 1 shl 30                  ; Cache Disable
+CR0_PG = 1 shl 31                  ; Paging Enable
 
-; Effective address
-lea eax, [string_var]     ; Load effective address
-lea ebx, [esi + edi * 4]  ; Calculate address
+control_register_management:
+    ; Reading control registers (requires supervisor privilege)
+    mov eax, cr0                   ; Read CR0
+    mov ebx, cr2                   ; Read CR2 (page fault address)
+    mov ecx, cr3                   ; Read CR3 (page directory base)
+    mov edx, cr4                   ; Read CR4 (extended features)
+    
+    ; Modifying control registers
+    mov eax, cr0
+    or eax, CR0_PG                 ; Enable paging
+    mov cr0, eax                   ; Write back to CR0
+    
+    ; Enable specific features
+    mov eax, cr0
+    or eax, CR0_PE or CR0_PG       ; Enable protection and paging
+    and eax, not CR0_CD            ; Enable cache
+    mov cr0, eax
+
+; CR2 - Page Fault Linear Address
+page_fault_handling:
+    ; CR2 contains the linear address that caused the page fault
+    ; This is set automatically by the processor
+    
+    ; In page fault handler:
+    mov eax, cr2                   ; Get faulting address
+    ; Process page fault based on address in EAX
+
+; CR3 - Page Directory Base Register
+page_directory_management:
+    ; CR3 contains physical address of page directory
+    ; Bits 31-12: Page Directory Base Address
+    ; Bits 11-5: Reserved (must be 0)
+    ; Bit 4: PCD (Page-level Cache Disable)
+    ; Bit 3: PWT (Page-level Write-Through)
+    ; Bits 2-0: Reserved (must be 0)
+    
+    ; Switch page directories (change address space)
+    mov eax, new_page_directory    ; Physical address
+    mov cr3, eax                   ; Switch address space
+    
+    ; Flush TLB by reloading CR3
+    mov eax, cr3
+    mov cr3, eax                   ; Reload forces TLB flush
+
+; CR4 - Extended Feature Control
+; Bit 21: SMEP (Supervisor Mode Execution Prevention)
+; Bit 20: SMAP (Supervisor Mode Access Prevention)
+; Bit 18: OSXSAVE (OS XSAVE/XRSTOR Support)
+; Bit 17: PCIDE (Process Context Identifiers)
+; Bit 16: FSGSBASE (Enable RDFSBASE/WRFSBASE instructions)
+; Bit 14: SMXE (SMX Enable)
+; Bit 13: VMXE (VMX Enable)
+; Bit 10: OSXMMEXCPT (OS XMM Exception Support)
+; Bit 9: OSFXSR (OS FXSAVE/FXRSTOR Support)
+; Bit 8: PCE (Performance Counter Enable)
+; Bit 7: PGE (Page Global Enable)
+; Bit 6: MCE (Machine Check Enable)
+; Bit 5: PAE (Physical Address Extension)
+; Bit 4: PSE (Page Size Extension)
+; Bit 3: DE (Debugging Extensions)
+; Bit 2: TSD (Time Stamp Disable)
+; Bit 1: PVI (Protected-mode Virtual Interrupts)
+; Bit 0: VME (Virtual 8086 Mode Extensions)
+
+CR4_VME = 1 shl 0                  ; Virtual 8086 Mode Extensions
+CR4_PVI = 1 shl 1                  ; Protected-mode Virtual Interrupts
+CR4_TSD = 1 shl 2                  ; Time Stamp Disable
+CR4_DE = 1 shl 3                   ; Debugging Extensions
+CR4_PSE = 1 shl 4                  ; Page Size Extension
+CR4_PAE = 1 shl 5                  ; Physical Address Extension
+CR4_MCE = 1 shl 6                  ; Machine Check Enable
+CR4_PGE = 1 shl 7                  ; Page Global Enable
+CR4_PCE = 1 shl 8                  ; Performance Counter Enable
+CR4_OSFXSR = 1 shl 9               ; OS FXSAVE/FXRSTOR Support
+CR4_OSXMMEXCPT = 1 shl 10          ; OS XMM Exception Support
+CR4_VMXE = 1 shl 13                ; VMX Enable
+CR4_SMXE = 1 shl 14                ; SMX Enable
+CR4_FSGSBASE = 1 shl 16            ; FSGSBASE Enable
+CR4_PCIDE = 1 shl 17               ; Process Context Identifiers
+CR4_OSXSAVE = 1 shl 18             ; OS XSAVE Support
+CR4_SMAP = 1 shl 20                ; Supervisor Mode Access Prevention
+CR4_SMEP = 1 shl 21                ; Supervisor Mode Execution Prevention
+
+extended_features:
+    ; Enable Physical Address Extension (PAE)
+    mov eax, cr4
+    or eax, CR4_PAE
+    mov cr4, eax
+    
+    ; Enable Page Global Extension
+    mov eax, cr4
+    or eax, CR4_PGE
+    mov cr4, eax
+    
+    ; Enable FXSAVE/FXRSTOR support
+    mov eax, cr4
+    or eax, CR4_OSFXSR
+    mov cr4, eax
+
+; ============================================================================
+; DEBUG REGISTERS (DR0-DR7)
+; ============================================================================
+
+; DR0-DR3: Debug Address Registers (breakpoint addresses)
+; DR4, DR5: Reserved (aliased to DR6, DR7 in some cases)
+; DR6: Debug Status Register
+; DR7: Debug Control Register
+
+debug_register_usage:
+    ; Set hardware breakpoint
+    mov eax, breakpoint_address    ; Address to break on
+    mov dr0, eax                   ; Set first breakpoint register
+    
+    ; Configure breakpoint in DR7
+    ; Bits 1-0: L0, G0 (Local/Global enable for DR0)
+    ; Bits 3-2: L1, G1 (Local/Global enable for DR1)
+    ; Bits 17-16: R/W0 (Read/Write condition for DR0)
+    ; Bits 19-18: LEN0 (Length condition for DR0)
+    
+    mov eax, dr7
+    or eax, 0x00000001             ; Enable DR0 locally
+    or eax, 0x00030000             ; Break on read/write, 4-byte length
+    mov dr7, eax
+    
+    ; Check debug status
+    mov eax, dr6                   ; Read debug status
+    test eax, 0x0001               ; Check if DR0 caused break
+    jnz .breakpoint_hit
+
+.breakpoint_hit:
+    ; Clear debug status
+    xor eax, eax
+    mov dr6, eax                   ; Clear debug status register
+
+; ============================================================================
+; MODEL SPECIFIC REGISTERS (MSRs)
+; ============================================================================
+
+; MSRs are accessed via RDMSR/WRMSR instructions
+; Common MSRs:
+; 0x1B: APIC Base Address
+; 0x2FF: IA32_MTRR_DEF_TYPE
+; 0x277: IA32_PAT (Page Attribute Table)
+
+MSR_APIC_BASE = 0x1B
+MSR_PAT = 0x277
+MSR_EFER = 0xC0000080               ; Extended Feature Enable Register
+
+msr_operations:
+    ; Read MSR
+    mov ecx, MSR_APIC_BASE         ; MSR number in ECX
+    rdmsr                          ; Read MSR to EDX:EAX
+    
+    ; Modify and write back
+    or eax, 0x800                  ; Set APIC enable bit
+    wrmsr                          ; Write EDX:EAX to MSR
+    
+    ; Enable Long Mode (x86-64)
+    mov ecx, MSR_EFER
+    rdmsr
+    or eax, 0x100                  ; Set LME (Long Mode Enable) bit
+    wrmsr
+
+; ============================================================================
+; SYSTEM FLAGS AND STATE MANAGEMENT
+; ============================================================================
+
+system_state_management:
+    ; Save complete processor state
+    pushfd                         ; Save flags
+    push eax                       ; Save general registers
+    push ebx
+    push ecx
+    push edx
+    push esi
+    push edi
+    push ebp
+    
+    ; Critical section code
+    cli                            ; Disable interrupts
+    ; ... atomic operations ...
+    sti                            ; Re-enable interrupts
+    
+    ; Restore processor state
+    pop ebp                        ; Restore registers
+    pop edi
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    popfd                          ; Restore flags
+
+; Task State Segment (TSS) management
+tss_management:
+    ; TSS contains processor state for task switching
+    ; In modern systems, primarily used for stack switching
+    
+    ; Load Task Register
+    mov ax, tss_selector           ; TSS descriptor selector
+    ltr ax                         ; Load Task Register
+
+; Global/Local Descriptor Table management
+descriptor_table_management:
+    ; GDT management
+    lgdt [gdt_descriptor]          ; Load Global Descriptor Table
+    
+    ; LDT management  
+    mov ax, ldt_selector           ; LDT descriptor selector
+    lldt ax                        ; Load Local Descriptor Table
+    
+    ; IDT management
+    lidt [idt_descriptor]          ; Load Interrupt Descriptor Table
+
+new_page_directory dd 0x100000
+breakpoint_address dd 0x401000
+tss_selector = 0x28
+ldt_selector = 0x30
+
+; Descriptor table structures
+gdt_descriptor:
+    dw gdt_end - gdt_start - 1     ; GDT limit
+    dd gdt_start                   ; GDT base address
+
+idt_descriptor:
+    dw idt_end - idt_start - 1     ; IDT limit
+    dd idt_start                   ; IDT base address
+
+gdt_start:
+    ; GDT entries would be defined here
+    rb 8 * 256                     ; Space for 256 descriptors
+gdt_end:
+
+idt_start:
+    ; IDT entries would be defined here
+    rb 8 * 256                     ; Space for 256 interrupt descriptors
+idt_end:
 ```
+
+This completes Chapter 5 with comprehensive coverage of registers and processor state management. The content provides professional-level detail about register architecture, system programming, and advanced processor features.
 
 ## Data Types and Memory Organization
 
