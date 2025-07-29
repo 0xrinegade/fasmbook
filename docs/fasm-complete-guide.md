@@ -1131,3 +1131,2355 @@ tail_call_example:
     jmp other_function  ; Jump instead of call (tail call)
 ```
 
+
+## Procedures and Stack Management
+
+### Stack Frame Management
+
+#### Understanding the Stack
+```assembly
+; Stack grows downward in memory
+; ESP points to top of stack (lowest address)
+; EBP typically used as frame pointer
+
+; Stack operations
+push eax        ; Equivalent to: sub esp, 4; mov [esp], eax
+pop ebx         ; Equivalent to: mov ebx, [esp]; add esp, 4
+
+; Multiple push/pop
+pushad          ; Push all general registers (EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI)
+popad           ; Pop all general registers
+
+pushfd          ; Push flags register
+popfd           ; Pop flags register
+
+; 16-bit versions
+pusha           ; Push all 16-bit registers
+popa            ; Pop all 16-bit registers
+```
+
+#### Standard Function Prologue and Epilogue
+```assembly
+function_template:
+    ; Standard prologue
+    push ebp        ; Save caller's frame pointer
+    mov ebp, esp    ; Establish new frame pointer
+    sub esp, 20     ; Allocate 20 bytes for local variables
+    
+    ; Save callee-saved registers if used
+    push ebx
+    push esi
+    push edi
+    
+    ; Function body
+    ; Local variables accessed as [ebp - offset]
+    ; Parameters accessed as [ebp + offset]
+    
+    ; Function result typically in EAX
+    mov eax, return_value
+    
+    ; Standard epilogue
+    pop edi         ; Restore callee-saved registers
+    pop esi
+    pop ebx
+    
+    mov esp, ebp    ; Deallocate local variables
+    pop ebp         ; Restore caller's frame pointer
+    ret             ; Return to caller
+
+; Accessing parameters and local variables
+function_with_locals:
+    push ebp
+    mov ebp, esp
+    sub esp, 12     ; Allocate space for 3 local variables
+    
+    ; Parameter access (assuming stdcall)
+    ; [ebp + 8]  = first parameter
+    ; [ebp + 12] = second parameter
+    ; [ebp + 16] = third parameter
+    
+    ; Local variable access
+    ; [ebp - 4]  = first local variable
+    ; [ebp - 8]  = second local variable
+    ; [ebp - 12] = third local variable
+    
+    mov eax, [ebp + 8]      ; Get first parameter
+    mov [ebp - 4], eax      ; Store in first local variable
+    
+    mov esp, ebp
+    pop ebp
+    ret 12          ; Return and clean 3 parameters (12 bytes)
+```
+
+#### Advanced Stack Techniques
+```assembly
+; Variable argument functions (like printf)
+variable_args_function:
+    push ebp
+    mov ebp, esp
+    
+    ; First parameter is count of arguments
+    mov ecx, [ebp + 8]      ; Get argument count
+    lea esi, [ebp + 12]     ; Point to first variable argument
+    
+.process_args:
+    test ecx, ecx
+    jz .done
+    
+    mov eax, [esi]          ; Get current argument
+    add esi, 4              ; Point to next argument
+    
+    ; Process argument in EAX
+    push ecx                ; Save counter
+    push esi                ; Save argument pointer
+    call process_argument
+    pop esi                 ; Restore argument pointer
+    pop ecx                 ; Restore counter
+    
+    dec ecx
+    jmp .process_args
+    
+.done:
+    pop ebp
+    ret
+
+; Stack-based string builder
+string_builder:
+    push ebp
+    mov ebp, esp
+    sub esp, 1024           ; Allocate 1KB buffer on stack
+    
+    lea edi, [ebp - 1024]   ; Point to buffer start
+    xor ecx, ecx            ; Buffer position
+    
+    ; Add string to buffer
+    push "Hello, "
+    call add_to_buffer
+    
+    push "World!"
+    call add_to_buffer
+    
+    ; Null terminate
+    mov byte [edi + ecx], 0
+    
+    ; Copy to heap-allocated memory
+    inc ecx                 ; Include null terminator
+    push ecx
+    call malloc
+    add esp, 4
+    
+    push ecx                ; Length
+    push edi                ; Source (stack buffer)
+    push eax                ; Destination (heap buffer)
+    call memcpy
+    add esp, 12
+    
+    ; EAX contains pointer to heap string
+    mov esp, ebp
+    pop ebp
+    ret
+```
+
+### Calling Conventions
+
+#### CDECL Convention
+```assembly
+; C Declaration calling convention
+; - Parameters pushed right to left
+; - Caller cleans up stack
+; - Return value in EAX
+; - Caller-saved: EAX, ECX, EDX
+; - Callee-saved: EBX, ESI, EDI, EBP
+
+cdecl_function:
+    ; Caller code
+    push 30         ; Third parameter
+    push 20         ; Second parameter  
+    push 10         ; First parameter
+    call my_function
+    add esp, 12     ; Caller cleans stack (3 * 4 bytes)
+    
+my_function:
+    ; Function code
+    push ebp
+    mov ebp, esp
+    
+    mov eax, [ebp + 8]      ; First parameter (10)
+    add eax, [ebp + 12]     ; Second parameter (20)
+    add eax, [ebp + 16]     ; Third parameter (30)
+    ; Result (60) in EAX
+    
+    pop ebp
+    ret                     ; Don't clean stack - caller does it
+```
+
+#### STDCALL Convention  
+```assembly
+; Standard Call convention (Windows API)
+; - Parameters pushed right to left
+; - Callee cleans up stack
+; - Return value in EAX
+; - Same register preservation as CDECL
+
+stdcall_function:
+    ; Caller code
+    push 30         ; Third parameter
+    push 20         ; Second parameter
+    push 10         ; First parameter
+    call my_function
+    ; No stack cleanup needed - callee does it
+    
+my_function:
+    push ebp
+    mov ebp, esp
+    
+    mov eax, [ebp + 8]      ; First parameter
+    add eax, [ebp + 12]     ; Second parameter
+    add eax, [ebp + 16]     ; Third parameter
+    
+    pop ebp
+    ret 12                  ; Clean 3 parameters (12 bytes)
+```
+
+#### FASTCALL Convention
+```assembly
+; Fast Call convention
+; - First two parameters in ECX, EDX
+; - Remaining parameters on stack (right to left)
+; - Callee cleans up stack
+; - Return value in EAX
+
+fastcall_function:
+    ; Caller code
+    push 40         ; Fourth parameter
+    push 30         ; Third parameter
+    mov edx, 20     ; Second parameter in EDX
+    mov ecx, 10     ; First parameter in ECX
+    call my_function
+    ; No stack cleanup needed
+    
+my_function:
+    push ebp
+    mov ebp, esp
+    
+    ; ECX = first parameter (10)
+    ; EDX = second parameter (20)
+    ; [ebp + 8] = third parameter (30)
+    ; [ebp + 12] = fourth parameter (40)
+    
+    add ecx, edx            ; Add first two parameters
+    add ecx, [ebp + 8]      ; Add third parameter
+    add ecx, [ebp + 12]     ; Add fourth parameter
+    mov eax, ecx            ; Return sum in EAX
+    
+    pop ebp
+    ret 8                   ; Clean only stack parameters (2 * 4 bytes)
+```
+
+### Recursive Functions
+
+#### Basic Recursion
+```assembly
+; Factorial function: n! = n * (n-1)!
+factorial:
+    push ebp
+    mov ebp, esp
+    
+    mov eax, [ebp + 8]      ; Get parameter n
+    
+    ; Base case: if n <= 1, return 1
+    cmp eax, 1
+    jle .base_case
+    
+    ; Recursive case: n * factorial(n-1)
+    push eax                ; Save n
+    dec eax                 ; n - 1
+    push eax                ; Pass n-1 as parameter
+    call factorial          ; Recursive call
+    add esp, 4              ; Clean stack
+    
+    pop ecx                 ; Restore n
+    mul ecx                 ; EAX = factorial(n-1) * n
+    jmp .done
+    
+.base_case:
+    mov eax, 1              ; Return 1
+    
+.done:
+    pop ebp
+    ret
+
+; Fibonacci function: fib(n) = fib(n-1) + fib(n-2)
+fibonacci:
+    push ebp
+    mov ebp, esp
+    
+    mov eax, [ebp + 8]      ; Get parameter n
+    
+    ; Base cases
+    cmp eax, 0
+    je .return_zero
+    cmp eax, 1
+    je .return_one
+    
+    ; Recursive case: fib(n-1) + fib(n-2)
+    push eax                ; Save n
+    
+    dec eax                 ; n - 1
+    push eax
+    call fibonacci          ; fib(n-1)
+    add esp, 4
+    
+    pop ecx                 ; Restore n
+    push eax                ; Save fib(n-1)
+    
+    sub ecx, 2              ; n - 2
+    push ecx
+    call fibonacci          ; fib(n-2)
+    add esp, 4
+    
+    pop ecx                 ; Get fib(n-1)
+    add eax, ecx            ; fib(n-1) + fib(n-2)
+    jmp .done
+    
+.return_zero:
+    xor eax, eax
+    jmp .done
+    
+.return_one:
+    mov eax, 1
+    
+.done:
+    pop ebp
+    ret
+```
+
+#### Tail Recursion Optimization
+```assembly
+; Tail recursive factorial with accumulator
+; factorial_tail(n, acc) = n == 0 ? acc : factorial_tail(n-1, n*acc)
+factorial_tail:
+    push ebp
+    mov ebp, esp
+    
+    mov eax, [ebp + 8]      ; Get n
+    mov ecx, [ebp + 12]     ; Get accumulator
+    
+    ; Base case: if n == 0, return accumulator
+    test eax, eax
+    jz .return_acc
+    
+    ; Tail recursive case - can be optimized to loop
+    mul ecx                 ; n * acc
+    dec [ebp + 8]           ; n - 1
+    mov [ebp + 12], eax     ; Update accumulator
+    
+    ; Instead of recursive call, loop back
+    jmp factorial_tail      ; Tail call optimization
+    
+.return_acc:
+    mov eax, ecx            ; Return accumulator
+    pop ebp
+    ret
+
+; Convert tail recursion to iterative loop
+factorial_iterative:
+    push ebp
+    mov ebp, esp
+    
+    mov eax, [ebp + 8]      ; Get n
+    mov ecx, 1              ; Accumulator = 1
+    
+.loop:
+    test eax, eax           ; Check if n == 0
+    jz .done
+    
+    mul ecx                 ; acc = n * acc
+    mov ecx, eax            ; Update accumulator
+    mov eax, [ebp + 8]      ; Restore n
+    dec eax                 ; n = n - 1
+    mov [ebp + 8], eax      ; Update n
+    jmp .loop
+    
+.done:
+    mov eax, ecx            ; Return accumulator
+    pop ebp
+    ret
+```
+
+## String Operations and Text Processing
+
+### Basic String Operations
+
+#### String Length Calculation
+```assembly
+; Calculate length of null-terminated string
+strlen:
+    push edi
+    mov edi, [esp + 8]      ; Get string pointer
+    xor eax, eax            ; Clear counter
+    
+.loop:
+    cmp byte [edi + eax], 0 ; Check for null terminator
+    je .done
+    inc eax                 ; Increment counter
+    jmp .loop
+    
+.done:
+    pop edi
+    ret
+
+; Optimized version using string instructions
+strlen_fast:
+    push edi
+    mov edi, [esp + 8]      ; Get string pointer
+    xor eax, eax            ; Search for null (0)
+    mov ecx, 0xFFFFFFFF     ; Maximum count
+    repne scasb             ; Scan for AL (0) in string
+    not ecx                 ; Convert to positive count
+    dec ecx                 ; Adjust for null terminator
+    mov eax, ecx            ; Return length
+    pop edi
+    ret
+
+; SIMD-optimized string length (SSE2)
+strlen_simd:
+    push esi
+    mov esi, [esp + 8]      ; Get string pointer
+    mov eax, esi
+    and eax, 0xF            ; Check alignment
+    jz .aligned
+    
+    ; Handle unaligned start
+.unaligned_loop:
+    cmp byte [esi], 0
+    je .found_end
+    inc esi
+    test esi, 0xF           ; Check if aligned now
+    jnz .unaligned_loop
+    
+.aligned:
+    pxor xmm0, xmm0         ; Clear XMM0 (contains zeros)
+    
+.simd_loop:
+    movdqa xmm1, [esi]      ; Load 16 bytes
+    pcmpeqb xmm1, xmm0      ; Compare with zeros
+    pmovmskb eax, xmm1      ; Get mask of equal bytes
+    test eax, eax           ; Any zeros found?
+    jnz .found_zero_in_chunk
+    
+    add esi, 16             ; Next 16 bytes
+    jmp .simd_loop
+    
+.found_zero_in_chunk:
+    bsf eax, eax            ; Find first set bit (zero position)
+    add esi, eax            ; Add offset to string start
+    
+.found_end:
+    mov eax, esi
+    sub eax, [esp + 8]      ; Calculate length
+    pop esi
+    ret
+```
+
+#### String Copy Operations
+```assembly
+; Basic string copy
+strcpy:
+    push esi
+    push edi
+    
+    mov edi, [esp + 12]     ; Destination
+    mov esi, [esp + 16]     ; Source
+    
+.loop:
+    lodsb                   ; Load byte from [ESI] to AL, increment ESI
+    stosb                   ; Store AL to [EDI], increment EDI
+    test al, al             ; Check if null terminator
+    jnz .loop
+    
+    mov eax, [esp + 12]     ; Return destination pointer
+    pop edi
+    pop esi
+    ret
+
+; Safe string copy with length limit
+strncpy:
+    push esi
+    push edi
+    push ebx
+    
+    mov edi, [esp + 16]     ; Destination
+    mov esi, [esp + 20]     ; Source
+    mov ecx, [esp + 24]     ; Maximum length
+    xor ebx, ebx            ; Null found flag
+    
+.loop:
+    test ecx, ecx           ; Check remaining length
+    jz .pad_zeros
+    
+    lodsb                   ; Load source byte
+    stosb                   ; Store to destination
+    dec ecx
+    
+    test al, al             ; Check for null
+    jz .pad_zeros
+    jmp .loop
+    
+.pad_zeros:
+    ; Pad remaining space with zeros
+    xor al, al
+    rep stosb
+    
+    mov eax, [esp + 16]     ; Return destination
+    pop ebx
+    pop edi
+    pop esi
+    ret
+
+; High-performance string copy using SIMD
+strcpy_simd:
+    push esi
+    push edi
+    
+    mov edi, [esp + 12]     ; Destination
+    mov esi, [esp + 16]     ; Source
+    
+    ; Check alignment
+    mov eax, esi
+    or eax, edi
+    test eax, 0xF
+    jnz .byte_copy          ; Use byte copy if not 16-byte aligned
+    
+    pxor xmm0, xmm0         ; Zero register for comparison
+    
+.simd_loop:
+    movdqa xmm1, [esi]      ; Load 16 bytes from source
+    movdqa [edi], xmm1      ; Store to destination
+    
+    pcmpeqb xmm1, xmm0      ; Check for null bytes
+    pmovmskb eax, xmm1      ; Get mask
+    test eax, eax
+    jnz .found_null
+    
+    add esi, 16
+    add edi, 16
+    jmp .simd_loop
+    
+.found_null:
+    ; Handle the final bytes with null terminator
+    sub esi, 16
+    sub edi, 16
+    
+.final_bytes:
+    lodsb
+    stosb
+    test al, al
+    jnz .final_bytes
+    jmp .done
+    
+.byte_copy:
+    lodsb
+    stosb
+    test al, al
+    jnz .byte_copy
+    
+.done:
+    mov eax, [esp + 12]     ; Return destination
+    pop edi
+    pop esi
+    ret
+```
+
+#### String Comparison
+```assembly
+; Compare two null-terminated strings
+strcmp:
+    push esi
+    push edi
+    
+    mov esi, [esp + 12]     ; First string
+    mov edi, [esp + 16]     ; Second string
+    
+.loop:
+    lodsb                   ; Load byte from first string
+    scasb                   ; Compare with byte from second string
+    jne .not_equal          ; If not equal, exit
+    test al, al             ; Check if end of string
+    jnz .loop
+    
+    ; Strings are equal
+    xor eax, eax
+    jmp .done
+    
+.not_equal:
+    sbb eax, eax            ; EAX = -1 if first < second
+    or eax, 1               ; EAX = 1 if first > second
+    
+.done:
+    pop edi
+    pop esi
+    ret
+
+; Compare strings with length limit
+strncmp:
+    push esi
+    push edi
+    push ecx
+    
+    mov esi, [esp + 16]     ; First string
+    mov edi, [esp + 20]     ; Second string
+    mov ecx, [esp + 24]     ; Maximum length
+    
+    test ecx, ecx           ; Check if length is zero
+    jz .equal
+    
+.loop:
+    lodsb                   ; Load from first string
+    scasb                   ; Compare with second string
+    jne .not_equal
+    test al, al             ; Check end of string
+    jz .equal
+    loop .loop              ; Continue for ECX bytes
+    
+.equal:
+    xor eax, eax
+    jmp .done
+    
+.not_equal:
+    sbb eax, eax
+    or eax, 1
+    
+.done:
+    pop ecx
+    pop edi
+    pop esi
+    ret
+
+; Case-insensitive string comparison
+stricmp:
+    push esi
+    push edi
+    
+    mov esi, [esp + 12]     ; First string
+    mov edi, [esp + 16]     ; Second string
+    
+.loop:
+    lodsb                   ; Load byte from first string
+    mov ah, [edi]           ; Load byte from second string
+    inc edi
+    
+    ; Convert both to lowercase
+    call to_lowercase       ; Convert AL to lowercase
+    xchg al, ah
+    call to_lowercase       ; Convert AH to lowercase
+    xchg al, ah
+    
+    cmp al, ah              ; Compare converted bytes
+    jne .not_equal
+    test al, al             ; Check end of string
+    jnz .loop
+    
+    xor eax, eax            ; Equal
+    jmp .done
+    
+.not_equal:
+    sbb eax, eax
+    or eax, 1
+    
+.done:
+    pop edi
+    pop esi
+    ret
+
+to_lowercase:
+    cmp al, 'A'
+    jb .done
+    cmp al, 'Z'
+    ja .done
+    add al, 32              ; Convert to lowercase
+.done:
+    ret
+```
+
+### Advanced String Processing
+
+#### String Search and Pattern Matching
+```assembly
+; Find substring in string (strstr)
+strstr:
+    push esi
+    push edi
+    push ebx
+    
+    mov esi, [esp + 16]     ; Haystack (string to search in)
+    mov edi, [esp + 20]     ; Needle (substring to find)
+    
+    ; Get length of needle
+    push edi
+    call strlen
+    add esp, 4
+    mov ebx, eax            ; EBX = needle length
+    
+    test ebx, ebx           ; Empty needle?
+    jz .found               ; Return haystack if needle is empty
+    
+.search_loop:
+    mov al, [esi]           ; Get current haystack character
+    test al, al             ; End of haystack?
+    jz .not_found
+    
+    cmp al, [edi]           ; Does it match first needle character?
+    jne .next_char
+    
+    ; Potential match - compare full needle
+    push esi                ; Save haystack position
+    push edi                ; Save needle start
+    mov ecx, ebx            ; Needle length
+    
+.compare_loop:
+    lodsb                   ; Load haystack character
+    scasb                   ; Compare with needle character
+    jne .no_match
+    loop .compare_loop
+    
+    ; Full match found
+    pop edi                 ; Clean stack
+    pop eax                 ; Return match position
+    jmp .done
+    
+.no_match:
+    pop edi                 ; Restore needle start
+    pop esi                 ; Restore haystack position
+    
+.next_char:
+    inc esi                 ; Next haystack character
+    jmp .search_loop
+    
+.not_found:
+    xor eax, eax            ; Return NULL
+    jmp .done
+    
+.found:
+    mov eax, esi            ; Return haystack start
+    
+.done:
+    pop ebx
+    pop edi
+    pop esi
+    ret
+
+; Boyer-Moore string search algorithm (simplified)
+boyer_moore_search:
+    push ebp
+    mov ebp, esp
+    sub esp, 512            ; Space for bad character table
+    push esi
+    push edi
+    push ebx
+    
+    mov esi, [ebp + 8]      ; Text
+    mov edi, [ebp + 12]     ; Pattern
+    
+    ; Calculate pattern length
+    push edi
+    call strlen
+    add esp, 4
+    mov ebx, eax            ; EBX = pattern length
+    
+    ; Build bad character table
+    lea ecx, [ebp - 512]    ; Bad character table
+    mov eax, ebx            ; Default skip distance
+    mov edx, 256            ; Initialize table
+    
+.init_table:
+    mov [ecx + edx - 1], eax
+    dec edx
+    jnz .init_table
+    
+    ; Fill actual character positions
+    xor edx, edx            ; Position counter
+    
+.fill_table:
+    cmp edx, ebx
+    jge .search_start
+    
+    movzx eax, byte [edi + edx]  ; Get pattern character
+    sub ebx, edx            ; Distance from end
+    dec ebx
+    mov [ecx + eax], ebx    ; Store skip distance
+    add ebx, edx
+    inc edx
+    jmp .fill_table
+    
+.search_start:
+    mov edx, ebx            ; Start at pattern length offset
+    dec edx
+    
+.search_loop:
+    mov al, [esi + edx]     ; Text character
+    test al, al             ; End of text?
+    jz .not_found
+    
+    mov ah, [edi + ebx - 1] ; Last pattern character
+    cmp al, ah
+    jne .skip
+    
+    ; Potential match - check full pattern backwards
+    push edx                ; Save text position
+    mov ecx, ebx            ; Pattern length
+    
+.backward_check:
+    dec ecx
+    jl .found_match
+    
+    mov al, [esi + edx]
+    cmp al, [edi + ecx]
+    jne .no_match_skip
+    
+    dec edx
+    jmp .backward_check
+    
+.found_match:
+    pop edx                 ; Get text position
+    inc edx                 ; Adjust for match start
+    lea eax, [esi + edx]    ; Return match position
+    jmp .done
+    
+.no_match_skip:
+    pop edx                 ; Restore text position
+    
+.skip:
+    movzx eax, byte [esi + edx]  ; Current text character
+    lea ecx, [ebp - 512]    ; Bad character table
+    add edx, [ecx + eax]    ; Skip using bad character table
+    jmp .search_loop
+    
+.not_found:
+    xor eax, eax
+    
+.done:
+    pop ebx
+    pop edi
+    pop esi
+    mov esp, ebp
+    pop ebp
+    ret
+```
+
+#### String Tokenization
+```assembly
+; Split string by delimiter (strtok)
+strtok:
+    push esi
+    push edi
+    push ebx
+    
+    mov esi, [esp + 16]     ; String to tokenize (or NULL for continue)
+    mov edi, [esp + 20]     ; Delimiter characters
+    
+    ; Use static variable for continued tokenization
+    test esi, esi
+    jnz .new_string
+    mov esi, [strtok_ptr]   ; Continue from saved position
+    test esi, esi
+    jz .no_more_tokens
+    
+.new_string:
+    ; Skip leading delimiters
+.skip_delimiters:
+    lodsb                   ; Load character
+    test al, al             ; End of string?
+    jz .no_more_tokens
+    
+    push esi                ; Save position
+    push eax                ; Save character
+    mov ebx, edi            ; Delimiter string
+    
+.check_delimiter:
+    mov ah, [ebx]           ; Load delimiter
+    test ah, ah             ; End of delimiter string?
+    jz .not_delimiter
+    
+    cmp al, ah              ; Is current char a delimiter?
+    je .is_delimiter
+    
+    inc ebx
+    jmp .check_delimiter
+    
+.is_delimiter:
+    pop eax                 ; Clean stack
+    pop esi                 ; Restore position
+    jmp .skip_delimiters    ; Continue skipping
+    
+.not_delimiter:
+    pop eax                 ; Restore character
+    pop esi                 ; Restore position
+    dec esi                 ; Back to token start
+    
+    ; Found token start
+    mov eax, esi            ; Save token start
+    
+    ; Find token end
+.find_token_end:
+    lodsb                   ; Load character
+    test al, al             ; End of string?
+    jz .end_of_string
+    
+    push esi                ; Save position
+    push eax                ; Save character
+    mov ebx, edi            ; Delimiter string
+    
+.check_end_delimiter:
+    mov ah, [ebx]           ; Load delimiter
+    test ah, ah             ; End of delimiter string?
+    jz .not_end_delimiter
+    
+    cmp al, ah              ; Is current char a delimiter?
+    je .found_delimiter
+    
+    inc ebx
+    jmp .check_end_delimiter
+    
+.found_delimiter:
+    pop eax                 ; Clean stack
+    pop esi                 ; Restore position
+    mov byte [esi - 1], 0   ; Null-terminate token
+    mov [strtok_ptr], esi   ; Save position for next call
+    jmp .return_token
+    
+.not_end_delimiter:
+    pop eax                 ; Restore character
+    pop esi                 ; Restore position
+    jmp .find_token_end     ; Continue searching
+    
+.end_of_string:
+    mov dword [strtok_ptr], 0  ; No more tokens
+    
+.return_token:
+    ; EAX already contains token start
+    jmp .done
+    
+.no_more_tokens:
+    xor eax, eax            ; Return NULL
+    
+.done:
+    pop ebx
+    pop edi
+    pop esi
+    ret
+
+section '.bss'
+strtok_ptr dd ?             ; Static pointer for continued tokenization
+```
+
+#### String Formatting and Conversion
+```assembly
+; Convert integer to string
+itoa:
+    push ebp
+    mov ebp, esp
+    push esi
+    push edi
+    push ebx
+    
+    mov eax, [ebp + 8]      ; Integer value
+    mov edi, [ebp + 12]     ; Buffer
+    mov ebx, [ebp + 16]     ; Base (2, 8, 10, 16)
+    
+    test eax, eax           ; Check sign
+    jns .positive
+    
+    ; Handle negative numbers (only for base 10)
+    cmp ebx, 10
+    jne .positive
+    
+    mov byte [edi], '-'     ; Add minus sign
+    inc edi
+    neg eax                 ; Make positive
+    
+.positive:
+    ; Convert digits in reverse order
+    mov esi, edi            ; Save buffer start
+    
+.convert_loop:
+    xor edx, edx            ; Clear remainder
+    div ebx                 ; EAX = quotient, EDX = remainder
+    
+    ; Convert remainder to character
+    cmp edx, 9
+    jle .decimal_digit
+    
+    ; Hexadecimal digit A-F
+    add edx, 'A' - 10
+    jmp .store_digit
+    
+.decimal_digit:
+    add edx, '0'
+    
+.store_digit:
+    mov [edi], dl           ; Store digit
+    inc edi
+    
+    test eax, eax           ; More digits?
+    jnz .convert_loop
+    
+    ; Null terminate
+    mov byte [edi], 0
+    
+    ; Reverse the string (excluding sign)
+    dec edi                 ; Point to last digit
+    
+.reverse_loop:
+    cmp esi, edi            ; Pointers crossed?
+    jge .done
+    
+    mov al, [esi]           ; Swap characters
+    mov ah, [edi]
+    mov [esi], ah
+    mov [edi], al
+    
+    inc esi
+    dec edi
+    jmp .reverse_loop
+    
+.done:
+    mov eax, [ebp + 12]     ; Return buffer pointer
+    pop ebx
+    pop edi
+    pop esi
+    pop ebp
+    ret
+
+; Convert string to integer
+atoi:
+    push esi
+    push ebx
+    
+    mov esi, [esp + 12]     ; String pointer
+    xor eax, eax            ; Result
+    xor ebx, ebx            ; Sign flag
+    
+    ; Skip whitespace
+.skip_whitespace:
+    lodsb
+    cmp al, ' '
+    je .skip_whitespace
+    cmp al, 9               ; Tab
+    je .skip_whitespace
+    cmp al, 10              ; LF
+    je .skip_whitespace
+    cmp al, 13              ; CR
+    je .skip_whitespace
+    
+    ; Check for sign
+    cmp al, '-'
+    jne .check_plus
+    mov ebx, 1              ; Negative
+    lodsb
+    jmp .convert_digits
+    
+.check_plus:
+    cmp al, '+'
+    jne .convert_digits
+    lodsb
+    
+.convert_digits:
+    ; Convert digits
+    cmp al, '0'
+    jb .done
+    cmp al, '9'
+    ja .done
+    
+    sub al, '0'             ; Convert to digit
+    imul eax, 10            ; Multiply result by 10
+    movzx ecx, al           ; Add new digit
+    add eax, ecx
+    
+    lodsb                   ; Next character
+    jmp .convert_digits
+    
+.done:
+    test ebx, ebx           ; Check sign
+    jz .positive
+    neg eax                 ; Make negative
+    
+.positive:
+    pop ebx
+    pop esi
+    ret
+
+; Simple sprintf implementation
+sprintf:
+    push ebp
+    mov ebp, esp
+    push esi
+    push edi
+    push ebx
+    
+    mov edi, [ebp + 8]      ; Output buffer
+    mov esi, [ebp + 12]     ; Format string
+    lea ebx, [ebp + 16]     ; Arguments
+    
+.format_loop:
+    lodsb                   ; Get format character
+    test al, al             ; End of format?
+    jz .done
+    
+    cmp al, '%'             ; Format specifier?
+    jne .regular_char
+    
+    ; Handle format specifier
+    lodsb                   ; Get specifier type
+    
+    cmp al, 'd'             ; Decimal integer
+    je .format_decimal
+    cmp al, 'x'             ; Hexadecimal
+    je .format_hex
+    cmp al, 's'             ; String
+    je .format_string
+    cmp al, 'c'             ; Character
+    je .format_char
+    cmp al, '%'             ; Literal %
+    je .regular_char
+    
+    ; Unknown specifier - just output it
+    jmp .regular_char
+    
+.format_decimal:
+    mov eax, [ebx]          ; Get argument
+    add ebx, 4              ; Next argument
+    
+    push 10                 ; Base 10
+    push edi                ; Buffer
+    push eax                ; Value
+    call itoa
+    add esp, 12
+    
+    ; Find end of converted string
+    call strlen
+    add edi, eax
+    jmp .format_loop
+    
+.format_hex:
+    mov eax, [ebx]          ; Get argument
+    add ebx, 4              ; Next argument
+    
+    push 16                 ; Base 16
+    push edi                ; Buffer
+    push eax                ; Value
+    call itoa
+    add esp, 12
+    
+    call strlen
+    add edi, eax
+    jmp .format_loop
+    
+.format_string:
+    mov ecx, [ebx]          ; Get string pointer
+    add ebx, 4              ; Next argument
+    
+.copy_string:
+    mov al, [ecx]           ; Get string character
+    test al, al             ; End of string?
+    jz .format_loop
+    
+    stosb                   ; Store character
+    inc ecx
+    jmp .copy_string
+    
+.format_char:
+    mov eax, [ebx]          ; Get character argument
+    add ebx, 4              ; Next argument
+    stosb                   ; Store character
+    jmp .format_loop
+    
+.regular_char:
+    stosb                   ; Store regular character
+    jmp .format_loop
+    
+.done:
+    mov al, 0               ; Null terminate
+    stosb
+    
+    mov eax, [ebp + 8]      ; Return buffer pointer
+    pop ebx
+    pop edi
+    pop esi
+    pop ebp
+    ret
+```
+
+## Graphics Programming in Assembly
+
+### VGA Graphics Programming
+
+#### VGA Mode Setup and Basic Operations
+```assembly
+; Set VGA graphics mode 13h (320x200, 256 colors)
+set_vga_mode:
+    mov ax, 0x13            ; VGA mode 13h
+    int 0x10                ; BIOS video interrupt
+    ret
+
+; Set text mode
+set_text_mode:
+    mov ax, 0x03            ; 80x25 text mode
+    int 0x10
+    ret
+
+; Plot pixel in mode 13h
+; Parameters: AL = color, BX = x, CX = y
+plot_pixel:
+    push es
+    push di
+    
+    mov ax, 0xA000          ; VGA memory segment
+    mov es, ax
+    
+    ; Calculate offset: y * 320 + x
+    mov ax, cx              ; Y coordinate
+    mov dx, 320
+    mul dx                  ; AX = Y * 320
+    add ax, bx              ; Add X coordinate
+    mov di, ax              ; DI = offset
+    
+    mov al, [color]         ; Get color
+    stosb                   ; Store pixel
+    
+    pop di
+    pop es
+    ret
+
+; Draw horizontal line
+; Parameters: AL = color, BX = x1, CX = x2, DX = y
+draw_hline:
+    push es
+    push di
+    
+    cmp bx, cx              ; Ensure x1 <= x2
+    jle .ordered
+    xchg bx, cx
+    
+.ordered:
+    mov ax, 0xA000
+    mov es, ax
+    
+    ; Calculate starting offset
+    mov ax, dx              ; Y coordinate
+    mov di, 320
+    mul di                  ; AX = Y * 320
+    add ax, bx              ; Add X1
+    mov di, ax
+    
+    ; Calculate length
+    mov ax, cx
+    sub ax, bx
+    inc ax                  ; Length = x2 - x1 + 1
+    mov cx, ax
+    
+    mov al, [color]         ; Get color
+    rep stosb               ; Fill line
+    
+    pop di
+    pop es
+    ret
+
+; Draw vertical line
+; Parameters: AL = color, BX = x, CX = y1, DX = y2
+draw_vline:
+    push es
+    push di
+    
+    cmp cx, dx              ; Ensure y1 <= y2
+    jle .ordered
+    xchg cx, dx
+    
+.ordered:
+    mov ax, 0xA000
+    mov es, ax
+    
+    ; Calculate starting offset
+    mov ax, cx              ; Y1 coordinate
+    mov di, 320
+    mul di                  ; AX = Y1 * 320
+    add ax, bx              ; Add X
+    mov di, ax
+    
+    mov al, [color]         ; Get color
+    
+.draw_loop:
+    mov [es:di], al         ; Plot pixel
+    add di, 320             ; Next row
+    inc cx                  ; Next Y
+    cmp cx, dx              ; Reached Y2?
+    jle .draw_loop
+    
+    pop di
+    pop es
+    ret
+```
+
+#### Advanced Graphics Algorithms
+```assembly
+; Bresenham's line drawing algorithm
+draw_line:
+    push ebp
+    mov ebp, esp
+    push esi
+    push edi
+    push ebx
+    
+    ; Parameters: x1, y1, x2, y2, color
+    mov eax, [ebp + 8]      ; x1
+    mov ebx, [ebp + 12]     ; y1
+    mov ecx, [ebp + 16]     ; x2
+    mov edx, [ebp + 20]     ; y2
+    
+    ; Calculate deltas
+    mov esi, ecx
+    sub esi, eax            ; dx = x2 - x1
+    mov edi, edx
+    sub edi, ebx            ; dy = y2 - y1
+    
+    ; Determine step directions
+    mov [x_step], 1
+    test esi, esi
+    jns .dx_positive
+    neg esi                 ; Make dx positive
+    mov [x_step], -1
+    
+.dx_positive:
+    mov [y_step], 320       ; Step down one row
+    test edi, edi
+    jns .dy_positive
+    neg edi                 ; Make dy positive
+    mov [y_step], -320      ; Step up one row
+    
+.dy_positive:
+    ; Choose primary axis
+    cmp esi, edi
+    jge .x_major
+    
+    ; Y-major line
+    mov [steps], edi        ; Number of steps
+    mov ecx, esi            ; Minor axis delta
+    shl ecx, 1              ; 2 * dx
+    mov [minor_delta], ecx
+    
+    sub ecx, edi            ; 2 * dx - dy
+    mov [error], ecx
+    
+    mov ecx, esi
+    sub ecx, edi
+    shl ecx, 1              ; 2 * (dx - dy)
+    mov [major_adjust], ecx
+    
+    jmp .draw_y_major
+    
+.x_major:
+    ; X-major line
+    mov [steps], esi        ; Number of steps
+    mov ecx, edi            ; Minor axis delta
+    shl ecx, 1              ; 2 * dy
+    mov [minor_delta], ecx
+    
+    sub ecx, esi            ; 2 * dy - dx
+    mov [error], ecx
+    
+    mov ecx, edi
+    sub ecx, esi
+    shl ecx, 1              ; 2 * (dy - dx)
+    mov [major_adjust], ecx
+    
+.draw_x_major:
+    ; Calculate initial offset
+    mov ecx, ebx            ; Y coordinate
+    mov edx, 320
+    mul edx                 ; Y * 320
+    add eax, [ebp + 8]      ; Add X coordinate
+    
+    mov esi, 0xA000
+    mov es, esi
+    mov edi, eax            ; Offset in video memory
+    
+    mov esi, [steps]        ; Step counter
+    mov al, [ebp + 24]      ; Color
+    
+.x_major_loop:
+    mov [es:edi], al        ; Plot pixel
+    
+    add edi, [x_step]       ; Step in X direction
+    
+    mov ecx, [error]
+    test ecx, ecx
+    js .x_major_continue
+    
+    ; Step in Y direction
+    add edi, [y_step]
+    add ecx, [major_adjust]
+    jmp .x_major_next
+    
+.x_major_continue:
+    add ecx, [minor_delta]
+    
+.x_major_next:
+    mov [error], ecx
+    dec esi
+    jnz .x_major_loop
+    jmp .done
+    
+.draw_y_major:
+    ; Similar to x_major but with axes swapped
+    mov ecx, ebx
+    mov edx, 320
+    mul edx
+    add eax, [ebp + 8]
+    
+    mov esi, 0xA000
+    mov es, esi
+    mov edi, eax
+    
+    mov esi, [steps]
+    mov al, [ebp + 24]
+    
+.y_major_loop:
+    mov [es:edi], al
+    
+    add edi, [y_step]
+    
+    mov ecx, [error]
+    test ecx, ecx
+    js .y_major_continue
+    
+    add edi, [x_step]
+    add ecx, [major_adjust]
+    jmp .y_major_next
+    
+.y_major_continue:
+    add ecx, [minor_delta]
+    
+.y_major_next:
+    mov [error], ecx
+    dec esi
+    jnz .y_major_loop
+    
+.done:
+    pop ebx
+    pop edi
+    pop esi
+    pop ebp
+    ret
+
+section '.bss'
+x_step          dd ?
+y_step          dd ?
+steps           dd ?
+minor_delta     dd ?
+major_adjust    dd ?
+error           dd ?
+color           db ?
+
+; Circle drawing using Bresenham's algorithm
+draw_circle:
+    push ebp
+    mov ebp, esp
+    push esi
+    push edi
+    push ebx
+    
+    ; Parameters: center_x, center_y, radius, color
+    mov esi, [ebp + 8]      ; center_x
+    mov edi, [ebp + 12]     ; center_y
+    mov ebx, [ebp + 16]     ; radius
+    
+    xor eax, eax            ; x = 0
+    mov ecx, ebx            ; y = radius
+    
+    ; Decision parameter: d = 3 - 2 * radius
+    mov edx, 3
+    mov ebx, [ebp + 16]     ; radius
+    shl ebx, 1              ; 2 * radius
+    sub edx, ebx            ; d = 3 - 2 * radius
+    
+.circle_loop:
+    ; Plot 8 symmetric points
+    push eax
+    push ecx
+    push edx
+    
+    ; (x, y)
+    mov ebx, esi
+    add ebx, eax            ; center_x + x
+    push [ebp + 20]         ; color
+    push edi
+    add [esp], ecx          ; center_y + y
+    push ebx
+    call plot_pixel_circle
+    
+    ; (x, -y)
+    mov ebx, esi
+    add ebx, eax            ; center_x + x
+    push [ebp + 20]         ; color
+    push edi
+    sub [esp], ecx          ; center_y - y
+    push ebx
+    call plot_pixel_circle
+    
+    ; (-x, y)
+    mov ebx, esi
+    sub ebx, eax            ; center_x - x
+    push [ebp + 20]         ; color
+    push edi
+    add [esp], ecx          ; center_y + y
+    push ebx
+    call plot_pixel_circle
+    
+    ; (-x, -y)
+    mov ebx, esi
+    sub ebx, eax            ; center_x - x
+    push [ebp + 20]         ; color
+    push edi
+    sub [esp], ecx          ; center_y - y
+    push ebx
+    call plot_pixel_circle
+    
+    ; (y, x)
+    mov ebx, esi
+    add ebx, ecx            ; center_x + y
+    push [ebp + 20]         ; color
+    push edi
+    add [esp], eax          ; center_y + x
+    push ebx
+    call plot_pixel_circle
+    
+    ; (y, -x)
+    mov ebx, esi
+    add ebx, ecx            ; center_x + y
+    push [ebp + 20]         ; color
+    push edi
+    sub [esp], eax          ; center_y - x
+    push ebx
+    call plot_pixel_circle
+    
+    ; (-y, x)
+    mov ebx, esi
+    sub ebx, ecx            ; center_x - y
+    push [ebp + 20]         ; color
+    push edi
+    add [esp], eax          ; center_y + x
+    push ebx
+    call plot_pixel_circle
+    
+    ; (-y, -x)
+    mov ebx, esi
+    sub ebx, ecx            ; center_x - y
+    push [ebp + 20]         ; color
+    push edi
+    sub [esp], eax          ; center_y - x
+    push ebx
+    call plot_pixel_circle
+    
+    pop edx
+    pop ecx
+    pop eax
+    
+    ; Check if x >= y (circle complete)
+    cmp eax, ecx
+    jge .done
+    
+    ; Update decision parameter
+    test edx, edx
+    js .decision_negative
+    
+    ; d >= 0: d = d + 4 * (x - y) + 10
+    dec ecx                 ; y--
+    mov ebx, eax
+    sub ebx, ecx            ; x - y
+    shl ebx, 2              ; 4 * (x - y)
+    add edx, ebx
+    add edx, 10
+    jmp .continue
+    
+.decision_negative:
+    ; d < 0: d = d + 4 * x + 6
+    shl eax, 2              ; 4 * x
+    add edx, eax
+    add edx, 6
+    shr eax, 2              ; Restore x
+    
+.continue:
+    inc eax                 ; x++
+    jmp .circle_loop
+    
+.done:
+    pop ebx
+    pop edi
+    pop esi
+    pop ebp
+    ret
+
+plot_pixel_circle:
+    ; Simple pixel plotting with bounds checking
+    push ebp
+    mov ebp, esp
+    
+    mov eax, [ebp + 8]      ; x
+    mov ebx, [ebp + 12]     ; y
+    
+    ; Bounds check
+    test eax, eax
+    js .done
+    cmp eax, 320
+    jge .done
+    test ebx, ebx
+    js .done
+    cmp ebx, 200
+    jge .done
+    
+    ; Plot pixel (same as plot_pixel but with parameters)
+    push es
+    push di
+    
+    mov es, 0xA000
+    mov di, bx
+    mov dx, 320
+    mul dx
+    add di, ax
+    add di, [ebp + 8]
+    
+    mov al, [ebp + 16]      ; color
+    mov [es:di], al
+    
+    pop di
+    pop es
+    
+.done:
+    pop ebp
+    ret 12                  ; Clean 3 parameters
+```
+
+
+## Advanced FASM Programming Techniques
+
+### Macro System and Metaprogramming
+
+#### Basic Macros
+```assembly
+; Simple macro definition
+macro write_string string {
+    mov eax, 4          ; sys_write
+    mov ebx, 1          ; stdout
+    mov ecx, string     ; string address
+    mov edx, string#_length ; string length
+    int 0x80
+}
+
+; Usage
+section '.data'
+    hello db 'Hello, World!', 10, 0
+    hello_length = $ - hello
+
+section '.text'
+    write_string hello
+
+; Parameterized macros
+macro mov_immediate reg, value {
+    if value eq 0
+        xor reg, reg    ; Optimize mov reg, 0 to xor reg, reg
+    else
+        mov reg, value
+    end if
+}
+
+; Conditional assembly
+macro debug_print string {
+    if DEBUG eq 1
+        push eax
+        push ebx
+        push ecx
+        push edx
+        write_string string
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+    end if
+}
+
+; Multi-line macros with local labels
+macro safe_divide dividend, divisor, result {
+    local .no_overflow, .done
+    
+    mov eax, dividend
+    xor edx, edx
+    
+    cmp divisor, 0
+    je .no_overflow
+    
+    div divisor
+    mov result, eax
+    jmp .done
+    
+.no_overflow:
+    mov result, 0
+    
+.done:
+}
+```
+
+#### Advanced Macro Techniques
+```assembly
+; Recursive macros
+macro repeat_instruction instr, count {
+    if count > 0
+        instr
+        repeat_instruction instr, count-1
+    end if
+}
+
+; Usage: repeat_instruction nop, 5  ; Generates 5 nop instructions
+
+; Variable argument macros
+macro call_with_args proc, [args] {
+    common
+        ; Push arguments in reverse order
+        mov ecx, 0
+    forward
+        push args
+        inc ecx
+    common
+        call proc
+        ; Clean up stack
+        lea esp, [esp + ecx * 4]
+}
+
+; String processing macros
+macro define_string name, value {
+    name db value, 0
+    name#_length = $ - name - 1
+}
+
+; Code generation macros
+macro create_accessor struct_name, field_name, field_offset {
+    get_#field_name:
+        mov eax, [esp + 4]      ; Get structure pointer
+        mov eax, [eax + field_offset]
+        ret
+        
+    set_#field_name:
+        mov eax, [esp + 4]      ; Get structure pointer
+        mov ebx, [esp + 8]      ; Get new value
+        mov [eax + field_offset], ebx
+        ret
+}
+
+; Usage
+struc POINT {
+    .x dd ?
+    .y dd ?
+}
+
+create_accessor POINT, x, POINT.x
+create_accessor POINT, y, POINT.y
+```
+
+### Optimization Techniques
+
+#### Instruction-Level Optimization
+```assembly
+; Replace expensive operations with cheaper ones
+slow_multiply_by_10:
+    mov eax, [value]
+    mov ebx, 10
+    mul ebx         ; Expensive multiplication
+
+fast_multiply_by_10:
+    mov eax, [value]
+    lea eax, [eax + eax * 4]  ; eax * 5
+    shl eax, 1      ; (eax * 5) * 2 = eax * 10
+
+; Division by powers of 2
+slow_divide_by_8:
+    mov eax, [value]
+    mov ebx, 8
+    xor edx, edx
+    div ebx
+
+fast_divide_by_8:
+    mov eax, [value]
+    sar eax, 3      ; Arithmetic shift right by 3 (divide by 8)
+
+; Conditional assignment without branches
+conditional_max:
+    mov eax, [value1]
+    mov ebx, [value2]
+    cmp eax, ebx
+    cmovl eax, ebx  ; eax = max(value1, value2)
+
+; Branchless absolute value
+abs_value:
+    mov eax, [value]
+    mov ebx, eax
+    sar ebx, 31     ; Sign extension (all 1s if negative, 0 if positive)
+    xor eax, ebx    ; Flip bits if negative
+    sub eax, ebx    ; Add 1 if was negative
+
+; Fast modulo for powers of 2
+fast_modulo_16:
+    mov eax, [value]
+    and eax, 15     ; value % 16 (only works for powers of 2)
+```
+
+#### Loop Optimization
+```assembly
+; Loop unrolling
+unrolled_copy:
+    mov esi, source
+    mov edi, destination
+    mov ecx, count
+    shr ecx, 2      ; Divide by 4
+    
+.unroll_4:
+    mov eax, [esi]
+    mov ebx, [esi + 4]
+    mov edx, [esi + 8]
+    mov ebp, [esi + 12]
+    
+    mov [edi], eax
+    mov [edi + 4], ebx
+    mov [edi + 8], edx
+    mov [edi + 12], ebp
+    
+    add esi, 16
+    add edi, 16
+    loop .unroll_4
+    
+    ; Handle remaining bytes
+    mov ecx, count
+    and ecx, 3
+    rep movsb
+
+; Software pipelining
+pipelined_loop:
+    mov esi, array
+    mov ecx, count
+    
+    ; Preload first iteration
+    mov eax, [esi]
+    
+.pipeline:
+    ; Process current value
+    add eax, 100
+    
+    ; Load next value (pipeline next iteration)
+    mov ebx, [esi + 4]
+    
+    ; Store result
+    mov [esi], eax
+    
+    ; Move to next iteration
+    add esi, 4
+    mov eax, ebx    ; Move next value to current
+    loop .pipeline
+
+; Vectorized operations using MMX/SSE
+vectorized_add:
+    mov esi, array1
+    mov edi, array2
+    mov edx, result_array
+    mov ecx, count
+    shr ecx, 2      ; Process 4 elements at once
+    
+.vector_loop:
+    movdqu xmm0, [esi]     ; Load 4 32-bit integers
+    movdqu xmm1, [edi]     ; Load 4 32-bit integers
+    paddd xmm0, xmm1       ; Add corresponding elements
+    movdqu [edx], xmm0     ; Store results
+    
+    add esi, 16
+    add edi, 16
+    add edx, 16
+    loop .vector_loop
+```
+
+### Memory Management and Caching
+
+#### Cache-Friendly Programming
+```assembly
+; Cache-friendly matrix multiplication
+matrix_multiply:
+    push ebp
+    mov ebp, esp
+    
+    mov esi, [ebp + 8]   ; Matrix A
+    mov edi, [ebp + 12]  ; Matrix B
+    mov edx, [ebp + 16]  ; Result matrix C
+    mov eax, [ebp + 20]  ; Matrix size N
+    
+    ; Tiled multiplication for better cache performance
+    mov ebx, 64          ; Tile size (adjust based on cache size)
+    
+.tile_i:
+    xor ecx, ecx         ; i = 0
+    
+.tile_j:
+    xor ebp, ebp         ; j = 0
+    
+.tile_k:
+    ; Process tile
+    push ecx
+    push ebp
+    push ebx
+    call multiply_tile
+    add esp, 12
+    
+    add ebp, ebx         ; j += tile_size
+    cmp ebp, eax
+    jl .tile_k
+    
+    add ecx, ebx         ; i += tile_size
+    cmp ecx, eax
+    jl .tile_j
+    
+    pop ebp
+    ret
+
+; Prefetching for large data sets
+prefetch_copy:
+    mov esi, source
+    mov edi, destination
+    mov ecx, size
+    
+.prefetch_loop:
+    ; Prefetch next cache line
+    prefetchnta [esi + 64]
+    
+    ; Copy current cache line
+    movdqa xmm0, [esi]
+    movdqa xmm1, [esi + 16]
+    movdqa xmm2, [esi + 32]
+    movdqa xmm3, [esi + 48]
+    
+    movdqa [edi], xmm0
+    movdqa [edi + 16], xmm1
+    movdqa [edi + 32], xmm2
+    movdqa [edi + 48], xmm3
+    
+    add esi, 64
+    add edi, 64
+    sub ecx, 64
+    jg .prefetch_loop
+```
+
+### Interfacing with C and System Calls
+
+#### Calling C Functions from Assembly
+```assembly
+; Calling convention compatibility
+extern printf, malloc, free
+
+section '.data'
+    format_str db 'Value: %d, String: %s', 10, 0
+    test_string db 'Hello from ASM!', 0
+
+section '.text'
+    ; Allocate memory using C malloc
+    push 1024           ; Size
+    call malloc
+    add esp, 4          ; Clean stack
+    
+    test eax, eax       ; Check if allocation succeeded
+    jz .allocation_failed
+    
+    ; Use printf to display values
+    push test_string    ; String parameter
+    push 42             ; Integer parameter
+    push format_str     ; Format string
+    call printf
+    add esp, 12         ; Clean stack (3 parameters)
+    
+    ; Free allocated memory
+    push eax            ; Memory pointer
+    call free
+    add esp, 4          ; Clean stack
+    
+.allocation_failed:
+    ; Handle allocation failure
+    mov eax, -1
+    ret
+
+; Mixed C/Assembly project structure
+global asm_function     ; Export to C
+extern c_function       ; Import from C
+
+asm_function:
+    ; Function callable from C
+    push ebp
+    mov ebp, esp
+    
+    ; Get parameters (C calling convention)
+    mov eax, [ebp + 8]  ; First parameter
+    mov ebx, [ebp + 12] ; Second parameter
+    
+    ; Call C function
+    push ebx
+    push eax
+    call c_function
+    add esp, 8
+    
+    ; Return value in EAX
+    pop ebp
+    ret
+```
+
+#### System Call Interface
+```assembly
+; Linux system calls
+section '.data'
+    filename db '/tmp/test.txt', 0
+    buffer db 'Hello, World!', 10
+    buffer_len = $ - buffer
+
+section '.text'
+    ; Open file
+    mov eax, 5          ; sys_open
+    mov ebx, filename   ; filename
+    mov ecx, 0x241      ; O_WRONLY | O_CREAT | O_TRUNC
+    mov edx, 0x1A4      ; File permissions (644)
+    int 0x80
+    
+    test eax, eax
+    js .error
+    
+    mov esi, eax        ; Save file descriptor
+    
+    ; Write to file
+    mov eax, 4          ; sys_write
+    mov ebx, esi        ; file descriptor
+    mov ecx, buffer     ; buffer
+    mov edx, buffer_len ; count
+    int 0x80
+    
+    ; Close file
+    mov eax, 6          ; sys_close
+    mov ebx, esi        ; file descriptor
+    int 0x80
+    
+    ; Exit successfully
+    mov eax, 1          ; sys_exit
+    xor ebx, ebx        ; exit status 0
+    int 0x80
+
+.error:
+    mov eax, 1          ; sys_exit
+    mov ebx, 1          ; exit status 1
+    int 0x80
+
+; Windows API calls
+extern ExitProcess, WriteFile, GetStdHandle
+import kernel32, ExitProcess, WriteFile, GetStdHandle
+
+section '.data'
+    message db 'Hello, Windows!', 13, 10
+    message_len = $ - message
+    bytes_written dd ?
+
+section '.text'
+    ; Get stdout handle
+    push -11            ; STD_OUTPUT_HANDLE
+    call [GetStdHandle]
+    
+    ; Write to stdout
+    push 0              ; lpOverlapped
+    push bytes_written  ; lpNumberOfBytesWritten
+    push message_len    ; nNumberOfBytesToWrite
+    push message        ; lpBuffer
+    push eax            ; hFile (stdout handle)
+    call [WriteFile]
+    
+    ; Exit process
+    push 0              ; exit code
+    call [ExitProcess]
+```
+
+### Real-World Project Examples
+
+#### Complete Application: Text Editor
+```assembly
+; Simple text editor in FASM
+format PE console
+entry start
+
+include 'win32a.inc'
+
+section '.data' data readable writeable
+    buffer rb 65536         ; Text buffer
+    filename rb 260         ; Filename buffer
+    console_handle dd ?
+    file_handle dd ?
+    bytes_read dd ?
+    bytes_written dd ?
+    
+    prompt_open db 'Enter filename to open: ', 0
+    prompt_save db 'Enter filename to save: ', 0
+    help_text db 'Commands: o=open, s=save, q=quit, h=help', 13, 10, 0
+    
+section '.text' code readable executable
+start:
+    ; Get console handles
+    invoke GetStdHandle, STD_OUTPUT_HANDLE
+    mov [console_handle], eax
+    
+    ; Display help
+    invoke WriteConsole, [console_handle], help_text, \
+           sizeof.help_text-1, bytes_written, 0
+    
+main_loop:
+    ; Read command
+    invoke ReadConsole, STD_INPUT_HANDLE, buffer, 1, bytes_read, 0
+    
+    mov al, [buffer]
+    cmp al, 'o'
+    je open_file
+    cmp al, 's'
+    je save_file
+    cmp al, 'q'
+    je exit_program
+    cmp al, 'h'
+    je show_help
+    
+    jmp main_loop
+
+open_file:
+    ; Prompt for filename
+    invoke WriteConsole, [console_handle], prompt_open, \
+           sizeof.prompt_open-1, bytes_written, 0
+    
+    ; Read filename
+    invoke ReadConsole, STD_INPUT_HANDLE, filename, 260, bytes_read, 0
+    
+    ; Remove newline
+    mov ecx, [bytes_read]
+    dec ecx
+    mov byte [filename + ecx], 0
+    
+    ; Open file
+    invoke CreateFile, filename, GENERIC_READ, 0, 0, \
+           OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0
+    
+    cmp eax, INVALID_HANDLE_VALUE
+    je main_loop
+    
+    mov [file_handle], eax
+    
+    ; Read file content
+    invoke ReadFile, [file_handle], buffer, 65535, bytes_read, 0
+    
+    ; Null terminate
+    mov ecx, [bytes_read]
+    mov byte [buffer + ecx], 0
+    
+    ; Display content
+    invoke WriteConsole, [console_handle], buffer, [bytes_read], bytes_written, 0
+    
+    invoke CloseHandle, [file_handle]
+    jmp main_loop
+
+save_file:
+    ; Implementation for save functionality
+    ; Similar structure to open_file
+    jmp main_loop
+
+show_help:
+    invoke WriteConsole, [console_handle], help_text, \
+           sizeof.help_text-1, bytes_written, 0
+    jmp main_loop
+
+exit_program:
+    invoke ExitProcess, 0
+
+section '.idata' import data readable writeable
+    library kernel32, 'KERNEL32.DLL'
+    import kernel32, \
+           CreateFile, 'CreateFileA', \
+           ReadFile, 'ReadFile', \
+           WriteFile, 'WriteFile', \
+           CloseHandle, 'CloseHandle', \
+           GetStdHandle, 'GetStdHandle', \
+           ReadConsole, 'ReadConsoleA', \
+           WriteConsole, 'WriteConsoleA', \
+           ExitProcess, 'ExitProcess'
+```
+
+## Professional Development Practices
+
+### Code Organization and Documentation
+```assembly
+; Professional header template
+;===============================================================================
+; Project:     KolibriOS Network Stack
+; Module:      TCP Protocol Implementation
+; Version:     2.1.0
+; Author:      Professional Developer
+; Date:        2024-01-15
+; License:     GPL v2
+;
+; Description: High-performance TCP implementation with congestion control
+;              and advanced window scaling.
+;
+; Dependencies:
+;   - IP layer interface
+;   - Memory management subsystem
+;   - Timer subsystem
+;
+; Revision History:
+;   2.1.0 - Added TCP window scaling
+;   2.0.0 - Complete rewrite for performance
+;   1.0.0 - Initial implementation
+;===============================================================================
+
+; Include guards for header files
+if ~ defined TCP_PROTOCOL_INC
+TCP_PROTOCOL_INC = 1
+
+; Constants and configuration
+TCP_MSS             = 1460      ; Maximum Segment Size
+TCP_WINDOW_SIZE     = 65535     ; Default window size
+TCP_MAX_RETRIES     = 5         ; Maximum retransmission attempts
+TCP_TIMEOUT_INITIAL = 3000      ; Initial RTO in milliseconds
+
+; State definitions
+TCP_STATE_CLOSED        = 0
+TCP_STATE_LISTEN        = 1
+TCP_STATE_SYN_SENT      = 2
+TCP_STATE_SYN_RECEIVED  = 3
+TCP_STATE_ESTABLISHED   = 4
+TCP_STATE_FIN_WAIT_1    = 5
+TCP_STATE_FIN_WAIT_2    = 6
+TCP_STATE_CLOSE_WAIT    = 7
+TCP_STATE_CLOSING       = 8
+TCP_STATE_LAST_ACK      = 9
+TCP_STATE_TIME_WAIT     = 10
+
+; Function prototypes and documentation
+;-------------------------------------------------------------------------------
+; tcp_create_socket
+;
+; Purpose:     Creates a new TCP socket
+; Parameters:  None
+; Returns:     EAX = Socket handle (0 if error)
+; Registers:   Preserves all except EAX
+; Notes:       Allocates socket control block and initializes state
+;-------------------------------------------------------------------------------
+tcp_create_socket:
+    ; Implementation here
+    ret
+
+end if ; TCP_PROTOCOL_INC
+```
+
+### Testing and Quality Assurance
+```assembly
+; Unit testing framework for assembly
+section '.data'
+    test_count dd 0
+    passed_count dd 0
+    failed_count dd 0
+    
+    test_msg_start db 'Running test: ', 0
+    test_msg_pass db ' [PASS]', 13, 10, 0
+    test_msg_fail db ' [FAIL]', 13, 10, 0
+    summary_msg db 'Tests: %d, Passed: %d, Failed: %d', 13, 10, 0
+
+; Test framework macros
+macro run_test test_name, test_proc {
+    push test_name
+    call print_test_start
+    
+    call test_proc
+    test eax, eax
+    jz .test_failed
+    
+    call print_test_pass
+    inc [passed_count]
+    jmp .test_done
+    
+.test_failed:
+    call print_test_fail
+    inc [failed_count]
+    
+.test_done:
+    inc [test_count]
+}
+
+macro assert_equal actual, expected {
+    local .assert_ok
+    
+    cmp actual, expected
+    je .assert_ok
+    
+    ; Test failed
+    xor eax, eax
+    ret
+    
+.assert_ok:
+}
+
+; Example tests
+test_string_length:
+    ; Test string length function
+    push test_string
+    call strlen
+    add esp, 4
+    
+    assert_equal eax, 13    ; Expected length
+    
+    mov eax, 1              ; Test passed
+    ret
+
+test_memory_copy:
+    ; Test memory copy function
+    push 10                 ; Count
+    push dest_buffer        ; Destination
+    push src_buffer         ; Source
+    call memcpy
+    add esp, 12
+    
+    ; Verify copy
+    push 10
+    push dest_buffer
+    push src_buffer
+    call memcmp
+    add esp, 12
+    
+    assert_equal eax, 0     ; Should be equal
+    
+    mov eax, 1
+    ret
+
+; Test runner
+run_all_tests:
+    run_test test_str_len, test_string_length
+    run_test test_mem_copy, test_memory_copy
+    
+    ; Print summary
+    push [failed_count]
+    push [passed_count]
+    push [test_count]
+    push summary_msg
+    call printf
+    add esp, 16
+    
+    ret
+
+section '.data'
+    test_str_len db 'String Length', 0
+    test_mem_copy db 'Memory Copy', 0
+    test_string db 'Hello, World!', 0
+    src_buffer db 1,2,3,4,5,6,7,8,9,10
+    dest_buffer db 10 dup(0)
+```
+
+This completes the comprehensive FASM guide covering all essential topics from basic syntax to professional development practices. The documentation now provides complete coverage for developers wanting to master assembly programming with FASM for KolibriOS development.
+
