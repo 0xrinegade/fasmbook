@@ -159,6 +159,87 @@ class FASMeBook {
         
         // Also populate the instruction glossary
         this.populateGlossary();
+        
+        // Scan all chapters for instruction usage
+        this.scanChaptersForInstructions();
+    }
+    
+    async scanChaptersForInstructions() {
+        if (!window.instructionGlossary) return;
+        
+        console.log('Scanning chapters for instruction usage...');
+        
+        for (const chapter of this.chapters) {
+            try {
+                const response = await fetch(`chapters/${chapter.file}`);
+                if (!response.ok) continue;
+                
+                const markdown = await response.text();
+                this.scanMarkdownForInstructions(markdown, chapter);
+            } catch (error) {
+                console.warn(`Failed to scan chapter ${chapter.id}:`, error);
+            }
+        }
+        
+        console.log('Chapter scanning complete');
+    }
+    
+    scanMarkdownForInstructions(markdown, chapter) {
+        // Extract code blocks and scan for instructions
+        const codeBlockRegex = /^```(?:assembly|asm|fasm)\n([\s\S]*?)```$/gm;
+        let match;
+        let lineNumber = 1;
+        
+        // Count lines before each code block
+        const lines = markdown.split('\n');
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            
+            // Check if this line starts a code block
+            if (line.startsWith('```assembly') || line.startsWith('```asm') || line.startsWith('```fasm')) {
+                // Scan the code block
+                let codeBlock = '';
+                let j = i + 1;
+                
+                while (j < lines.length && !lines[j].startsWith('```')) {
+                    codeBlock += lines[j] + '\n';
+                    j++;
+                }
+                
+                // Scan this code block for instructions
+                this.scanCodeBlockForInstructions(codeBlock, chapter, i + 1);
+                i = j; // Skip to end of code block
+            }
+        }
+    }
+    
+    scanCodeBlockForInstructions(codeBlock, chapter, startLine) {
+        const instructions = [
+            'mov', 'add', 'sub', 'mul', 'div', 'inc', 'dec', 'cmp', 'test',
+            'jmp', 'je', 'jne', 'jl', 'jle', 'jg', 'jge', 'ja', 'jb', 'jo', 'jno',
+            'call', 'ret', 'push', 'pop', 'lea', 'int', 'nop',
+            'and', 'or', 'xor', 'not', 'shl', 'shr', 'sal', 'sar',
+            'loop', 'loope', 'loopne', 'rep', 'repe', 'repne',
+            'movs', 'stos', 'scas', 'cmps', 'lods', 'imul', 'idiv', 'cdq'
+        ];
+        
+        const codeLines = codeBlock.split('\n');
+        
+        codeLines.forEach((line, index) => {
+            instructions.forEach(instruction => {
+                const regex = new RegExp(`\\b${instruction}\\b`, 'gi');
+                if (regex.test(line)) {
+                    window.instructionGlossary.addUsage(instruction.toUpperCase(), {
+                        chapter: chapter.id,
+                        chapterTitle: chapter.title,
+                        line: startLine + index,
+                        context: line.trim(),
+                        file: chapter.file
+                    });
+                }
+            });
+        });
     }
     
     populateGlossary() {

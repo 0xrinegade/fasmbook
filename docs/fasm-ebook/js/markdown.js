@@ -726,9 +726,32 @@ function hideInstructionTooltip() {
 }
 
 function scrollToLine(lineNumber) {
-    // Implementation to scroll to a specific line in the content
-    // This is a placeholder - would need to be implemented based on actual line tracking
+    // Try to scroll to specific line by looking for code blocks and context
     console.log(`Scrolling to line ${lineNumber}`);
+    
+    const contentElement = document.getElementById('chapter-content');
+    if (!contentElement) return;
+    
+    // Find all code blocks and try to match line numbers
+    const codeBlocks = contentElement.querySelectorAll('pre code');
+    
+    if (codeBlocks.length > 0) {
+        // For now, scroll to the first code block as an approximation
+        const firstCodeBlock = codeBlocks[0];
+        firstCodeBlock.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+        });
+        
+        // Highlight the code block temporarily
+        firstCodeBlock.style.outline = '2px solid #007acc';
+        firstCodeBlock.style.backgroundColor = 'rgba(0, 122, 204, 0.1)';
+        
+        setTimeout(() => {
+            firstCodeBlock.style.outline = '';
+            firstCodeBlock.style.backgroundColor = '';
+        }, 3000);
+    }
 }
 
 // Global function for glossary search

@@ -558,18 +558,24 @@ class InstructionGlossary {
                 ` : ''}
                 ${instruction.usages && instruction.usages.length > 0 ? `
                     <div class="instruction-usages">
-                        <strong>Used in:</strong>
+                        <strong>Found in ${instruction.usages.length} locations:</strong><br>
                         ${instruction.usages.slice(0, 5).map(usage => 
-                            `<a href="#" onclick="navigateToUsage('${usage.chapter}', ${usage.line})" class="usage-link">${usage.chapter}:${usage.line}</a>`
-                        ).join(', ')}
-                        ${instruction.usages.length > 5 ? `... and ${instruction.usages.length - 5} more` : ''}
+                            `<a href="#" onclick="navigateToUsage('${usage.chapter}', ${usage.line})" class="usage-link" title="${usage.context}">
+                                📖 ${usage.chapterTitle || usage.chapter} (line ${usage.line})
+                             </a>`
+                        ).join('<br>')}
+                        ${instruction.usages.length > 5 ? `<br><small><em>... and ${instruction.usages.length - 5} more locations</em></small>` : ''}
                     </div>
-                ` : ''}
+                ` : `
+                    <div class="instruction-usages">
+                        <em>No usage examples found yet. Instruction tracking is still in progress...</em>
+                    </div>
+                `}
                 ${instruction.crossRefs ? `
                     <div class="instruction-cross-refs">
                         <strong>See also:</strong>
                         ${instruction.crossRefs.map(ref => 
-                            `<a href="#" onclick="showInstructionTooltip('${ref}')" class="cross-ref-link">${ref}</a>`
+                            `<a href="#" onclick="showInstructionTooltip(event, '${ref}')" class="cross-ref-link">${ref}</a>`
                         ).join(', ')}
                     </div>
                 ` : ''}
@@ -583,15 +589,20 @@ window.instructionGlossary = new InstructionGlossary();
 
 // Navigation helper function
 function navigateToUsage(chapter, line) {
-    // This will be implemented to jump to specific usage
     console.log(`Navigate to ${chapter} line ${line}`);
+    
     // Hide tooltip
     hideInstructionTooltip();
+    
     // Navigate to chapter and scroll to line
     if (window.fasmEbook) {
         window.fasmEbook.loadChapter(chapter).then(() => {
-            // Scroll to specific line (implementation needed)
-            scrollToLine(line);
+            // Wait for content to load, then scroll to the specific line
+            setTimeout(() => {
+                scrollToLine(line);
+            }, 500);
+        }).catch(error => {
+            console.error('Failed to navigate to usage:', error);
         });
     }
 }

@@ -294,6 +294,68 @@
     outline-offset: 2px;
 }
 
+/* eInk optimizations for interactive features */
+.eink-mode .clickable-instruction {
+    /* Reduce hover effects for better eInk performance */
+    text-decoration-style: solid;
+}
+
+.eink-mode .clickable-instruction:hover {
+    /* Simpler hover effect for eInk */
+    background-color: #e0e0e0;
+    text-decoration: underline;
+}
+
+.eink-mode .instruction-tooltip-popup {
+    /* Optimized tooltips for eInk displays */
+    background: white;
+    border: 3px solid #333333;
+    box-shadow: none; /* Remove shadow for better eInk performance */
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.eink-mode .code-header {
+    /* Simplified header for eInk */
+    background: #f0f0f0;
+    border-bottom: 2px solid #333333;
+}
+
+.eink-mode .code-copy {
+    /* More visible button for eInk */
+    border: 2px solid #333333;
+    background: white;
+    color: #333333;
+}
+
+.eink-mode .code-copy:hover {
+    background: #333333;
+    color: white;
+}
+
+/* Touch-friendly sizing for eInk devices */
+.eink-mode .clickable-instruction {
+    min-height: 24px;
+    display: inline-block;
+    line-height: 1.5;
+}
+
+.eink-mode .usage-link,
+.eink-mode .cross-ref-link {
+    padding: 2px 4px;
+    margin: 1px;
+    display: inline-block;
+    border: 1px solid #666;
+    background: white;
+    text-decoration: none;
+}
+
+.eink-mode .usage-link:hover,
+.eink-mode .cross-ref-link:hover {
+    background: #333;
+    color: white;
+}
+
 /* Responsive adjustments for eInk devices */
 @media (max-width: 768px) {
     .eink-mode {
