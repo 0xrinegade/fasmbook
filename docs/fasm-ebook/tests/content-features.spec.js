@@ -3,7 +3,12 @@ import { test, expect } from '@playwright/test';
 test.describe('FASM eBook - Content Features', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await page.waitForTimeout(2000);
+    
+    // Wait for the content to finish loading (loading indicator should disappear)
+    await page.waitForFunction(() => {
+      const contentElement = document.getElementById('chapter-content');
+      return contentElement && !contentElement.querySelector('.initial-loading');
+    }, { timeout: 30000 });
   });
 
   test('should display instruction tooltips', async ({ page }) => {

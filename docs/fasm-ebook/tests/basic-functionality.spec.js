@@ -5,7 +5,12 @@ test.describe('FASM eBook - Basic Functionality', () => {
     await page.goto('/');
     // Wait for the main app to initialize
     await expect(page.locator('h1')).toContainText('FASM Programming Book');
-    await page.waitForTimeout(1000); // Let scripts initialize
+    
+    // Wait for the content to finish loading (loading indicator should disappear)
+    await page.waitForFunction(() => {
+      const contentElement = document.getElementById('chapter-content');
+      return contentElement && !contentElement.querySelector('.initial-loading');
+    }, { timeout: 30000 });
   });
 
   test('should load the main page correctly', async ({ page }) => {
@@ -17,8 +22,13 @@ test.describe('FASM eBook - Basic Functionality', () => {
     await expect(page.locator('#main-content')).toBeVisible();
     await expect(page.locator('#toc-list')).toBeVisible();
     
-    // Check that content area exists (using correct selector)
+    // Check that content area exists and has loaded content (not just loading screen)
     await expect(page.locator('#chapter-content')).toBeVisible();
+    
+    // Verify actual chapter content has loaded (should contain more than just loading text)
+    const contentText = await page.locator('#chapter-content').textContent();
+    expect(contentText).not.toContain('Loading the complete assembly programming guide');
+    expect(contentText.length).toBeGreaterThan(200); // Ensure substantial content loaded
   });
 
   test('should display table of contents', async ({ page }) => {
@@ -41,12 +51,17 @@ test.describe('FASM eBook - Basic Functionality', () => {
     // Click on first chapter
     await page.click('#toc-list li a:first-child');
     
-    // Wait for content to load with longer timeout
-    await page.waitForSelector('#chapter-content h1, #chapter-content h2', { timeout: 20000 });
+    // Wait for new content to load - check for content change rather than just headers
+    await page.waitForFunction(() => {
+      const contentElement = document.getElementById('chapter-content');
+      return contentElement && 
+             !contentElement.querySelector('.initial-loading') &&
+             contentElement.textContent.length > 300;
+    }, { timeout: 20000 });
     
     // Check that content has loaded
     const contentText = await page.locator('#chapter-content').textContent();
-    expect(contentText.length).toBeGreaterThan(100);
+    expect(contentText.length).toBeGreaterThan(200);
     
     // Check that progress has been updated
     const progressText = await page.locator('#progress-text').textContent();
@@ -75,15 +90,25 @@ test.describe('FASM eBook - Basic Functionality', () => {
     await page.waitForSelector('#toc-list li a', { timeout: 20000 });
     await page.click('#toc-list li a:nth-child(2)'); // Second chapter
     
-    // Wait for content to load with longer timeout
-    await page.waitForSelector('#chapter-content h1, #chapter-content h2', { timeout: 20000 });
+    // Wait for content to load using the same pattern as other tests
+    await page.waitForFunction(() => {
+      const contentElement = document.getElementById('chapter-content');
+      return contentElement && 
+             !contentElement.querySelector('.initial-loading') &&
+             contentElement.textContent.length > 300;
+    }, { timeout: 20000 });
     
     // Wait for progress to be saved
     await page.waitForTimeout(1000);
     
     // Reload the page
     await page.reload();
-    await page.waitForTimeout(3000); // Give more time for initialization after reload
+    
+    // Wait for content to reload after page refresh
+    await page.waitForFunction(() => {
+      const contentElement = document.getElementById('chapter-content');
+      return contentElement && !contentElement.querySelector('.initial-loading');
+    }, { timeout: 30000 });
     
     // Check that progress is restored
     const progressText = await page.locator('#progress-text').textContent();
