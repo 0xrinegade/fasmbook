@@ -303,6 +303,581 @@ shr [lfsr_state], 1     ; Shift state right
 or [lfsr_state], eax    ; Insert new random bit
 ```
 
+## 📚 Comprehensive Instruction Reference: OR
+
+> **🚩 Bitwise Logic Foundation**: The OR instruction performs bitwise logical OR operations, essential for bit setting, flag combining, and data merging operations.
+
+### Historical Context and Evolution 📜
+
+The OR instruction implements one of the fundamental Boolean logic operations in digital hardware. Like AND, its theoretical foundation comes from Boolean algebra, but its practical applications focus on bit setting and combining operations.
+
+**Key Historical Milestones:**
+- **1854**: George Boole defines logical OR in Boolean algebra
+- **1938**: Claude Shannon demonstrates OR gate implementation in electrical circuits
+- **1972**: Intel 8008 introduces basic bitwise OR operations
+- **1978**: Intel 8086 enhances OR with comprehensive addressing modes
+- **1985**: 80386 adds 32-bit OR with optimized microcode
+- **2003**: x86-64 extends OR to 64-bit operands for modern applications
+
+### Complete Instruction Theory and Specification
+
+**OR** performs a bitwise logical OR operation between source and destination operands. Each bit position follows Boolean OR logic (0 OR 0 = 0, all other combinations = 1).
+
+**Fundamental Operation:**
+```
+Destination ← Destination OR Source
+```
+
+**Boolean Truth Table:**
+```
+Bit A | Bit B | Result
+------|-------|-------
+  0   |   0   |   0
+  0   |   1   |   1  
+  1   |   0   |   1
+  1   |   1   |   1
+```
+
+**Processor Internal Behavior:**
+1. **Fetch**: Instruction decoded from instruction cache
+2. **Read**: Source and destination operands loaded into ALU
+3. **Execute**: Bitwise OR performed on all bit positions simultaneously
+4. **Flags**: ZF, SF, PF updated; CF and OF cleared
+5. **Write**: Result stored to destination operand
+
+### Complete Syntax Reference and API
+
+**Basic Syntax Patterns:**
+```assembly
+or destination, source
+```
+
+**All Supported Operand Combinations:**
+
+| Source → Destination | Syntax Example | Encoding | Cycles | Notes |
+|---------------------|----------------|----------|---------|-------|
+| Immediate → Register | `or eax, 0x80` | 0D 80 00 00 00 | 1 | Fast bit setting |
+| Immediate → Memory | `or [ebx], 0x80` | 83 0B 80 | 3-4 | Direct memory bit setting |
+| Register → Register | `or eax, ebx` | 09 D8 | 1 | Fastest bitwise combination |
+| Register → Memory | `or [ebx], eax` | 09 03 | 3-4 | Store combined result |
+| Memory → Register | `or eax, [ebx]` | 0B 03 | 3-4 | Load and combine |
+| Memory → Memory | **INVALID** | N/A | N/A | x86 restriction |
+
+**Size Variants and Encodings:**
+```assembly
+; 8-bit operations (byte bit setting)
+or al, 0x80          ; 0C 80 (set high bit of AL)
+or bl, 0x0F          ; 80 CB 0F (set lower 4 bits of BL)
+or [esi], al         ; 08 06 (combine memory byte with AL)
+
+; 16-bit operations (word bit setting) - requires 66h prefix
+or ax, 0x8000        ; 66 0D 00 80 (set high bit of AX)
+or bx, ax            ; 66 09 C3 (word register combination)
+or [esi], ax         ; 66 09 06 (word register to memory)
+
+; 32-bit operations (doubleword bit setting) - default
+or eax, 0x80000000   ; 0D 00 00 00 80 (set high bit of EAX)
+or ebx, eax          ; 09 C3 (dword register combination)
+or [esi], eax        ; 09 06 (dword register to memory)
+
+; 64-bit operations (quadword bit setting) - x86-64 only
+or rax, 0x8000000000000000  ; 48 0D 00 00 00 80 (set high bit)
+or rbx, rax                 ; 48 09 C3 (qword combination)
+or [rsi], rax              ; 48 09 06 (qword to memory)
+```
+
+**Common Bit Setting Patterns:**
+```assembly
+; Set individual bits
+or eax, 1            ; 0D 01 00 00 00 (set bit 0)
+or eax, 0x80000000   ; 0D 00 00 00 80 (set bit 31)
+
+; Set multiple bits
+or eax, 0x0000000F   ; 0D 0F 00 00 00 (set bits 0-3)
+or eax, 0x000000F0   ; 0D F0 00 00 00 (set bits 4-7)
+
+; Combine bit fields
+or eax, 0x12340000   ; 0D 00 00 34 12 (set complex pattern)
+
+; Status flag setting
+or [flags], 0x00000001   ; Set "enabled" flag
+or [flags], 0x00000004   ; Set "ready" flag
+```
+
+### Performance Characteristics and Optimization
+
+**Cycle Timing Analysis:**
+
+**Register Operations (Fastest):**
+- Register to register: **1 cycle latency, 0.25 cycles throughput**
+- Immediate to register: **1 cycle latency, 0.25 cycles throughput**
+- 4-way parallel execution on modern CPUs
+
+**Memory Operations (Cache-Dependent):**
+- **L1 Cache Hit**: 3-4 cycles latency
+- **L2 Cache Hit**: 10-12 cycles latency
+- **L3 Cache Hit**: 25-40 cycles latency
+- **Main Memory**: 100-300 cycles latency
+
+**Execution Port Distribution:**
+```assembly
+; Intel Core can execute OR on multiple execution ports:
+or eax, ebx          ; Ports 0, 1, 5, 6 (4-way parallel)
+or ecx, edx          ; Executes in parallel with above
+or esi, edi          ; Executes in parallel with both
+or r8, r9            ; All can execute same cycle
+```
+
+### Common Use Cases and Programming Patterns
+
+**1. Bit Setting and Flag Management:**
+```assembly
+; Set configuration flags
+mov eax, [config_register]
+or eax, 0x00000001      ; Enable feature A
+or eax, 0x00000008      ; Enable feature D
+or eax, 0x00000020      ; Enable feature F
+mov [config_register], eax
+
+; Atomic flag setting (with proper synchronization)
+or [status_flags], 0x80  ; Set "completed" flag
+```
+
+**2. Combining Bit Fields:**
+```assembly
+; Combine multiple data fields into single word
+mov eax, [device_id]     ; Bits 0-7: Device ID
+shl eax, 8               ; Shift to position
+or eax, [vendor_id]      ; Bits 8-15: Vendor ID  
+shl eax, 8
+or eax, [revision]       ; Bits 16-23: Revision
+shl eax, 8
+or eax, [flags]          ; Bits 24-31: Flags
+mov [packed_info], eax
+```
+
+**3. Merging Data Streams:**
+```assembly
+; Combine RGB color components
+mov eax, [red_value]     ; Red (0-255)
+shl eax, 8
+or eax, [green_value]    ; Green (0-255)
+shl eax, 8  
+or eax, [blue_value]     ; Blue (0-255)
+; EAX now contains 24-bit RGB value
+```
+
+**4. Setting Default Values:**
+```assembly
+; Apply default settings to configuration
+mov eax, [user_config]
+or eax, DEFAULT_FLAGS    ; Ensure critical flags are set
+and eax, VALID_MASK      ; Clear invalid bits
+mov [active_config], eax
+```
+
+**5. Bitmask Generation:**
+```assembly
+; Create bitmask from bit position
+mov ecx, [bit_position]  ; Position to set (0-31)
+mov eax, 1
+shl eax, cl              ; Create single-bit mask
+or [bitmask], eax        ; Add bit to existing mask
+```
+
+### Optimization Techniques and Best Practices
+
+**✅ Performance Optimizations:**
+```assembly
+; Combine multiple OR operations
+or eax, 0x00000001      ; Set bit 0
+or eax, 0x00000008      ; Set bit 3
+or eax, 0x00000020      ; Set bit 5
+; Better: combine immediates
+or eax, 0x00000029      ; Set bits 0, 3, 5 in one operation
+
+; Use OR for conditional flag setting without branches
+mov ebx, 0              ; Default: no flag
+cmp condition, 0
+setnz bl                ; EBX = 1 if condition true, 0 if false
+or [flags], ebx         ; Set flag conditionally
+```
+
+**❌ Common Mistakes:**
+```assembly
+; Don't use OR for testing (it modifies the operand!)
+or eax, 0x80000000      ; Sets bit AND modifies EAX
+; Better for testing:
+test eax, 0x80000000    ; Tests bit without modification
+
+; Avoid redundant operations
+or eax, 0               ; Pointless - no bits are set
+or eax, 0xFFFFFFFF      ; Sets all bits (use mov eax, -1)
+```
+
+**⚡ Advanced Optimization Patterns:**
+```assembly
+; Parallel bit field construction
+mov eax, [field_a]      ; Load first field
+mov ebx, [field_b]      ; Load second field in parallel
+shl eax, 16             ; Position field A
+or eax, ebx             ; Combine fields
+
+; Branchless conditional OR
+; Traditional:
+cmp condition, 0
+jz skip_set
+or eax, mask
+skip_set:
+
+; Branchless:
+neg condition           ; 0 → 0, non-zero → 0xFFFFFFFF  
+and mask, condition     ; Conditional mask
+or eax, mask            ; Apply mask
+```
+
+### Flag Effects and Status Register Impact
+
+**Flags Modified by OR:**
+- **Zero Flag (ZF)**: Set if result is zero, cleared otherwise
+- **Sign Flag (SF)**: Set to value of result's most significant bit
+- **Parity Flag (PF)**: Set if result has even number of 1 bits
+- **Carry Flag (CF)**: Always cleared by OR operation  
+- **Overflow Flag (OF)**: Always cleared by OR operation
+
+**Practical Flag Usage:**
+```assembly
+; Test if any bits are set after OR
+or eax, [new_flags]     ; Combine with new flags
+jnz some_flags_set      ; Jump if any flags active
+
+; Check result sign after OR
+or eax, [mask]          ; Apply mask
+js result_negative      ; Jump if sign bit set
+```
+
+### Integration with Modern CPU Features
+
+**SIMD Extensions:**
+```assembly
+; OR extends to vector operations
+por mm0, mm1            ; 64-bit MMX OR
+orps xmm0, xmm1         ; 128-bit SSE OR (single precision)
+orpd xmm0, xmm1         ; 128-bit SSE OR (double precision)
+vpor ymm0, ymm1, ymm2   ; 256-bit AVX OR
+```
+
+**Branch Prediction Compatibility:**
+```assembly
+; OR operations don't affect branch prediction
+or eax, mask            ; Deterministic bit setting
+test eax, eax           ; Predictable flag test
+jnz normal_case         ; Predictor learns pattern
+```
+
+**Cache-Friendly Patterns:**
+```assembly
+; Batch OR operations for cache efficiency
+mov esi, flags_array
+mov ecx, array_count
+update_loop:
+    or [esi], DEFAULT_MASK  ; Set default flags
+    add esi, 4              ; Next element
+    loop update_loop        ; Sequential access pattern
+```
+
+## 📚 Comprehensive Instruction Reference: AND
+
+> **🚩 Bitwise Logic Foundation**: The AND instruction performs bitwise logical AND operations, essential for bit masking, flag checking, and data filtering operations.
+
+### Historical Context and Evolution 📜
+
+The AND instruction represents one of the fundamental Boolean logic operations implemented in hardware. Its development parallels the evolution of digital logic and Boolean algebra applications in computing.
+
+**Key Historical Milestones:**
+- **1854**: George Boole develops Boolean algebra, mathematical foundation for AND logic
+- **1938**: Claude Shannon applies Boolean algebra to digital circuits
+- **1972**: Intel 8008 includes basic bitwise AND operations
+- **1978**: Intel 8086 expands AND with multiple addressing modes and flag setting
+- **1985**: 80386 adds 32-bit AND operations with enhanced performance
+- **2003**: x86-64 extends AND to 64-bit operands for modern computing
+
+### Complete Instruction Theory and Specification
+
+**AND** performs a bitwise logical AND operation between source and destination operands. Each bit position is processed independently, following Boolean AND logic (1 AND 1 = 1, all other combinations = 0).
+
+**Fundamental Operation:**
+```
+Destination ← Destination AND Source
+```
+
+**Boolean Truth Table:**
+```
+Bit A | Bit B | Result
+------|-------|-------
+  0   |   0   |   0
+  0   |   1   |   0  
+  1   |   0   |   0
+  1   |   1   |   1
+```
+
+**Processor Internal Behavior:**
+1. **Fetch**: Instruction bytes loaded from memory into decode buffer
+2. **Decode**: Source and destination operands identified and addressed
+3. **Read**: Both operands are read into ALU execution unit
+4. **Execute**: Bitwise AND operation performed on each bit position
+5. **Flags**: Processor flags updated based on result (ZF, SF, PF)
+6. **Write**: Result written back to destination operand
+
+### Complete Syntax Reference and API
+
+**Basic Syntax Patterns:**
+```assembly
+and destination, source
+```
+
+**All Supported Operand Combinations:**
+
+| Source → Destination | Syntax Example | Encoding | Cycles | Notes |
+|---------------------|----------------|----------|---------|-------|
+| Immediate → Register | `and eax, 0xFF` | 25 FF 00 00 00 | 1 | Fast bit masking |
+| Immediate → Memory | `and [ebx], 0xFF` | 83 23 FF | 3-4 | Direct memory masking |
+| Register → Register | `and eax, ebx` | 21 D8 | 1 | Fastest bitwise operation |
+| Register → Memory | `and [ebx], eax` | 21 03 | 3-4 | Store masked result |
+| Memory → Register | `and eax, [ebx]` | 23 03 | 3-4 | Load and mask |
+| Memory → Memory | **INVALID** | N/A | N/A | x86 doesn't support mem-to-mem |
+
+**Size Variants and Encodings:**
+```assembly
+; 8-bit operations (byte masking)
+and al, 0x0F         ; 24 0F (mask lower 4 bits of AL)
+and bl, 0x80         ; 80 E3 80 (test high bit of BL)
+and [esi], al        ; 20 06 (mask memory byte with AL)
+
+; 16-bit operations (word masking) - requires 66h prefix
+and ax, 0x00FF       ; 66 25 FF 00 (mask to lower byte)
+and bx, ax           ; 66 21 C3 (word register to register)
+and [esi], ax        ; 66 21 06 (word register to memory)
+
+; 32-bit operations (doubleword masking) - default in 32-bit mode
+and eax, 0x000000FF  ; 25 FF 00 00 00 (mask to lowest byte)
+and ebx, eax         ; 21 C3 (dword register to register)
+and [esi], eax       ; 21 06 (dword register to memory)
+
+; 64-bit operations (quadword masking) - x86-64 only
+and rax, 0x00000000FFFFFFFF  ; 48 25 FF FF FF FF (mask to lower 32 bits)
+and rbx, rax                 ; 48 21 C3 (qword register to register)
+and [rsi], rax              ; 48 21 06 (qword register to memory)
+```
+
+**Advanced Masking Patterns:**
+```assembly
+; Single bit extraction
+and eax, 1           ; 25 01 00 00 00 (extract LSB)
+and eax, 0x80000000  ; 25 00 00 00 80 (extract MSB)
+
+; Multi-bit field extraction  
+and eax, 0x0000FF00  ; 25 00 FF 00 00 (extract bits 8-15)
+and eax, 0x000003FF  ; 25 FF 03 00 00 (extract bits 0-9)
+
+; Alignment masking
+and eax, 0xFFFFFFFC  ; 25 FC FF FF FF (align to 4-byte boundary)
+and eax, 0xFFFFFFF0  ; 25 F0 FF FF FF (align to 16-byte boundary)
+
+; Power-of-2 modulo operations
+and eax, 7           ; 25 07 00 00 00 (equivalent to eax % 8)
+and eax, 15          ; 25 0F 00 00 00 (equivalent to eax % 16)
+```
+
+### Performance Characteristics and Optimization
+
+**Cycle Timing Analysis:**
+
+**Register Operations (Fastest):**
+- Register to register: **1 cycle latency, 0.25 cycles throughput**
+- Immediate to register: **1 cycle latency, 0.25 cycles throughput**
+- Modern CPUs can execute 4 AND operations simultaneously
+
+**Memory Operations (Cache-Dependent):**
+- **L1 Cache Hit**: 3-4 cycles latency
+- **L2 Cache Hit**: 10-12 cycles latency
+- **L3 Cache Hit**: 25-40 cycles latency  
+- **Main Memory**: 100-300 cycles latency
+
+**Execution Port Distribution:**
+```assembly
+; Intel Core architecture can execute AND on multiple ports:
+and eax, ebx         ; Ports 0, 1, 5, 6 (4-way parallel execution)
+and ecx, edx         ; Can execute simultaneously with above
+and esi, edi         ; Can execute simultaneously with both
+and r8, r9           ; All four can execute in same cycle
+```
+
+### Common Use Cases and Programming Patterns
+
+**1. Bit Masking and Extraction:**
+```assembly
+; Extract specific bit fields from a 32-bit value
+mov eax, [status_register]  ; Load 32-bit status
+and eax, 0x000000FF        ; Extract lower 8 bits (device ID)
+
+; Extract multiple fields efficiently
+mov ebx, [data_word]       ; Load data
+mov ecx, ebx               ; Copy for second extraction
+and ebx, 0x0000FFFF        ; Extract lower 16 bits  
+and ecx, 0xFFFF0000        ; Extract upper 16 bits
+shr ecx, 16                ; Shift to position
+```
+
+**2. Flag Testing and Bit Checking:**
+```assembly
+; Test if specific bits are set
+mov eax, [flags_register]
+and eax, 0x00000004        ; Test bit 2
+jnz bit_2_is_set           ; Jump if bit was set
+
+; Test multiple flags at once
+and eax, 0x0000000F        ; Test lower 4 bits
+cmp eax, 0x0000000F        ; All bits set?
+je all_flags_active
+```
+
+**3. Memory Alignment:**
+```assembly
+; Align pointer to 16-byte boundary
+mov eax, [unaligned_ptr]
+and eax, 0xFFFFFFF0        ; Clear lower 4 bits = align to 16 bytes
+
+; Check if pointer is aligned
+mov eax, [pointer]
+and eax, 0x0000000F        ; Extract alignment bits
+test eax, eax              ; Check if zero
+jz pointer_is_aligned      ; Jump if perfectly aligned
+```
+
+**4. Modulo Operations for Power-of-2:**
+```assembly
+; Fast modulo for power-of-2 values
+mov eax, [index]
+and eax, 7                 ; eax = eax % 8 (much faster than div)
+
+; Array index wrapping for circular buffers
+mov eax, [write_index]
+inc eax                    ; Increment index
+and eax, BUFFER_SIZE-1     ; Wrap around (BUFFER_SIZE must be power of 2)
+mov [write_index], eax
+```
+
+**5. Bit Field Manipulation:**
+```assembly
+; Clear specific bits while preserving others
+mov eax, [configuration]
+and eax, 0xFFFFFF0F        ; Clear bits 4-7, keep all others
+
+; Combine with OR for bit field updates:
+and eax, 0xFFFFFF0F        ; Clear field
+or eax, (new_value << 4)   ; Set new value in field
+mov [configuration], eax
+```
+
+### Optimization Techniques and Best Practices
+
+**✅ Performance Optimizations:**
+```assembly
+; Use AND for fast power-of-2 modulo
+and eax, 15              ; Much faster than: mov edx, 0; div 16
+
+; Combine AND with other operations
+mov eax, [data]
+and eax, 0xFF            ; Extract byte
+add eax, [offset]        ; Process extracted value
+; Both operations can execute in parallel on modern CPUs
+
+; Use immediate values when possible (smaller encoding)
+and eax, 0xFF            ; 3 bytes encoding
+; vs.
+mov ebx, 0xFF
+and eax, ebx             ; 7 bytes total
+```
+
+**❌ Common Performance Mistakes:**
+```assembly
+; Avoid unnecessary masking
+and eax, 0xFFFFFFFF      ; Pointless - no bits are cleared
+and al, 0xFF             ; Pointless - AL is already 8 bits
+
+; Don't use AND for zero testing
+and eax, eax             ; Sets flags but modifies EAX!
+; Better:
+test eax, eax            ; Tests without modification
+```
+
+**⚡ Advanced Optimization Patterns:**
+```assembly
+; Branchless conditional masking
+; Traditional approach:
+cmp condition, 0
+jz skip_mask
+and eax, mask
+skip_mask:
+
+; Branchless approach:
+neg condition            ; 0 → 0, non-zero → 0xFFFFFFFF
+and mask, condition      ; Conditional mask
+and eax, mask            ; Apply mask
+```
+
+### Flag Effects and Status Register Impact
+
+**Flags Modified by AND:**
+- **Zero Flag (ZF)**: Set if result is zero, cleared otherwise
+- **Sign Flag (SF)**: Set to value of result's most significant bit
+- **Parity Flag (PF)**: Set if result has even number of 1 bits
+- **Carry Flag (CF)**: Always cleared by AND operation
+- **Overflow Flag (OF)**: Always cleared by AND operation
+
+**Flag Usage Examples:**
+```assembly
+; Test if value is zero using AND flags
+and eax, eax             ; Test EAX against itself
+jz eax_was_zero          ; ZF set if EAX was zero
+
+; Test specific bit and branch
+and eax, 0x80000000      ; Test sign bit
+jnz value_was_negative   ; SF set if sign bit was 1
+
+; Parity checking for error detection
+and eax, 0xFF            ; Extract byte
+jp even_parity           ; Jump if even number of 1 bits
+```
+
+### Integration with Modern CPU Features
+
+**Branch Prediction Optimization:**
+```assembly
+; AND operations don't affect branch prediction
+and eax, mask            ; Deterministic operation
+test eax, eax            ; Predictable conditional test
+jz common_case           ; Branch predictor learns pattern
+```
+
+**SIMD Integration:**
+```assembly
+; AND extends to vector operations
+pand mm0, mm1            ; 64-bit MMX AND
+andps xmm0, xmm1         ; 128-bit SSE AND (single precision)
+andpd xmm0, xmm1         ; 128-bit SSE AND (double precision)
+vpand ymm0, ymm1, ymm2   ; 256-bit AVX AND
+```
+
+**Cache Optimization:**
+```assembly
+; Use AND for cache-friendly data structure access
+mov eax, [hash_key]
+and eax, HASH_TABLE_MASK ; Quick hash function
+mov ebx, [hash_table + eax*4]  ; Single cache line access
+```
+
 **XOR-based Conditional Move (Branchless Programming):**
 ```assembly
 ; Conditional assignment without branches:

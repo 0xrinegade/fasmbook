@@ -535,6 +535,661 @@ cmp eax, 0xDEADBEEF     ; Check if corrupted
 jne stack_corrupted     ; Handle corruption
 ```
 
+## 📚 Comprehensive Instruction Reference: POP
+
+> **🚩 Stack Data Retrieval**: The POP instruction retrieves data from the top of the stack, essential for function returns, register restoration, and stack-based data structures.
+
+### Historical Context and Evolution 📜
+
+The POP instruction complements PUSH as the fundamental stack manipulation operation. Together, they enable the stack-based memory model that forms the foundation of modern function calling conventions and structured programming.
+
+**Key Historical Milestones:**
+- **1945**: Basic stack concepts in early computers using manual stack management
+- **1960s**: Hardware stack pointer development in minicomputers
+- **1972**: Intel 8008 introduces integrated PUSH/POP instructions
+- **1978**: Intel 8086 adds segment register POP operations and stack validation
+- **1985**: 80386 introduces 32-bit POP with enhanced error checking
+- **2003**: x86-64 extends POP to 64-bit operations with improved performance
+
+### Complete Instruction Theory and Specification
+
+**POP** retrieves data from the top of the stack and stores it in the specified destination, then increments the stack pointer to remove the item from the stack.
+
+**Fundamental Operation:**
+```
+Destination ← [ESP]
+ESP ← ESP + operand_size
+```
+
+**Processor Internal Behavior:**
+1. **Fetch**: Instruction decoded from instruction cache
+2. **Read**: Data loaded from memory address specified by ESP
+3. **Store**: Data written to destination operand (register or memory)
+4. **Update**: ESP incremented by operand size (2, 4, or 8 bytes)
+5. **Validation**: Stack limits checked in protected mode
+
+### Complete Syntax Reference and API
+
+**Basic Syntax Patterns:**
+```assembly
+pop destination
+```
+
+**All Supported Destination Types:**
+
+| Destination Type | Syntax Example | Encoding | Cycles | Notes |
+|------------------|----------------|----------|---------|-------|
+| General Register | `pop eax` | 58 | 1-2 | Fastest stack operation |
+| Segment Register | `pop ds` | 1F | 3-5 | Segment descriptor loaded |
+| Memory Location | `pop [ebx]` | 8F 03 | 3-5 | Stack to memory transfer |
+| Memory + Offset | `pop [ebx+4]` | 8F 43 04 | 3-5 | Indirect addressing |
+
+**Size Variants and Encodings:**
+```assembly
+; 16-bit operations (word) - requires 66h prefix in 32-bit mode
+pop ax               ; 66 58 (pop to 16-bit register)
+pop [ebx]            ; 66 8F 03 (pop word to memory)
+
+; 32-bit operations (doubleword) - default in 32-bit mode
+pop eax              ; 58 (pop to 32-bit register)
+pop ebx              ; 5B (each register has unique encoding)
+pop ecx              ; 59
+pop edx              ; 5A
+pop esi              ; 5E
+pop edi              ; 5F
+pop [memory]         ; 8F 05 + address (pop to memory)
+
+; 64-bit operations (quadword) - x86-64 only
+pop rax              ; 58 (pop to 64-bit register)
+pop [memory]         ; 8F 05 + address (pop qword to memory)
+
+; Segment register operations
+pop es               ; 07 (pop to ES segment)
+pop ss               ; 17 (pop to SS segment) - special handling
+pop ds               ; 1F (pop to DS segment)
+pop fs               ; 0F A1 (pop to FS segment)
+pop gs               ; 0F A9 (pop to GS segment)
+```
+
+**Special Encoding Optimizations:**
+```assembly
+; Register-specific encodings (smaller and faster)
+pop eax              ; 58 (1 byte)
+pop ebx              ; 5B (1 byte)
+pop ecx              ; 59 (1 byte)
+pop edx              ; 5A (1 byte)
+pop ebp              ; 5D (1 byte)
+pop esp              ; 5C (1 byte) - rarely used, changes stack pointer!
+pop esi              ; 5E (1 byte)
+pop edi              ; 5F (1 byte)
+
+; Memory operations require ModR/M byte
+pop [register]       ; 8F /0 + ModR/M (2+ bytes)
+pop [displacement]   ; 8F /0 + displacement (5+ bytes)
+```
+
+### Performance Characteristics and Optimization
+
+**Cycle Timing Analysis:**
+
+**Register POP Operations (Fastest):**
+- **Modern CPUs**: 1-2 cycles latency, 0.5-1 cycles throughput
+- **Stack Cache**: Dedicated cache for recent stack operations
+- **Micro-op Fusion**: Multiple POP operations can be optimized together
+
+**Memory POP Operations:**
+- **L1 Cache Hit**: 3-4 cycles (stack read + memory write)
+- **L2 Cache Hit**: 8-12 cycles
+- **Cache Miss**: +100-300 cycles depending on memory hierarchy
+
+**Stack Pointer Update Optimization:**
+```assembly
+; Modern CPUs optimize consecutive POP operations
+pop eax              ; 1 cycle
+pop ebx              ; 1 cycle (can execute in parallel)
+pop ecx              ; 1 cycle (can execute in parallel)
+; Total: ~1-2 cycles due to stack engine optimization
+```
+
+### Common Use Cases and Programming Patterns
+
+**1. Function Epilogue and Register Restoration:**
+```assembly
+function_epilogue:
+    ; Restore callee-saved registers in reverse order
+    pop edi              ; Restore last-saved register first
+    pop esi              ; Restore second-to-last
+    pop ebx              ; Restore first-saved register last
+    pop ebp              ; Restore frame pointer
+    ret                  ; Return to caller
+```
+
+**2. Parameter Retrieval in Custom Calling Conventions:**
+```assembly
+; Manual parameter access without standard calling convention
+custom_function:
+    ; Assume: call pushed return address, then 3 parameters
+    pop eax              ; Get return address
+    pop ebx              ; Get parameter 1
+    pop ecx              ; Get parameter 2  
+    pop edx              ; Get parameter 3
+    push eax             ; Restore return address for RET
+    
+    ; Function body uses EBX, ECX, EDX as parameters
+    ; ...
+    ret
+```
+
+**3. Stack-Based Data Structure Operations:**
+```assembly
+; Stack-based calculator: pop operands for operations
+calculator_add:
+    pop eax              ; Get second operand (top of stack)
+    pop ebx              ; Get first operand (second from top)
+    add eax, ebx         ; Perform addition
+    push eax             ; Push result back on stack
+    ret
+
+calculator_multiply:
+    pop eax              ; Get second operand
+    pop ebx              ; Get first operand
+    imul eax, ebx        ; Perform multiplication
+    push eax             ; Push result back
+    ret
+```
+
+**4. Exception Handler Cleanup:**
+```assembly
+exception_handler:
+    ; Stack contains: [ErrorCode] [EIP] [CS] [EFLAGS] [ESP] [SS]
+    pop eax              ; Get error code
+    ; ... handle exception ...
+    
+    ; Clean restoration
+    pop eip_backup       ; Save return address
+    pop cs_backup        ; Save code segment
+    pop eflags_backup    ; Save flags
+    ; ... process exception ...
+    iret                 ; Return from interrupt
+```
+
+**5. Temporary Variable Management:**
+```assembly
+; Use stack for temporary storage
+calculate_complex:
+    push eax             ; Save current value
+    push ebx             ; Save another value
+    
+    ; Perform complex calculation using EAX, EBX
+    mov eax, [operand1]
+    mov ebx, [operand2]
+    imul eax, ebx
+    add eax, [operand3]
+    
+    ; Store result and restore registers
+    mov [result], eax
+    pop ebx              ; Restore EBX
+    pop eax              ; Restore EAX
+    ret
+```
+
+### Optimization Techniques and Best Practices
+
+**✅ Performance Best Practices:**
+```assembly
+; Pop registers in efficient order (reverse of push order)
+; PUSH order: EAX, EBX, ECX
+push eax
+push ebx  
+push ecx
+; ... function body ...
+; POP order: ECX, EBX, EAX (reverse)
+pop ecx
+pop ebx
+pop eax
+
+; Use consecutive POP operations for hardware optimization
+pop edi              ; Hardware can optimize
+pop esi              ; consecutive operations
+pop ebx              ; into single micro-op
+```
+
+**❌ Common Mistakes and Pitfalls:**
+```assembly
+; WRONG: Unbalanced push/pop operations
+push eax
+push ebx
+; ... some code ...
+pop eax              ; ERROR: Pops EBX value into EAX!
+; Missing: pop ebx
+
+; WRONG: Popping ESP (stack pointer corruption)
+pop esp              ; Dangerous! Changes stack pointer unpredictably
+
+; WRONG: Assuming stack contents
+pop eax              ; Assumes something was pushed earlier
+; Always verify stack state before popping
+```
+
+**⚡ Advanced Optimization Patterns:**
+```assembly
+; Use POP for fast memory copying from stack
+stack_to_array_copy:
+    mov edi, target_array
+    mov ecx, element_count
+copy_loop:
+    pop eax              ; Get element from stack
+    mov [edi], eax       ; Store to array
+    add edi, 4           ; Next array position
+    loop copy_loop       ; Repeat for all elements
+
+; Combine POP with immediate operations
+pop eax              ; Get value from stack
+add eax, CONSTANT    ; Process immediately
+mov [result], eax    ; Store processed result
+```
+
+### Flag Effects and Exception Handling
+
+**Flags Affected by POP:**
+- **No arithmetic flags modified**: POP doesn't affect ZF, SF, CF, OF, PF
+- **Exception flags**: May trigger stack fault in protected mode
+
+**Exception Conditions:**
+```assembly
+; Stack underflow detection
+cmp esp, [stack_top]     ; Check if at stack top
+jae stack_underflow      ; Jump if ESP >= stack top
+pop eax                  ; Safe to pop
+
+; Stack segment limit checking (protected mode)
+; Hardware automatically checks:
+; - ESP must be within stack segment limits
+; - Stack must have read permissions
+; - Alignment requirements must be met
+```
+
+### Integration with Modern CPU Features
+
+**Stack Engine Optimization:**
+```assembly
+; Modern CPUs have dedicated "stack engines" that optimize:
+pop eax              ; Tracked in stack cache
+pop ebx              ; May not require memory access
+pop ecx              ; If recently pushed values
+```
+
+**Branch Prediction Integration:**
+```assembly
+; POP operations don't affect branch prediction
+pop eax              ; Deterministic operation
+test eax, eax        ; Use result for branching
+jz handle_zero       ; Predictable pattern
+```
+
+**64-bit Mode Enhancements:**
+```assembly
+; x86-64 POP operations are more efficient
+pop rax              ; 64-bit operation, same cycle count as 32-bit
+pop qword [memory]   ; Direct 64-bit memory operations
+```
+
+**SIMD and Vector Integration:**
+```assembly
+; While POP doesn't directly support SIMD, it can prepare data:
+pop eax              ; Get 32-bit value
+movd xmm0, eax       ; Move to SIMD register
+; Or use memory operations:
+pop [temp_buffer]    ; Pop to memory
+movaps xmm0, [temp_buffer]  ; Load into SIMD
+```
+
+### Security Considerations
+
+**Stack Buffer Overflow Protection:**
+```assembly
+; Canary-based stack protection
+push STACK_CANARY    ; Push known value
+; ... function operations ...
+pop eax              ; Retrieve canary
+cmp eax, STACK_CANARY ; Verify integrity
+jne stack_corrupted  ; Handle corruption
+```
+
+**Return Address Protection:**
+```assembly
+; Protect against return address manipulation
+call get_return_addr ; Get current return address
+pop eax              ; EAX = return address
+cmp eax, [valid_return_range_start]
+jb invalid_return    ; Address too low
+cmp eax, [valid_return_range_end]  
+ja invalid_return    ; Address too high
+push eax             ; Restore valid return address
+```
+
+**Control Flow Integrity (CFI):**
+```assembly
+; Hardware CFI can track stack operations
+; Intel CET (Control-flow Enforcement Technology) monitors:
+; - POP operations that affect control flow
+; - Stack pointer consistency  
+; - Return address integrity
+```
+
+## 📚 Comprehensive Instruction Reference: JMP
+
+> **🚩 Unconditional Jump Foundation**: The JMP instruction provides unconditional program flow control, essential for implementing loops, function calls, and complex control structures.
+
+### Historical Context and Evolution 📜
+
+The JMP instruction is one of the oldest and most fundamental control flow instructions, dating back to the earliest stored-program computers. Its evolution mirrors the development of structured programming concepts.
+
+**Key Historical Milestones:**
+- **1945**: First jump instructions in ENIAC using manual cable connections
+- **1949**: Binary jump instructions in EDVAC stored-program computer
+- **1972**: Intel 8008 introduced structured jump with relative addressing
+- **1978**: Intel 8086 added near/far jump distinctions for segmented memory
+- **1985**: 80386 introduced 32-bit jump targets and protected mode validation
+- **2003**: x86-64 expanded jump addressing to 64-bit virtual space
+
+### Complete Instruction Theory and Specification
+
+**JMP** performs an unconditional transfer of program control to a specified target address. Unlike conditional jumps, JMP always modifies the instruction pointer, making it essential for implementing loops, function epilogues, and complex control structures.
+
+**Fundamental Operation:**
+```
+EIP ← Target Address
+```
+
+**Processor Internal Behavior:**
+1. **Fetch**: Current instruction address is read and decoded
+2. **Target Calculation**: Target address is computed based on addressing mode
+3. **Validation**: In protected mode, target is validated against segment limits
+4. **Jump**: EIP register is updated to target address
+5. **Branch Prediction**: Processor attempts to predict target for performance
+
+### Complete Syntax Reference and API
+
+**Basic Syntax Patterns:**
+```assembly
+jmp target_address
+```
+
+**All Supported Jump Types:**
+
+| Jump Type | Syntax Example | Encoding | Cycles | Range |
+|-----------|----------------|----------|---------|-------|
+| Short Jump | `jmp short label` | EB rel8 | 1-2 | ±127 bytes |
+| Near Jump | `jmp label` | E9 rel32 | 1-2 | ±2GB in 32-bit |
+| Far Jump | `jmp far [ptr]` | FF /5 | 15-25 | Any segment |
+| Indirect Near | `jmp eax` | FF /4 | 2-3 | Register contents |
+| Indirect Far | `jmp [memory]` | FF /5 | 20-30 | Memory contents |
+
+**Encoding Examples:**
+```assembly
+; Short jump (optimization for nearby targets)
+jmp short nearby_label    ; EB 05 (jump forward 5 bytes)
+jmp short backward_label  ; EB FB (jump backward 5 bytes)
+
+; Near jump (most common form)
+jmp function_start        ; E9 12 34 56 78 (relative displacement)
+jmp $+100                 ; E9 5B 00 00 00 (forward 100 bytes)
+
+; Indirect jump through register
+jmp eax                   ; FF E0 (jump to address in EAX)
+jmp ecx                   ; FF E1 (jump to address in ECX)
+
+; Indirect jump through memory
+jmp [jump_table + eax*4]  ; FF 24 85 [table_addr] (computed jump)
+jmp [function_pointer]    ; FF 25 [ptr_addr] (function pointer call)
+```
+
+**Advanced Addressing Modes:**
+```assembly
+; Direct address jump
+jmp 0x401000             ; E9 [computed_displacement] (absolute target)
+
+; Register indirect
+jmp eax                  ; FF E0 (target address in EAX)
+jmp [ebx]                ; FF 23 (target address at memory[EBX])
+
+; Memory with displacement
+jmp [ebx + 4]            ; FF 63 04 (target at memory[EBX+4])
+jmp [ebx + ecx*4 + 8]    ; FF 64 8B 08 (complex addressing)
+
+; Far jumps (rarely used in modern 32-bit programming)
+jmp far [cs:target]      ; EA [segment:offset] (inter-segment jump)
+```
+
+### Performance Characteristics and Optimization
+
+**Cycle Timing Analysis:**
+
+**Direct Jumps (Fastest):**
+- Short jump: **1-2 cycles** (optimal branch prediction)
+- Near jump: **1-2 cycles** (predicted correctly)
+- Mispredicted jump: **15-20 cycles** (pipeline flush penalty)
+
+**Indirect Jumps (Slower):**
+- Register indirect: **2-3 cycles** (additional address calculation)
+- Memory indirect: **5-10 cycles** (memory access + address calculation)
+- Cache miss penalty: **+100-300 cycles** (if target not in cache)
+
+**Branch Prediction Impact:**
+```assembly
+; Predictable pattern (fast)
+loop_start:
+    ; ... loop body ...
+    dec ecx
+    jnz loop_start        ; Conditional jump, predictable
+    jmp after_loop        ; Unconditional, always predicted correctly
+
+; Unpredictable pattern (slow)
+jmp [random_table + eax*4]  ; Indirect jump, unpredictable target
+                            ; Causes 15-20 cycle penalty on misprediction
+```
+
+### Common Use Cases and Programming Patterns
+
+**1. Loop Implementation:**
+```assembly
+loop_start:
+    ; Process array element
+    mov eax, [esi + ecx*4]  ; Load element
+    add eax, ebx            ; Process it
+    mov [edi + ecx*4], eax  ; Store result
+    inc ecx                 ; Next element
+    cmp ecx, [array_size]   ; Check bounds
+    jl loop_start           ; Conditional jump back
+    jmp loop_complete       ; Exit loop unconditionally
+loop_complete:
+```
+
+**2. Function Epilogue (Alternative to RET):**
+```assembly
+function_end:
+    mov esp, ebp            ; Restore stack pointer
+    pop ebp                 ; Restore frame pointer
+    jmp [esp]               ; Manual return (equivalent to RET)
+```
+
+**3. Switch Statement Implementation:**
+```assembly
+; Switch statement with jump table
+switch_statement:
+    cmp eax, 4              ; Check range
+    ja default_case         ; Out of range
+    jmp [jump_table + eax*4]  ; Computed jump
+
+jump_table:
+    dd case_0, case_1, case_2, case_3, case_4
+
+case_0:
+    ; Handle case 0
+    jmp switch_end
+case_1:
+    ; Handle case 1  
+    jmp switch_end
+; ... etc
+```
+
+**4. Error Handling and Cleanup:**
+```assembly
+process_data:
+    call allocate_memory
+    test eax, eax
+    jz allocation_failed    ; Conditional jump on failure
+    
+    ; ... processing code ...
+    jmp cleanup_and_exit    ; Unconditional jump to cleanup
+
+allocation_failed:
+    mov eax, -1             ; Error code
+    jmp function_exit       ; Skip cleanup, direct exit
+    
+cleanup_and_exit:
+    call free_memory        ; Cleanup allocated resources
+function_exit:
+    ret
+```
+
+### Optimization Techniques and Best Practices
+
+**✅ Performance Best Practices:**
+```assembly
+; Keep jump targets aligned for better cache performance
+align 16
+frequently_called_function:
+    ; Function code here
+
+; Use short jumps when possible (smaller encoding, faster)
+cmp eax, 0
+jz short error_handler    ; Use short when target is nearby
+
+; Prefer conditional jumps for predictable patterns
+test eax, eax
+jz handle_zero           ; Predictable: usually non-zero
+; Rather than:
+jmp [zero_nonzero_table + eax*4]  ; Unpredictable indirect jump
+```
+
+**❌ Common Performance Pitfalls:**
+```assembly
+; Avoid unnecessary unconditional jumps
+; BAD:
+if_condition:
+    ; some code
+    jmp endif
+else_condition:  
+    ; some code
+    jmp endif
+endif:
+
+; BETTER: Use fall-through
+if_condition:
+    ; some code
+    jmp endif
+else_condition:
+    ; some code (falls through)
+endif:
+```
+
+**⚡ Advanced Optimization Patterns:**
+```assembly
+; Jump threading for multiple conditions
+cmp eax, 1
+je case_one
+cmp eax, 2  
+je case_two
+jmp default_case
+
+; Optimized with early exit pattern:
+dec eax               ; eax = original - 1
+jz case_one          ; Was 1
+dec eax              ; eax = original - 2  
+jz case_two          ; Was 2
+; Fall through to default_case
+```
+
+### Integration with Modern CPU Features
+
+**Branch Target Buffer (BTB) Optimization:**
+```assembly
+; BTB learns jump targets for better prediction
+; Frequent jump targets are cached for 1-cycle jumps
+frequently_used_function:
+    ; This target will be cached in BTB
+    ; Subsequent jumps here will be predicted correctly
+```
+
+**Return Stack Buffer (RSB) Integration:**
+```assembly
+; JMP doesn't use RSB (unlike CALL/RET)
+call function_a       ; Uses RSB for return prediction
+jmp function_b        ; Doesn't affect RSB
+; When function_b calls RET, RSB is still valid
+```
+
+**Cache Line Alignment:**
+```assembly
+; Jump targets should align with cache line boundaries
+align 64              ; Align to cache line (64 bytes on modern CPUs)
+hot_loop_start:
+    ; Critical loop code here
+    ; Entire loop fits in single cache line = faster execution
+```
+
+### Security Considerations
+
+**Control Flow Integrity (CFI):**
+```assembly
+; Modern CPUs support CET (Control Flow Enforcement Technology)
+; Indirect jumps are tracked to prevent ROP/JOP attacks
+jmp eax               ; Target must be valid landing pad
+                      ; Hardware validates against allowed targets
+```
+
+**Jump-Oriented Programming (JOP) Mitigation:**
+```assembly
+; Avoid predictable indirect jump patterns
+; BAD: Easy to exploit
+jmp [user_controlled_table + user_input*4]
+
+; BETTER: Validate input first
+cmp eax, MAX_TABLE_SIZE
+jae error_exit
+jmp [validated_table + eax*4]
+```
+
+### Integration with Structured Programming
+
+**Implementing High-Level Constructs:**
+```assembly
+; for(int i = 0; i < 10; i++) equivalent:
+mov ecx, 0              ; i = 0
+for_loop_start:
+    cmp ecx, 10         ; i < 10?
+    jge for_loop_end    ; Exit loop if i >= 10
+    
+    ; Loop body here
+    
+    inc ecx             ; i++
+    jmp for_loop_start  ; Continue loop
+for_loop_end:
+
+; while(condition) equivalent:
+while_loop_start:
+    call check_condition
+    test eax, eax
+    jz while_loop_end   ; Exit if condition false
+    
+    ; Loop body here
+    
+    jmp while_loop_start  ; Continue loop
+while_loop_end:
+```
+
 ### Integration with Modern Programming Patterns
 
 **Exception Handling Integration:**
