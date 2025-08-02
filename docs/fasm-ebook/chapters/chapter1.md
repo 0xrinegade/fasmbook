@@ -535,6 +535,607 @@ cmp eax, 0xDEADBEEF     ; Check if corrupted
 jne stack_corrupted     ; Handle corruption
 ```
 
+## 📚 Comprehensive Instruction Reference: Conditional Jumps (JZ, JNZ, JE, JNE)
+
+> **🚩 Conditional Flow Control**: Conditional jump instructions provide the foundation for all decision-making in assembly programming, enabling if-statements, loops, and complex logic structures.
+
+### Historical Context and Evolution 📜
+
+Conditional jumps represent one of the most significant innovations in computer architecture, enabling programs to make decisions based on data rather than following fixed sequences.
+
+**Key Historical Milestones:**
+- **1945**: First conditional operations in ENIAC using manual switch settings
+- **1951**: Conditional jumps in UNIVAC I based on accumulator state
+- **1972**: Intel 8008 introduces flag-based conditional jumps
+- **1978**: Intel 8086 expands to full condition code system with 16 conditional jumps
+- **1985**: 80386 adds 32-bit conditional operations with enhanced branch prediction
+- **1993**: Pentium introduces branch prediction hardware for conditional jumps
+- **2003**: x86-64 extends conditional jumps with improved prediction algorithms
+
+### Complete Instruction Theory and Specification
+
+**Conditional jumps** examine processor flags set by previous instructions and transfer control to a target address only if specific conditions are met. If the condition is false, execution continues with the next instruction.
+
+**Fundamental Operation:**
+```
+IF (condition_met) THEN
+    EIP ← Target Address
+ELSE  
+    EIP ← EIP + instruction_length
+```
+
+**Flag Dependencies:**
+All conditional jumps depend on flags set by previous instructions:
+- **ZF (Zero Flag)**: Set when result is zero
+- **SF (Sign Flag)**: Set when result is negative
+- **CF (Carry Flag)**: Set when unsigned overflow occurs
+- **OF (Overflow Flag)**: Set when signed overflow occurs
+- **PF (Parity Flag)**: Set when result has even number of 1 bits
+
+### Complete Syntax Reference and API
+
+**Most Common Conditional Jumps:**
+
+| Instruction | Condition | Flags Tested | Use Case |
+|-------------|-----------|--------------|----------|
+| **JZ** (Jump if Zero) | Result = 0 | ZF = 1 | Equality testing |
+| **JNZ** (Jump if Not Zero) | Result ≠ 0 | ZF = 0 | Inequality testing |
+| **JE** (Jump if Equal) | Same as JZ | ZF = 1 | Comparison results |
+| **JNE** (Jump if Not Equal) | Same as JNZ | ZF = 0 | Comparison results |
+| **JL** (Jump if Less) | Signed < | (SF ⊕ OF) = 1 | Signed comparisons |
+| **JG** (Jump if Greater) | Signed > | ZF=0 & (SF ⊕ OF)=0 | Signed comparisons |
+| **JB** (Jump if Below) | Unsigned < | CF = 1 | Unsigned comparisons |
+| **JA** (Jump if Above) | Unsigned > | CF=0 & ZF=0 | Unsigned comparisons |
+
+**Encoding Examples:**
+```assembly
+; Short conditional jumps (±127 bytes) - 2 bytes
+jz short nearby_label    ; 74 05 (jump forward 5 bytes if zero)
+jnz short back_label     ; 75 FB (jump backward 5 bytes if not zero)
+je short equal_case      ; 74 xx (same as JZ)
+jne short not_equal      ; 75 xx (same as JNZ)
+
+; Near conditional jumps (±2GB) - 6 bytes  
+jz far_label            ; 0F 84 xx xx xx xx (32-bit displacement)
+jnz far_label           ; 0F 85 xx xx xx xx
+je far_label            ; 0F 84 xx xx xx xx (same as JZ)
+jne far_label           ; 0F 85 xx xx xx xx (same as JNZ)
+```
+
+**Complete Conditional Jump Set:**
+```assembly
+; Equality/Zero testing
+jz   label              ; 74 rel8 / 0F 84 rel32 (Jump if Zero)
+jnz  label              ; 75 rel8 / 0F 85 rel32 (Jump if Not Zero)
+je   label              ; 74 rel8 / 0F 84 rel32 (Jump if Equal, same as JZ)
+jne  label              ; 75 rel8 / 0F 85 rel32 (Jump if Not Equal, same as JNZ)
+
+; Signed comparisons  
+jl   label              ; 7C rel8 / 0F 8C rel32 (Jump if Less)
+jle  label              ; 7E rel8 / 0F 8E rel32 (Jump if Less or Equal)
+jg   label              ; 7F rel8 / 0F 8F rel32 (Jump if Greater)
+jge  label              ; 7D rel8 / 0F 8D rel32 (Jump if Greater or Equal)
+
+; Unsigned comparisons
+jb   label              ; 72 rel8 / 0F 82 rel32 (Jump if Below)
+jbe  label              ; 76 rel8 / 0F 86 rel32 (Jump if Below or Equal)  
+ja   label              ; 77 rel8 / 0F 87 rel32 (Jump if Above)
+jae  label              ; 73 rel8 / 0F 83 rel32 (Jump if Above or Equal)
+
+; Sign and carry testing
+js   label              ; 78 rel8 / 0F 88 rel32 (Jump if Sign)
+jns  label              ; 79 rel8 / 0F 89 rel32 (Jump if Not Sign)
+jc   label              ; 72 rel8 / 0F 82 rel32 (Jump if Carry, same as JB)
+jnc  label              ; 73 rel8 / 0F 83 rel32 (Jump if Not Carry, same as JAE)
+
+; Parity and overflow
+jp   label              ; 7A rel8 / 0F 8A rel32 (Jump if Parity/Parity Even)
+jnp  label              ; 7B rel8 / 0F 8B rel32 (Jump if No Parity/Parity Odd)
+jo   label              ; 70 rel8 / 0F 80 rel32 (Jump if Overflow)
+jno  label              ; 71 rel8 / 0F 81 rel32 (Jump if No Overflow)
+```
+
+### Performance Characteristics and Branch Prediction
+
+**Cycle Timing Analysis:**
+
+**Predicted Correctly (Best Case):**
+- **Short jump taken**: 1-2 cycles
+- **Short jump not taken**: 1 cycle  
+- **Near jump taken**: 1-2 cycles
+- **Near jump not taken**: 1 cycle
+
+**Mispredicted (Worst Case):**
+- **Any mispredicted jump**: 15-20 cycles (pipeline flush penalty)
+- **Complex prediction patterns**: Up to 25 cycles on some architectures
+
+**Branch Prediction Strategies:**
+```assembly
+; PREDICTABLE: Loop patterns (well-predicted)
+mov ecx, 100
+loop_start:
+    ; Process data
+    dec ecx
+    jnz loop_start          ; Predicted correctly 99/100 times
+
+; UNPREDICTABLE: Data-dependent branches (poorly predicted)  
+cmp [random_data], 50
+jl random_case              ; 50/50 chance, hard to predict
+```
+
+### Common Use Cases and Programming Patterns
+
+**1. Equality Testing After Comparisons:**
+```assembly
+; Compare two values and branch based on result
+mov eax, [value1]
+cmp eax, [value2]           ; Sets flags based on comparison
+je values_equal             ; Jump if EAX == [value2] (ZF=1)
+jne values_different        ; Jump if EAX != [value2] (ZF=0)
+
+; More examples:
+cmp eax, 100
+jl less_than_100           ; Jump if EAX < 100 (signed)
+jg greater_than_100        ; Jump if EAX > 100 (signed)
+```
+
+**2. Zero Testing After Operations:**
+```assembly
+; Test if result is zero without modifying the value
+test eax, eax              ; Perform bitwise AND (EAX & EAX)
+jz eax_is_zero             ; Jump if result was zero
+jnz eax_is_nonzero         ; Jump if result was non-zero
+
+; Alternative using OR
+or eax, eax                ; Sets flags, but modifies EAX if it was zero
+jz was_zero                ; Jump if original EAX was zero
+```
+
+**3. Loop Control Structures:**
+```assembly
+; for(int i = 0; i < 10; i++) equivalent
+mov ecx, 0                 ; i = 0
+for_loop:
+    cmp ecx, 10            ; Compare i with 10
+    jge for_end            ; Exit if i >= 10
+    
+    ; Loop body here
+    
+    inc ecx                ; i++
+    jmp for_loop           ; Continue loop
+for_end:
+
+; while(condition) equivalent  
+while_loop:
+    cmp [condition_var], 0
+    je while_end           ; Exit if condition == 0
+    
+    ; Loop body here
+    
+    jmp while_loop         ; Continue loop
+while_end:
+```
+
+**4. Error Checking and Validation:**
+```assembly
+; Function return value checking
+call some_function         ; Function returns status in EAX
+test eax, eax              ; Check return value
+jz success                 ; Jump if function returned 0 (success)
+; Handle error case here
+jmp error_cleanup
+
+success:
+; Handle success case here
+
+; Null pointer checking
+mov eax, [pointer_value]
+test eax, eax              ; Check if pointer is NULL
+jz null_pointer_error      ; Jump if pointer is 0 (NULL)
+; Safe to use pointer here
+```
+
+**5. Multi-way Branching (Switch Statements):**
+```assembly
+; Switch statement implementation
+mov eax, [switch_value]
+cmp eax, 1
+je case_1
+cmp eax, 2
+je case_2  
+cmp eax, 3
+je case_3
+jmp default_case           ; No match found
+
+case_1:
+    ; Handle case 1
+    jmp switch_end
+case_2:
+    ; Handle case 2
+    jmp switch_end
+case_3:
+    ; Handle case 3
+    jmp switch_end
+default_case:
+    ; Handle default case
+switch_end:
+```
+
+### Optimization Techniques and Best Practices
+
+**✅ Branch Prediction Optimization:**
+```assembly
+; Make common cases fall through (no jump taken)
+test eax, eax
+jnz rare_error_case        ; Rare case jumps
+; Common case continues here (no jump penalty)
+
+; Use consistent patterns for predictable branches
+mov ecx, array_size
+process_loop:
+    ; Process element
+    dec ecx
+    jnz process_loop       ; Predictable: usually taken, except last iteration
+```
+
+**❌ Performance Anti-Patterns:**
+```assembly
+; Avoid alternating unpredictable patterns
+cmp [random_value], 128
+jl random_branch           ; 50/50 probability - unpredictable
+; vs alternating every time - even worse for prediction
+
+; Don't use conditional jumps for simple value selection
+cmp eax, 0
+jz set_zero
+mov eax, 1
+jmp done
+set_zero:
+mov eax, 0
+done:
+; Better: Use conditional move (CMOV) or arithmetic tricks
+```
+
+**⚡ Advanced Optimization Patterns:**
+```assembly
+; Branchless conditional execution using conditional moves
+cmp eax, ebx
+mov ecx, value_if_equal    ; Prepare value
+cmove eax, ecx             ; Move only if equal (no branch!)
+
+; Use TEST instead of CMP when checking for zero
+test eax, eax              ; Faster than: cmp eax, 0
+jz handle_zero
+
+; Combine conditions to reduce branch count
+test eax, eax              ; Check if EAX is zero
+jz handle_zero_or_negative ; Handle both zero and negative
+test eax, 0x80000000       ; Check sign bit
+jnz handle_negative        ; Handle only negative
+; Handle positive case here (fall through)
+```
+
+### Flag Interaction and Dependencies
+
+**Understanding Flag Setting Instructions:**
+```assembly
+; Arithmetic instructions set flags
+add eax, ebx               ; Sets ZF, SF, CF, OF, PF
+jz sum_is_zero             ; Jump if addition result was zero
+jo addition_overflow       ; Jump if signed overflow occurred
+
+; Comparison instructions set flags  
+cmp eax, ebx               ; Sets flags as if: SUB EAX, EBX (but doesn't modify EAX)
+je values_equal            ; Jump if EAX == EBX
+jl eax_less_than_ebx       ; Jump if EAX < EBX (signed)
+
+; Logical instructions affect some flags
+and eax, 0xFF              ; Sets ZF, SF, PF; clears CF, OF
+jz result_was_zero         ; Jump if (EAX & 0xFF) == 0
+```
+
+**Flag Preservation Across Instructions:**
+```assembly
+; Some instructions don't affect flags
+mov eax, ebx               ; Doesn't change flags
+lea esi, [edi + 4]         ; Doesn't change flags
+; Conditional jump still uses flags from previous flag-setting instruction
+
+; Some instructions affect only some flags
+inc eax                    ; Sets ZF, SF, OF, PF; doesn't affect CF
+; JC/JNC still use old CF value, but JZ uses new ZF
+```
+
+## 📚 Comprehensive Instruction Reference: LEA (Load Effective Address)
+
+> **🚩 Address Calculation Expert**: LEA computes memory addresses without accessing memory, providing efficient address arithmetic and complex calculations in a single instruction.
+
+### Historical Context and Evolution 📜
+
+The LEA instruction represents a breakthrough in address calculation efficiency, allowing complex address arithmetic without memory access overhead.
+
+**Key Historical Milestones:**
+- **1978**: Intel 8086 introduces LEA for 16-bit segmented addressing
+- **1985**: 80386 enhances LEA with 32-bit addressing and scaled indexing
+- **1993**: Pentium optimizes LEA execution in single cycle for simple forms
+- **1995**: Pentium Pro adds complex LEA forms with 3-cycle execution
+- **2003**: x86-64 extends LEA to 64-bit address calculations
+- **2008**: Modern cores optimize LEA with dedicated address generation units
+
+### Complete Instruction Theory and Specification
+
+**LEA** calculates the effective address of the source operand and stores the result in the destination register. Crucially, it performs address arithmetic without accessing memory.
+
+**Fundamental Operation:**
+```
+Destination ← Effective_Address(Source)
+```
+
+**Key Advantages:**
+- No memory access (pure arithmetic operation)
+- Complex calculations in single instruction
+- Doesn't affect processor flags
+- Can perform multiple arithmetic operations simultaneously
+
+### Complete Syntax Reference and API
+
+**Basic Syntax:**
+```assembly
+lea destination_register, [memory_expression]
+```
+
+**All Supported Address Calculations:**
+
+| Address Form | Syntax Example | Calculation | Use Case |
+|--------------|----------------|-------------|----------|
+| Base | `lea eax, [ebx]` | EBX | Register copy |
+| Base + Displacement | `lea eax, [ebx + 8]` | EBX + 8 | Structure member access |
+| Base + Index | `lea eax, [ebx + esi]` | EBX + ESI | Dynamic offset |
+| Index * Scale | `lea eax, [esi*4]` | ESI * 4 | Array element size |
+| Complex | `lea eax, [ebx + esi*4 + 12]` | EBX + ESI*4 + 12 | Full addressing |
+
+**Scale Factor Support:**
+```assembly
+; Scale factors: 1, 2, 4, 8 (for 1, 2, 4, 8-byte elements)
+lea eax, [esi*1]         ; ESI * 1
+lea eax, [esi*2]         ; ESI * 2 (word arrays)
+lea eax, [esi*4]         ; ESI * 4 (dword arrays)  
+lea eax, [esi*8]         ; ESI * 8 (qword arrays)
+```
+
+**Size Variants:**
+```assembly
+; 32-bit LEA (default in 32-bit mode)
+lea eax, [ebx + ecx*4 + 16]  ; 32-bit address calculation
+lea esi, [edi + 100]         ; 32-bit result
+
+; 64-bit LEA (x86-64 mode)  
+lea rax, [rbx + rcx*8 + 32]  ; 64-bit address calculation
+lea rsi, [rdi + 200]         ; 64-bit result
+
+; 16-bit LEA (legacy, requires 66h prefix)
+lea ax, [bx + si]            ; 16-bit address calculation
+```
+
+### Performance Characteristics and Optimization
+
+**Cycle Timing Analysis:**
+
+**Simple LEA Forms (1 cycle):**
+- `lea eax, [ebx]` - Register copy
+- `lea eax, [ebx + displacement]` - Base + constant
+- `lea eax, [ebx + ecx]` - Base + index
+
+**Complex LEA Forms (3 cycles on older CPUs, 1-2 cycles on modern):**
+- `lea eax, [ebx + ecx*scale]` - Base + scaled index
+- `lea eax, [ebx + ecx*scale + displacement]` - Full addressing
+
+**Modern CPU Optimizations:**
+```assembly
+; Intel Core and AMD Zen can execute complex LEA in 1 cycle
+lea eax, [ebx + ecx*4 + 100]  ; 1 cycle on modern CPUs
+; Older CPUs required 3 cycles for this complex form
+```
+
+### Common Use Cases and Programming Patterns
+
+**1. Efficient Arithmetic Operations:**
+```assembly
+; Fast multiplication by 2, 3, 5, 9 using LEA
+lea eax, [ebx*2]         ; EAX = EBX * 2
+lea eax, [ebx + ebx*2]   ; EAX = EBX * 3 (EBX + EBX*2)
+lea eax, [ebx + ebx*4]   ; EAX = EBX * 5 (EBX + EBX*4)
+lea eax, [ebx + ebx*8]   ; EAX = EBX * 9 (EBX + EBX*8)
+
+; Complex arithmetic in one instruction
+lea eax, [ebx*4 + 7]     ; EAX = EBX * 4 + 7
+lea eax, [ebx + ecx*2 + 10]  ; EAX = EBX + ECX * 2 + 10
+```
+
+**2. Array Element Address Calculation:**
+```assembly
+; Calculate address of array[index]
+mov eax, [array_index]       ; Load index
+lea esi, [array_base + eax*4]  ; ESI = &array[index] (4-byte elements)
+
+; Multi-dimensional arrays: matrix[row][col] 
+mov eax, [row]               ; Load row index
+mov ebx, [col]               ; Load column index
+lea eax, [eax + eax*4]       ; row * 5 (assuming 5 columns)
+lea esi, [matrix_base + eax*4 + ebx*4]  ; &matrix[row][col]
+```
+
+**3. Structure Member Access:**
+```assembly
+; Access structure members efficiently
+; struct { int a; int b; int c; } *ptr;
+mov esi, [struct_pointer]
+lea eax, [esi + 0]       ; &ptr->a (offset 0)
+lea ebx, [esi + 4]       ; &ptr->b (offset 4)  
+lea ecx, [esi + 8]       ; &ptr->c (offset 8)
+
+; Dynamic structure array access
+mov eax, [struct_index]      ; Index into array of structures
+lea esi, [struct_array + eax*12]  ; &array[index] (12-byte structures)
+```
+
+**4. String and Buffer Manipulation:**
+```assembly
+; Advance pointer by calculated amount
+mov esi, [buffer_pointer]
+mov eax, [bytes_processed]
+lea esi, [esi + eax]     ; Advance pointer by bytes_processed
+mov [buffer_pointer], esi
+
+; Calculate end pointer
+mov esi, [buffer_start]
+mov eax, [buffer_size]
+lea edi, [esi + eax]     ; EDI = buffer_end = buffer_start + size
+```
+
+**5. Register Value Manipulation:**
+```assembly
+; Increment/decrement without affecting flags
+lea eax, [eax + 1]       ; EAX = EAX + 1 (doesn't change flags)
+lea eax, [eax - 1]       ; EAX = EAX - 1 (doesn't change flags)
+
+; Scale register value
+lea eax, [eax*2]         ; EAX = EAX * 2
+lea eax, [eax*4 + eax]   ; EAX = EAX * 5 (EAX*4 + EAX)
+```
+
+### Advanced Optimization Techniques
+
+**✅ Performance Best Practices:**
+```assembly
+; Use LEA instead of multiple arithmetic instructions
+; Instead of:
+mov eax, index
+mov ebx, 4
+imul eax, ebx
+add eax, base_address
+add eax, 12
+; Use:
+lea eax, [base_address + index*4 + 12]  ; Single instruction!
+
+; Combine register operations efficiently
+lea eax, [ebx + ecx]     ; EAX = EBX + ECX (faster than ADD)
+lea eax, [ebx*2 + ecx]   ; EAX = EBX*2 + ECX (complex calculation)
+```
+
+**❌ Performance Pitfalls:**
+```assembly
+; Don't use LEA for simple operations that have dedicated instructions
+lea eax, [ebx]           ; Just use: mov eax, ebx
+lea eax, [eax + 1]       ; Just use: inc eax (unless you need to preserve flags)
+
+; Avoid LEA when result isn't used as address
+lea eax, [ebx*3]         ; OK if calculating for arithmetic
+mov eax, [ebx*3]         ; WRONG - this tries to load from memory!
+```
+
+**⚡ Advanced Optimization Patterns:**
+```assembly
+; LEA for fast switch table indexing
+mov eax, [case_value]
+lea esi, [jump_table + eax*4]  ; Calculate table entry address
+jmp [esi]                      ; Jump to computed address
+
+; Efficient loop counter arithmetic
+lea ecx, [ecx + ecx*2]   ; counter = counter * 3
+lea ecx, [ecx + 7]       ; counter = counter + 7
+; Combined: counter = old_counter * 3 + 7
+
+; Pipeline-friendly address calculations
+lea eax, [base1 + index*4]     ; Calculate first address
+lea ebx, [base2 + index*4]     ; Calculate second address in parallel
+mov ecx, [eax]                 ; Load from first address
+mov edx, [ebx]                 ; Load from second address
+```
+
+### Flag Effects and Special Properties
+
+**Key LEA Properties:**
+- **No flags affected**: LEA never modifies processor flags
+- **No memory access**: Pure arithmetic operation
+- **Single cycle**: Most forms execute in 1 cycle on modern CPUs
+- **No exceptions**: Cannot generate memory access violations
+
+**Practical Applications:**
+```assembly
+; Preserve flags while doing arithmetic
+add eax, ebx             ; Sets flags based on result
+lea ecx, [ecx + 5]       ; Increment ECX without affecting flags
+jz result_was_zero       ; Uses flags from ADD, not LEA
+```
+
+### Integration with Modern CPU Features
+
+**Address Generation Units (AGU):**
+```assembly
+; Modern CPUs have dedicated AGUs for LEA
+lea eax, [ebx + ecx*4]   ; Executes on AGU, doesn't compete with ALU
+add edx, esi             ; Can execute simultaneously on ALU
+```
+
+**64-bit Extensions:**
+```assembly
+; LEA with 64-bit addressing (x86-64)
+lea rax, [rbx + rcx*8 + 1000]  ; Full 64-bit address calculation
+lea rsi, [rdi + 0x123456789]   ; Large displacement support
+```
+
+**SIMD Integration:**
+```assembly
+; LEA prepares addresses for SIMD operations
+lea eax, [array_base + index*16]  ; Address for 128-bit SIMD load
+movaps xmm0, [eax]                ; Load 128 bits at calculated address
+```
+
+**Compiler Integration:**
+```assembly
+; Compilers heavily use LEA for optimization
+; C code: result = array[i*3 + 2];
+; Optimized assembly:
+lea eax, [esi + esi*2 + 2]  ; Calculate i*3 + 2
+mov eax, [array_base + eax*4]  ; Load array element
+```
+
+### Integration with Modern CPU Features
+
+**Branch Prediction Hardware:**
+```assembly
+; Modern CPUs use multiple prediction techniques:
+; - Static prediction: Backward jumps predicted taken (loops)
+; - Dynamic prediction: Branch history tables track patterns
+; - Indirect prediction: Separate predictor for computed jumps
+
+; Help the predictor with consistent patterns:
+cmp ecx, ARRAY_SIZE
+jl process_element         ; Consistent loop pattern - well predicted
+```
+
+**Branch Target Buffer (BTB):**
+```assembly
+; Frequently taken branches are cached in BTB
+frequent_function:
+    ; This target gets cached after first few executions
+    ; Subsequent jumps here will be predicted correctly
+    
+    call subroutine
+    jnz frequent_function  ; Target cached in BTB
+```
+
+**Conditional Move Integration:**
+```assembly
+; Use CMOV to eliminate branches entirely
+cmp eax, ebx
+mov ecx, value_a           ; Prepare first value
+mov edx, value_b           ; Prepare second value  
+cmovl ecx, edx             ; Use value_b if EAX < EBX
+; Result in ECX, no branching!
+```
+
 ## 📚 Comprehensive Instruction Reference: POP
 
 > **🚩 Stack Data Retrieval**: The POP instruction retrieves data from the top of the stack, essential for function returns, register restoration, and stack-based data structures.
