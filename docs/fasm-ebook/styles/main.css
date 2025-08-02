@@ -451,8 +451,11 @@ body {
 }
 
 .ai-toggle {
+    position: fixed;
     width: 48px;
     height: 48px;
+    right: 1rem;
+    bottom: 7rem;
     border-radius: 8px;
     border: 1px solid #333;
     background-color: var(--bg-color);
@@ -465,6 +468,7 @@ body {
     align-items: center;
     justify-content: center;
     color: #333;
+    z-index: 1400;
 }
 
 .ai-toggle:hover {

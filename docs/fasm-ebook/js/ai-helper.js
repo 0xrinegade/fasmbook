@@ -54,8 +54,11 @@ class FASMeBookAI {
             aiToggle.style.right = this.togglePosition.right;
             aiToggle.style.bottom = this.togglePosition.bottom;
             
-            // Make draggable
-            this.makeDraggable(aiToggle, true);
+            // Make draggable only once
+            if (!aiToggle.hasAttribute('data-draggable')) {
+                this.makeDraggable(aiToggle, true);
+                aiToggle.setAttribute('data-draggable', 'true');
+            }
         }
     }
     
@@ -507,19 +510,10 @@ Smaller instructions are better because:
     }
     
     setupEventListeners() {
-        const aiToggle = document.getElementById('ai-toggle');
         const aiClose = document.getElementById('ai-close');
         const aiSend = document.getElementById('ai-send');
         const aiInput = document.getElementById('ai-input-field');
         const aiWindow = document.getElementById('ai-window');
-        
-        if (aiToggle) {
-            aiToggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.toggleWindow();
-            });
-        }
         
         if (aiClose) {
             aiClose.addEventListener('click', () => this.closeWindow());
@@ -569,10 +563,16 @@ Smaller instructions are better because:
     makeDraggable(element, isToggleButton = false) {
         let isDragging = false;
         let dragOffset = { x: 0, y: 0 };
+        let hasMoved = false;
+        let startPosition = { x: 0, y: 0 };
         
         const onMouseDown = (e) => {
             // Only allow dragging from header for window, anywhere for toggle button
             if (!isToggleButton && !e.target.closest('.ai-header')) return;
+            
+            // Reset movement tracking
+            hasMoved = false;
+            startPosition = { x: e.clientX, y: e.clientY };
             
             isDragging = true;
             const rect = element.getBoundingClientRect();
@@ -586,46 +586,63 @@ Smaller instructions are better because:
         const onMouseMove = (e) => {
             if (!isDragging) return;
             
-            const newLeft = e.clientX - dragOffset.x;
-            const newTop = e.clientY - dragOffset.y;
+            // Check if we've moved enough to consider this a drag operation
+            const moveDistance = Math.sqrt(
+                Math.pow(e.clientX - startPosition.x, 2) + 
+                Math.pow(e.clientY - startPosition.y, 2)
+            );
             
-            // Constrain to viewport
-            const maxLeft = window.innerWidth - element.offsetWidth;
-            const maxTop = window.innerHeight - element.offsetHeight;
-            
-            const constrainedLeft = Math.max(0, Math.min(newLeft, maxLeft));
-            const constrainedTop = Math.max(0, Math.min(newTop, maxTop));
-            
-            if (isToggleButton) {
-                // For toggle button, use right/bottom positioning
-                const right = window.innerWidth - constrainedLeft - element.offsetWidth;
-                const bottom = window.innerHeight - constrainedTop - element.offsetHeight;
+            // Only start dragging if we've moved more than 5 pixels
+            if (moveDistance > 5) {
+                hasMoved = true;
                 
-                element.style.right = `${right}px`;
-                element.style.bottom = `${bottom}px`;
-                element.style.left = 'auto';
-                element.style.top = 'auto';
+                const newLeft = e.clientX - dragOffset.x;
+                const newTop = e.clientY - dragOffset.y;
                 
-                this.togglePosition = { 
-                    right: `${right}px`, 
-                    bottom: `${bottom}px` 
-                };
-            } else {
-                element.style.left = `${constrainedLeft}px`;
-                element.style.top = `${constrainedTop}px`;
-                element.style.right = 'auto';
-                element.style.bottom = 'auto';
+                // Constrain to viewport
+                const maxLeft = window.innerWidth - element.offsetWidth;
+                const maxTop = window.innerHeight - element.offsetHeight;
+                
+                const constrainedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                const constrainedTop = Math.max(0, Math.min(newTop, maxTop));
+                
+                if (isToggleButton) {
+                    // For toggle button, use right/bottom positioning
+                    const right = window.innerWidth - constrainedLeft - element.offsetWidth;
+                    const bottom = window.innerHeight - constrainedTop - element.offsetHeight;
+                    
+                    element.style.right = `${right}px`;
+                    element.style.bottom = `${bottom}px`;
+                    element.style.left = 'auto';
+                    element.style.top = 'auto';
+                    
+                    this.togglePosition = { 
+                        right: `${right}px`, 
+                        bottom: `${bottom}px` 
+                    };
+                } else {
+                    element.style.left = `${constrainedLeft}px`;
+                    element.style.top = `${constrainedTop}px`;
+                    element.style.right = 'auto';
+                    element.style.bottom = 'auto';
+                }
             }
             
             e.preventDefault();
         };
         
-        const onMouseUp = () => {
+        const onMouseUp = (e) => {
             if (isDragging) {
                 isDragging = false;
                 element.style.cursor = isToggleButton ? 'pointer' : 'default';
                 
-                if (isToggleButton) {
+                // If we haven't moved much, this was a click, not a drag
+                if (!hasMoved && isToggleButton) {
+                    // Trigger the toggle window function for the AI button
+                    this.toggleWindow();
+                }
+                
+                if (isToggleButton && hasMoved) {
                     this.saveTogglePosition();
                 }
             }
@@ -638,17 +655,28 @@ Smaller instructions are better because:
         // Touch events for mobile
         element.addEventListener('touchstart', (e) => {
             const touch = e.touches[0];
-            onMouseDown({ clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => e.preventDefault() });
+            onMouseDown({ 
+                clientX: touch.clientX, 
+                clientY: touch.clientY, 
+                preventDefault: () => e.preventDefault(),
+                target: e.target 
+            });
         });
         
         document.addEventListener('touchmove', (e) => {
             if (isDragging) {
                 const touch = e.touches[0];
-                onMouseMove({ clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => e.preventDefault() });
+                onMouseMove({ 
+                    clientX: touch.clientX, 
+                    clientY: touch.clientY, 
+                    preventDefault: () => e.preventDefault() 
+                });
             }
         });
         
-        document.addEventListener('touchend', onMouseUp);
+        document.addEventListener('touchend', (e) => {
+            onMouseUp(e);
+        });
     }
     
     toggleExpansion() {
@@ -900,8 +928,11 @@ Smaller instructions are better because:
             aiWindow.classList.add('visible');
             this.isOpen = true;
             
-            // Enable dragging for the window
-            this.makeDraggable(aiWindow, false);
+            // Enable dragging for the window only once
+            if (!aiWindow.hasAttribute('data-draggable')) {
+                this.makeDraggable(aiWindow, false);
+                aiWindow.setAttribute('data-draggable', 'true');
+            }
             
             // Setup enhanced header only once
             if (!aiWindow.hasAttribute('data-enhanced')) {
