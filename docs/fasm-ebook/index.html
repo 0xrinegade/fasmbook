@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Complete FASM Programming Book</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/ebook.css">
+    <link rel="stylesheet" href="styles/eink.css">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body class="eink-mode">
+    <!-- Navigation Panel -->
+    <nav id="navigation-panel" class="nav-panel">
+        <div class="nav-header">
+            <h1>FASM Programming Book</h1>
+            <button id="nav-toggle" class="nav-toggle">☰</button>
+        </div>
+        
+        <div class="nav-content">
+            <!-- Table of Contents -->
+            <div class="toc-section">
+                <h3>Table of Contents</h3>
+                <ul id="toc-list" class="toc-list">
+                    <!-- Will be populated by JavaScript -->
+                </ul>
+            </div>
+            
+            <!-- Reading Progress -->
+            <div class="progress-section">
+                <h3>Reading Progress</h3>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <span id="progress-text">0% Complete</span>
+            </div>
+            
+            <!-- Bookmarks -->
+            <div class="bookmarks-section">
+                <h3>Bookmarks</h3>
+                <ul id="bookmarks-list" class="bookmarks-list">
+                    <!-- Will be populated by JavaScript -->
+                </ul>
+            </div>
+            
+            <!-- Reading History -->
+            <div class="history-section">
+                <h3>Recent Reading</h3>
+                <ul id="history-list" class="history-list">
+                    <!-- Will be populated by JavaScript -->
+                </ul>
+            </div>
+            
+            <!-- Instruction Glossary -->
+            <div class="glossary-section">
+                <h3>Instruction Reference</h3>
+                <div class="glossary-search">
+                    <input type="text" id="glossary-search" placeholder="Search instructions..." 
+                           onkeyup="searchInstructions(this.value)">
+                </div>
+                <ul id="glossary-list" class="glossary-list">
+                    <!-- Will be populated by JavaScript -->
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content Area -->
+    <main id="main-content" class="main-content">
+        <!-- Chapter Navigation -->
+        <div class="chapter-nav">
+            <button id="prev-chapter" class="nav-btn">← Previous</button>
+            <span id="chapter-info" class="chapter-info">Loading...</span>
+            <button id="next-chapter" class="nav-btn">Next →</button>
+        </div>
+        
+        <!-- Content Display -->
+        <article id="chapter-content" class="chapter-content">
+            <!-- Initial loading content -->
+            <div class="initial-loading">
+                <h2>📚 FASM Programming eBook</h2>
+                <p>Loading the complete assembly programming guide...</p>
+                <div style="margin: 20px 0;">
+                    <div style="width: 100%; background: #e0e0e0; height: 4px; border-radius: 2px;">
+                        <div style="width: 0%; background: #666666; height: 100%; border-radius: 2px; animation: loadingBar 2s ease-in-out infinite;"></div>
+                    </div>
+                </div>
+                <p><small>This may take a moment on first load...</small></p>
+            </div>
+        </article>
+        
+        <!-- Page Navigation -->
+        <div class="page-nav">
+            <button id="prev-page" class="page-btn">← Previous Page</button>
+            <span id="page-info" class="page-info">Page 1 of 1</span>
+            <button id="next-page" class="page-btn">Next Page →</button>
+        </div>
+    </main>
+    
+    <!-- Drawing Canvas Overlay (for eInk devices) -->
+    <canvas id="drawing-canvas" class="drawing-canvas"></canvas>
+    
+    <!-- Control Icons Container -->
+    <div id="control-icons" class="control-icons">
+        <!-- Settings Panel -->
+        <div id="settings-panel" class="settings-panel">
+            <button id="settings-toggle" class="settings-toggle" title="Settings">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="m12 1 1.73 1v3.52a8.97 8.97 0 0 1 2.24.68l2.49-2.49L19.73 5l-2.49 2.49a8.97 8.97 0 0 1 .68 2.24H21v2.46h-3.52a8.97 8.97 0 0 1-.68 2.24l2.49 2.49L18 19.73l-2.49-2.49a8.97 8.97 0 0 1-2.24.68V21h-2.46v-3.52a8.97 8.97 0 0 1-2.24-.68L5.27 19.73 4 18.46l2.49-2.49a8.97 8.97 0 0 1-.68-2.24H2v-2.46h3.52a8.97 8.97 0 0 1 .68-2.24L3.73 5.27 5 4l2.49 2.49A8.97 8.97 0 0 1 9.73 5.5V2h2.46z"></path>
+                </svg>
+            </button>
+            <div class="settings-content">
+                <h3>Reading Settings</h3>
+                
+                <div class="setting-group">
+                    <label>Display Mode:</label>
+                    <select id="display-mode">
+                        <option value="eink">eInk Friendly</option>
+                        <option value="standard">Standard</option>
+                        <option value="dark">Dark Mode</option>
+                    </select>
+                </div>
+                
+                <div class="setting-group">
+                    <label>Font Size:</label>
+                    <input type="range" id="font-size" min="12" max="24" value="16">
+                    <span id="font-size-value">16px</span>
+                </div>
+                
+                <div class="setting-group">
+                    <label>Line Height:</label>
+                    <input type="range" id="line-height" min="1.2" max="2.0" step="0.1" value="1.6">
+                    <span id="line-height-value">1.6</span>
+                </div>
+                
+                <div class="setting-group">
+                    <label>Drawing Mode:</label>
+                    <input type="checkbox" id="drawing-mode"> Enable Drawing
+                </div>
+                
+                <div class="setting-group">
+                    <label>Zen Mode:</label>
+                    <input type="checkbox" id="zen-mode"> Hide Controls
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Helper -->
+        <div id="ai-helper" class="ai-helper">
+            <button id="ai-toggle" class="ai-toggle" title="AI Assistant">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 8V4H8"></path>
+                    <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+                    <path d="m2 14 2-2 4 4"></path>
+                    <path d="m20 10-2 2-4-4"></path>
+                    <path d="m9 15 3-3 3 3"></path>
+                </svg>
+            </button>
+            <div id="ai-window" class="ai-window">
+                <div class="ai-header">
+                    <h3>FASM Programming Assistant</h3>
+                    <button id="ai-close" class="ai-close">×</button>
+                </div>
+                <div class="ai-content">
+                    <div id="ai-chat" class="ai-chat">
+                        <div class="ai-message">
+                            <strong>Assistant:</strong> Hello! I'm your FASM programming assistant. I can help explain concepts, debug code, suggest optimizations, and answer questions about assembly programming. What would you like to know?
+                        </div>
+                    </div>
+                    <div class="ai-input">
+                        <input type="text" id="ai-input-field" placeholder="Ask me anything about FASM or assembly programming...">
+                        <button id="ai-send" class="ai-send">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/instruction-glossary.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/markdown-parser.js"></script>
+    <script src="js/markdown.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/drawing.js"></script>
+    <script src="js/ai-helper.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

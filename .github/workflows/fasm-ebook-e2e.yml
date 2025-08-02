@@ -1,0 +1,336 @@
+name: FASM eBook E2E Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/fasm-ebook/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/fasm-ebook/**'
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Test mode to run'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - 'quick'
+          - 'core'
+          - 'visual'
+          - 'quality'
+          - 'mobile'
+          - 'cross-browser'
+          - 'full'
+      browser:
+        description: 'Browser to test'
+        required: false
+        default: 'chromium'
+        type: choice
+        options:
+          - 'chromium'
+          - 'firefox'
+          - 'webkit'
+
+jobs:
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        include:
+          - browser: chromium
+            test_mode: full
+          - browser: firefox
+            test_mode: core
+          - browser: webkit
+            test_mode: core
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'docs/fasm-ebook/package.json'
+      
+      - name: Install dependencies
+        working-directory: docs/fasm-ebook
+        run: |
+          npm ci
+          npx playwright install --with-deps ${{ matrix.browser }}
+      
+      - name: Clean up any existing server processes
+        working-directory: docs/fasm-ebook
+        run: |
+          # Kill any processes using port 8081
+          ./scripts/cleanup-port.sh 8081
+      
+      - name: Run E2E tests
+        working-directory: docs/fasm-ebook
+        run: |
+          test_mode="${{ github.event.inputs.test_mode || matrix.test_mode }}"
+          browser="${{ github.event.inputs.browser || matrix.browser }}"
+          ./run-tests.sh "$test_mode" "$browser"
+      
+      - name: Upload test results (selective)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.browser }}
+          path: |
+            docs/fasm-ebook/test-results/*.json
+            docs/fasm-ebook/test-results/*.xml
+            docs/fasm-ebook/playwright-report/index.html
+            docs/fasm-ebook/playwright-report/data.js
+          retention-days: 30
+          compression-level: 6
+      
+      - name: Upload detailed results on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: failure-details-${{ matrix.browser }}
+          path: |
+            docs/fasm-ebook/test-results/
+            docs/fasm-ebook/playwright-report/
+          retention-days: 7
+          compression-level: 9
+      
+      - name: Prune large artifacts
+        if: always()
+        run: |
+          cd docs/fasm-ebook
+          # Remove large video files if tests passed
+          if [[ "${{ job.status }}" == "success" ]]; then
+            find test-results -name "*.webm" -delete 2>/dev/null || true
+            find test-results -name "*.mp4" -delete 2>/dev/null || true
+          fi
+          
+          # Compress screenshots if they exist
+          if command -v gzip >/dev/null 2>&1; then
+            find test-results -name "*.png" -exec gzip {} \; 2>/dev/null || true
+          fi
+          
+          # Limit artifact size to 100MB
+          if command -v du >/dev/null 2>&1; then
+            total_size=$(du -sm test-results playwright-report 2>/dev/null | awk '{sum += $1} END {print sum}' || echo "0")
+            if [[ "$total_size" -gt 100 ]]; then
+              echo "Artifacts too large (${total_size}MB), pruning oldest files..."
+              find test-results -type f -printf '%T@ %p\n' | sort -n | head -20 | cut -d' ' -f2- | xargs rm -f || true
+            fi
+          fi
+
+  mobile-tests:
+    name: Mobile E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'docs/fasm-ebook/package.json'
+      
+      - name: Install dependencies
+        working-directory: docs/fasm-ebook
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      
+      - name: Clean up any existing server processes (mobile)
+        working-directory: docs/fasm-ebook
+        run: |
+          # Kill any processes using port 8081
+          ./scripts/cleanup-port.sh 8081
+      
+      - name: Run mobile tests
+        working-directory: docs/fasm-ebook
+        run: |
+          npx playwright test --project="Mobile Chrome" --project="Mobile Safari"
+      
+      - name: Upload mobile test results (selective)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-test-results
+          path: |
+            docs/fasm-ebook/test-results/*.json
+            docs/fasm-ebook/test-results/*.xml
+            docs/fasm-ebook/playwright-report/index.html
+          retention-days: 14
+          compression-level: 6
+
+  accessibility-tests:
+    name: Accessibility & Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'docs/fasm-ebook/package.json'
+      
+      - name: Install dependencies
+        working-directory: docs/fasm-ebook
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      
+      - name: Clean up any existing server processes (accessibility)
+        working-directory: docs/fasm-ebook
+        run: |
+          # Kill any processes using port 8081
+          ./scripts/cleanup-port.sh 8081
+      
+      - name: Run accessibility tests
+        working-directory: docs/fasm-ebook
+        run: |
+          ./run-tests.sh quality chromium
+      
+      - name: Upload accessibility results (selective)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accessibility-test-results
+          path: |
+            docs/fasm-ebook/test-results/*.json
+            docs/fasm-ebook/test-results/*.xml
+            docs/fasm-ebook/test-results/*accessibility*
+            docs/fasm-ebook/playwright-report/index.html
+          retention-days: 14
+          compression-level: 6
+
+  visual-regression:
+    name: Visual Regression Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'docs/fasm-ebook/package.json'
+      
+      - name: Install dependencies
+        working-directory: docs/fasm-ebook
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      
+      - name: Clean up any existing server processes (visual)
+        working-directory: docs/fasm-ebook
+        run: |
+          # Kill any processes using port 8081
+          ./scripts/cleanup-port.sh 8081
+      
+      - name: Run visual tests
+        working-directory: docs/fasm-ebook
+        run: |
+          ./run-tests.sh visual chromium
+      
+      - name: Upload visual test results (selective)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-test-results
+          path: |
+            docs/fasm-ebook/test-results/*.json
+            docs/fasm-ebook/test-results/*.xml
+            docs/fasm-ebook/test-results/*visual*
+            docs/fasm-ebook/test-results/*screenshot*
+            docs/fasm-ebook/playwright-report/index.html
+          retention-days: 14
+          compression-level: 6
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [e2e-tests, mobile-tests, accessibility-tests, visual-regression]
+    if: always()
+    
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results
+      
+      - name: Generate summary report
+        run: |
+          echo "# FASM eBook E2E Test Results" > $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check job results
+          if [[ "${{ needs.e2e-tests.result }}" == "success" ]]; then
+            echo "✅ **E2E Tests**: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **E2E Tests**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.mobile-tests.result }}" == "success" ]]; then
+            echo "✅ **Mobile Tests**: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Mobile Tests**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.accessibility-tests.result }}" == "success" ]]; then
+            echo "✅ **Accessibility Tests**: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Accessibility Tests**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ needs.visual-regression.result }}" == "success" ]]; then
+            echo "✅ **Visual Tests**: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Visual Tests**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🧪 **Basic Functionality**: Page loading, navigation, TOC" >> $GITHUB_STEP_SUMMARY
+          echo "- 🤖 **AI Assistant**: Click/drag functionality, window management" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚙️ **Settings Panel**: Configuration options, persistence" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎨 **Drawing Tools**: Canvas operations, library management" >> $GITHUB_STEP_SUMMARY
+          echo "- 📖 **Content Features**: Code highlighting, instruction tooltips" >> $GITHUB_STEP_SUMMARY
+          echo "- 📱 **Responsive Design**: Mobile, tablet, desktop layouts" >> $GITHUB_STEP_SUMMARY
+          echo "- ♿ **Accessibility**: Keyboard navigation, screen readers" >> $GITHUB_STEP_SUMMARY
+          echo "- 🚀 **Performance**: Core Web Vitals, loading times" >> $GITHUB_STEP_SUMMARY
+          echo "- 📱 **PWA Features**: Service worker, offline functionality" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Browser Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌐 **Desktop**: Chrome, Firefox, Safari" >> $GITHUB_STEP_SUMMARY
+          echo "- 📱 **Mobile**: Chrome Mobile, Safari Mobile" >> $GITHUB_STEP_SUMMARY
+          echo "- 💻 **Tablet**: iPad Pro" >> $GITHUB_STEP_SUMMARY

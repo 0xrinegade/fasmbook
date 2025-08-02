@@ -1,0 +1,1234 @@
+/* Main CSS for FASM eBook */
+:root {
+    --bg-color: #ffffff;
+    --text-color: #000000;
+    --border-color: #e0e0e0;
+    --accent-color: #333333;
+    --highlight-color: #f0f0f0;
+    --font-family: 'Georgia', 'Times New Roman', serif;
+    --font-size: 16px;
+    --line-height: 1.2;
+    --nav-width: 300px;
+    --header-height: 60px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    display: flex;
+    min-height: 100vh;
+    transition: all 0.3s ease;
+}
+
+/* Loading Animation */
+@keyframes loadingBar {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+}
+
+.initial-loading {
+    text-align: center;
+    padding: 60px 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.initial-loading h2 {
+    margin-bottom: 20px;
+    color: var(--accent-color);
+}
+
+.error-message {
+    text-align: center;
+    padding: 40px 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: var(--highlight-color);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.error-message h2 {
+    margin-bottom: 15px;
+    color: var(--accent-color);
+}
+
+.error-message button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.error-message button:hover {
+    background-color: #555;
+}
+
+/* Navigation Panel */
+.nav-panel {
+    width: var(--nav-width);
+    background-color: var(--bg-color);
+    border-right: 2px solid var(--border-color);
+    height: 100vh;
+    overflow-y: auto;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.nav-panel.hidden {
+    transform: translateX(-100%) !important;
+}
+
+.nav-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-color);
+    z-index: 10;
+}
+
+.nav-header h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.nav-toggle {
+    background: var(--bg-color);
+    border: 2px solid var(--accent-color);
+    padding: 0.75rem;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-toggle:hover {
+    background-color: var(--highlight-color);
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-toggle:active {
+    transform: scale(0.95);
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}
+
+.nav-content {
+    padding: 1rem;
+}
+
+.nav-content h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Table of Contents */
+.toc-list, .bookmarks-list, .history-list {
+    list-style: none;
+    margin-bottom: 1rem;
+}
+
+.toc-list li, .bookmarks-list li, .history-list li {
+    margin-bottom: 0.1rem;
+}
+
+.toc-list a, .bookmarks-list a, .history-list a {
+    text-decoration: none;
+    color: var(--text-color);
+    display: block;
+    padding: 0.5rem;
+    margin: 0.125rem 0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    border: 1px solid transparent;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.toc-list a:hover, .bookmarks-list a:hover, .history-list a:hover, .glossary-list a:hover {
+    background-color: var(--highlight-color);
+    border-color: var(--border-color);
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.toc-list a.current {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border-color: var(--accent-color);
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toc-list a:active, .bookmarks-list a:active, .history-list a:active {
+    transform: scale(0.98);
+}
+
+/* Glossary Section */
+.glossary-section {
+    margin-bottom: 2rem;
+}
+
+.glossary-search {
+    margin-bottom: 1rem;
+}
+
+.glossary-search input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.glossary-search input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.glossary-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.glossary-list li {
+    margin-bottom: 0.25rem;
+}
+
+.glossary-list a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+.instruction-category-badge {
+    background: var(--highlight-color);
+    color: var(--accent-color);
+    padding: 0.1rem 0.3rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+/* Progress Bar */
+.progress-section {
+    margin-bottom: 2rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--accent-color);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+#progress-text {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+}
+
+/* Main Content */
+.main-content {
+    margin-left: var(--nav-width);
+    flex: 1;
+    padding: 2rem;
+    max-width: none;
+    transition: margin-left 0.3s ease;
+}
+
+.main-content.expanded {
+    margin-left: 0;
+}
+
+/* Chapter Navigation */
+.chapter-nav, .page-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.page-nav {
+    margin-top: 3rem;
+    margin-bottom: 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: none;
+}
+
+.nav-btn, .page-btn {
+    background: none;
+    border: 2px solid var(--accent-color);
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover, .page-btn:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}
+
+.nav-btn:disabled, .page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chapter-info, .page-info {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* Chapter Content */
+.chapter-content {
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: var(--line-height);
+}
+
+.chapter-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.3rem;
+    line-height: 1.1;
+}
+
+.chapter-content h2 {
+    font-size: 2rem;
+    margin: 1.5rem 0 0.7rem 0;
+    line-height: 1.2;
+}
+
+.chapter-content h3 {
+    font-size: 1.5rem;
+    margin: 1rem 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.chapter-content h4 {
+    font-size: 1.25rem;
+    margin: 0.8rem 0 0.3rem 0;
+    line-height: 1.3;
+}
+
+.chapter-content p {
+    margin-bottom: 0.6rem;
+    text-align: justify;
+}
+
+.chapter-content ul, .chapter-content ol {
+    margin: 0.7rem 0 1rem 2rem;
+}
+
+.chapter-content li {
+    margin-bottom: 0.2rem;
+}
+
+.chapter-content blockquote {
+    margin: 1.2rem 0;
+    padding: 0.8rem 1.5rem;
+    border-left: 4px solid var(--accent-color);
+    background-color: var(--highlight-color);
+    font-style: italic;
+}
+
+.chapter-content code {
+    background-color: var(--highlight-color);
+    padding: 0.15rem 0.3rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.chapter-content pre {
+    background-color: var(--highlight-color);
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 1rem 0;
+    border: 1px solid var(--border-color);
+}
+
+.chapter-content pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.85rem;
+    line-height: 1.2;
+}
+
+/* Drawing Canvas */
+.drawing-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 500;
+}
+
+.drawing-canvas.active {
+    pointer-events: all;
+    cursor: crosshair;
+}
+
+/* Control Icons Container */
+.control-icons {
+    position: fixed;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    z-index: 1500;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.control-icons.zen-mode {
+    opacity: 0;
+    transform: translateY(-50%) translateX(100%);
+    pointer-events: none;
+}
+
+.control-icons.fade-out {
+    opacity: 0.3;
+}
+
+/* AI Helper */
+.ai-helper {
+    position: relative;
+}
+
+.ai-toggle {
+    position: fixed;
+    width: 48px;
+    height: 48px;
+    right: 1rem;
+    bottom: 7rem;
+    border-radius: 8px;
+    border: 1px solid #333;
+    background-color: var(--bg-color);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    z-index: 1400;
+}
+
+.ai-toggle:hover {
+    background-color: #f5f5f5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.05);
+}
+
+.ai-toggle:active {
+    transform: scale(0.98);
+}
+
+.ai-toggle svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    pointer-events: none;
+}
+
+.ai-window {
+    position: fixed;
+    bottom: 2rem;
+    right: 6rem;
+    width: min(400px, calc(100vw - 8rem));
+    height: min(500px, calc(100vh - 6rem));
+    max-width: 95vw;
+    max-height: 80vh;
+    background-color: var(--bg-color);
+    border: 1px solid #333;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    display: none;
+    flex-direction: column;
+    /* Ensure window never goes outside viewport */
+    transform: translateY(-50%);
+    top: 50%;
+    z-index: 1600;
+}
+
+.ai-window.visible {
+    display: flex;
+}
+
+/* Adjust AI window position if it would go outside viewport */
+.ai-window.adjust-left {
+    right: auto;
+    left: 1rem;
+}
+
+.ai-window.adjust-up {
+    bottom: auto;
+    top: 1rem;
+}
+
+.ai-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--highlight-color);
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.ai-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+}
+
+.ai-header h3 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.ai-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+}
+
+.ai-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.ai-chat {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ai-message {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 4px;
+    background-color: var(--highlight-color);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.ai-input {
+    padding: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0; /* Prevent input area from shrinking */
+    border-top: 1px solid var(--border-color);
+}
+
+.ai-input input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.ai-send {
+    padding: 0.75rem 1.5rem;
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+/* Enhanced AI Window Styles */
+.ai-window.expanded {
+    width: 95vw !important;
+    height: 90vh !important;
+    left: 50% !important;
+    top: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 2000;
+}
+
+.ai-drag-handle {
+    font-size: 16px;
+    color: var(--accent-color);
+    cursor: move;
+    user-select: none;
+    padding: 0 8px;
+    line-height: 1;
+}
+
+.ai-nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-nav-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.ai-nav-btn:hover {
+    background-color: var(--highlight-color);
+    border-color: var(--accent-color);
+}
+
+.ai-nav-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.ai-close {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.ai-close:hover {
+    background-color: #ff4444;
+    color: white;
+    border-color: #ff4444;
+}
+
+/* Virtual Scrolling Styles */
+.virtual-scroll-container {
+    position: relative;
+    width: 100%;
+}
+
+.virtual-visible-container {
+    position: relative;
+    width: 100%;
+}
+
+/* AI Toggle Button Draggable */
+.ai-toggle {
+    position: fixed;
+    width: 48px;
+    height: 48px;
+    background-color: var(--bg-color);
+    border: 1px solid #333;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ai-toggle:hover {
+    background-color: var(--highlight-color);
+    border-color: var(--accent-color);
+    transform: scale(1.05);
+}
+
+.ai-toggle svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Improved chat container boundaries */
+.ai-chat {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-bottom: 1px solid var(--border-color);
+    height: 100%;
+    max-height: 100%;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+}
+
+/* Better message containment */
+.ai-message {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 4px;
+    background-color: var(--highlight-color);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Settings Panel */
+/* Settings Panel */
+.settings-panel {
+    position: relative;
+}
+
+.settings-toggle {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    background-color: var(--bg-color);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+}
+
+.settings-toggle:hover {
+    background-color: #f5f5f5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.05);
+}
+
+.settings-toggle:active {
+    transform: scale(0.98);
+}
+
+.settings-toggle svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    pointer-events: none;
+}
+
+.settings-content {
+    position: fixed;
+    top: 50%;
+    right: 6rem;
+    transform: translateY(-50%);
+    width: min(300px, calc(100vw - 8rem));
+    max-width: 95vw;
+    max-height: calc(100vh - 4rem);
+    background-color: var(--bg-color);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 1.5rem;
+    z-index: 1600;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    display: none;
+    overflow-y: auto;
+    /* Ensure settings never go outside viewport */
+    transform: translateX(0);
+}
+
+.settings-content.visible {
+    display: block;
+}
+
+/* Adjust settings panel position if it would go outside viewport */
+.settings-content.adjust-left {
+    right: auto;
+    left: 1rem;
+}
+
+.settings-content.adjust-down {
+    top: auto;
+    bottom: 1rem;
+}
+
+.settings-content h3 {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.setting-group {
+    margin-bottom: 1rem;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.setting-group select,
+.setting-group input[type="range"] {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.setting-group input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+/* Enhanced Responsive Design */
+/* Tablet and smaller */
+@media (max-width: 1024px) {
+    .ai-helper {
+        bottom: 1rem;
+        right: 1rem;
+    }
+    
+    .settings-panel {
+        top: 1rem;
+        right: 1rem;
+    }
+    
+    .ai-window {
+        width: min(380px, calc(100vw - 2rem));
+        height: min(480px, calc(100vh - 8rem));
+    }
+    
+    .settings-content {
+        width: min(280px, calc(100vw - 2rem));
+    }
+}
+
+/* Mobile and smaller tablets */
+@media (max-width: 768px) {
+    :root {
+        --nav-width: 280px;
+        --font-size: 14px;
+    }
+    
+    .nav-panel {
+        transform: translateX(-100%);
+    }
+    
+    .nav-panel.visible {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+    
+    .chapter-content {
+        max-width: 100%;
+    }
+    
+    .chapter-nav, .page-nav {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .control-icons {
+        right: 4px;
+        gap: 8px;
+    }
+    
+    .ai-toggle,
+    .settings-toggle {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .ai-toggle svg,
+    .settings-toggle svg {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .ai-window {
+        width: calc(100vw - 1rem);
+        height: calc(100vh - 6rem);
+        right: 0.5rem;
+        bottom: 2rem;
+        top: 2rem;
+        transform: none;
+    }
+    
+    .ai-nav-controls {
+        gap: 4px;
+    }
+    
+    .ai-nav-btn {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .ai-nav-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .ai-close {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+    
+    .ai-drag-handle {
+        font-size: 14px;
+        padding: 0 4px;
+    }
+    
+    .settings-content {
+        width: calc(100vw - 1rem);
+        right: 0.5rem;
+        top: 2rem;
+        transform: none;
+        max-height: calc(100vh - 4rem);
+    }
+}
+
+/* Small mobile phones */
+@media (max-width: 480px) {
+    :root {
+        --nav-width: 100vw;
+        --font-size: 13px;
+    }
+    
+    .ai-window {
+        width: 100vw;
+        height: calc(100vh - 4rem);
+        right: 0;
+        bottom: 0;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .ai-nav-controls {
+        gap: 2px;
+    }
+    
+    .ai-nav-btn {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .ai-nav-btn svg {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .ai-close {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+    }
+    
+    .ai-drag-handle {
+        font-size: 12px;
+        padding: 0 2px;
+    }
+    
+    .settings-content {
+        width: 100vw;
+        right: 0;
+        top: 0;
+        max-height: 100vh;
+        border-radius: 0;
+        padding: 1rem;
+    }
+    
+    .nav-panel {
+        width: 100vw;
+    }
+}
+
+/* Additional UI improvements */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.1);
+    z-index: 1200;
+    display: none;
+}
+
+.modal-backdrop.visible {
+    display: block;
+}
+
+/* Better touch targets and spacing */
+button, .clickable {
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Improved focus indicators */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Safe area support for devices with notches */
+@supports (padding: max(0px)) {
+    .ai-helper {
+        bottom: max(2rem, env(safe-area-inset-bottom, 2rem));
+        right: max(2rem, env(safe-area-inset-right, 2rem));
+    }
+    
+    .settings-panel {
+        top: max(2rem, env(safe-area-inset-top, 2rem));
+        right: max(2rem, env(safe-area-inset-right, 2rem));
+    }
+    
+    .nav-panel {
+        padding-top: max(1rem, env(safe-area-inset-top, 1rem));
+        padding-left: max(0px, env(safe-area-inset-left, 0px));
+    }
+}
+
+/* External Navigation Toggle */
+.external-nav-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 2000;
+    background: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+}
+
+.external-nav-toggle[style*="display: block"] {
+    display: flex !important;
+}
+
+.external-nav-toggle:hover {
+    background: var(--hover-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.external-nav-toggle:active {
+    transform: translateY(0);
+}
+
+/* Enhanced print styles */
+@media print {
+    .nav-panel,
+    .ai-helper,
+    .settings-panel,
+    .chapter-nav,
+    .page-nav {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 0;
+    }
+    
+    .chapter-content {
+        max-width: 100%;
+    }
+}
+
+/* PWA Install Button Styles */
+.pwa-install-group {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--highlight-color);
+    margin: 1rem 0;
+}
+
+.pwa-info h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: var(--accent-color);
+}
+
+.pwa-info p {
+    margin: 0 0 1rem 0;
+    font-size: 0.85rem;
+    color: var(--text-color);
+    opacity: 0.8;
+    line-height: 1.3;
+}
+
+.pwa-install-btn {
+    width: 100%;
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border: 2px solid var(--accent-color);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 48px;
+}
+
+.pwa-install-btn:hover {
+    background-color: var(--bg-color);
+    color: var(--accent-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.pwa-install-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pwa-install-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.pwa-install-btn svg {
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+.pwa-status {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    text-align: center;
+    min-height: 1.2rem;
+}
+
+.pwa-status span {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+}
+
+/* PWA Mobile Optimizations */
+@media (max-width: 768px) {
+    .pwa-install-group {
+        margin: 0.5rem 0;
+        padding: 0.75rem;
+    }
+    
+    .pwa-info h4 {
+        font-size: 0.9rem;
+    }
+    
+    .pwa-info p {
+        font-size: 0.8rem;
+    }
+    
+    .pwa-install-btn {
+        font-size: 0.85rem;
+        padding: 0.7rem 0.8rem;
+    }
+}
+
+/* PWA Standalone Mode Adjustments */
+@media (display-mode: standalone) {
+    .pwa-install-group {
+        display: none;
+    }
+}
+
+/* Hide PWA controls when not supported */
+.no-pwa-support .pwa-install-group {
+    display: none;
+}

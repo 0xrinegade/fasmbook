@@ -1,0 +1,122 @@
+[
+  {
+    "id": "preface",
+    "title": "Preface",
+    "file": "preface.md",
+    "pages": 3
+  },
+  {
+    "id": "chapter0",
+    "title": "Chapter 0: How to Use This Book",
+    "file": "chapter0.md",
+    "pages": 12
+  },
+  {
+    "id": "chapter1",
+    "title": "Chapter 1: Welcome to the Machine",
+    "file": "chapter1.md",
+    "pages": 15
+  },
+  {
+    "id": "chapter2",
+    "title": "Chapter 2: Learning to Speak FASM",
+    "file": "chapter2.md",
+    "pages": 87
+  },
+  {
+    "id": "chapter3",
+    "title": "Chapter 3: Data Types & Memory Architecture",
+    "file": "chapter3.md",
+    "pages": 45
+  },
+  {
+    "id": "chapter4",
+    "title": "Chapter 4: The Instruction Cookbook",
+    "file": "chapter4.md",
+    "pages": 67
+  },
+  {
+    "id": "chapter5",
+    "title": "Chapter 5: Registers - Your Digital Toolkit",
+    "file": "chapter5.md",
+    "pages": 58
+  },
+  {
+    "id": "chapter6",
+    "title": "Chapter 6: Program Flow - The Story Your Code Tells",
+    "file": "chapter6.md",
+    "pages": 73
+  },
+  {
+    "id": "chapter7",
+    "title": "Chapter 7: Advanced System Programming",
+    "file": "chapter7.md",
+    "pages": 62
+  },
+  {
+    "id": "chapter8",
+    "title": "Chapter 8: Optimization and Performance Engineering",
+    "file": "chapter8.md",
+    "pages": 59
+  },
+  {
+    "id": "chapter9",
+    "title": "Chapter 9: Building High-Performance Web Servers",
+    "file": "chapter9.md",
+    "pages": 78
+  },
+  {
+    "id": "chapter10",
+    "title": "Chapter 10: Redis Integration and High-Performance Caching",
+    "file": "chapter10.md",
+    "pages": 95
+  },
+  {
+    "id": "chapter11",
+    "title": "Chapter 11: BPF Programming - Kernel-Level Network and System Monitoring",
+    "file": "chapter11.md",
+    "pages": 82
+  },
+  {
+    "id": "chapter12",
+    "title": "Chapter 12: Virtual Machine Implementation Based on KolibriOS",
+    "file": "chapter12.md",
+    "pages": 71
+  },
+  {
+    "id": "chapter13",
+    "title": "Chapter 13: Container Implementation for KolibriOS",
+    "file": "chapter13.md",
+    "pages": 68
+  },
+  {
+    "id": "chapter14",
+    "title": "Chapter 14: Implementing 2D Video Game TRON",
+    "file": "chapter14.md",
+    "pages": 64
+  },
+  {
+    "id": "chapter15",
+    "title": "Chapter 15: Framework and Library Development",
+    "file": "chapter15.md",
+    "pages": 58
+  },
+  {
+    "id": "chapter16",
+    "title": "Chapter 16: Package Management System Design for FASM",
+    "file": "chapter16.md",
+    "pages": 61
+  },
+  {
+    "id": "chapter17",
+    "title": "Chapter 17: In-Memory Key-Value Storage with FASM Plugin System",
+    "file": "chapter17.md",
+    "pages": 69
+  },
+  {
+    "id": "chapter18",
+    "title": "Chapter 18: Advanced Concurrent Programming and GPU Computing",
+    "file": "chapter18.md",
+    "pages": 95
+  }
+]

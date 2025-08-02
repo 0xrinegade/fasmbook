@@ -1,0 +1,51 @@
+{
+  "server": {
+    "defaultPort": 8000,
+    "testPort": 8081,
+    "timeout": 120000
+  },
+  "testing": {
+    "defaultBrowser": "chromium",
+    "timeout": 30000,
+    "retryCount": 2
+  },
+  "artifacts": {
+    "maxSizeMB": 100,
+    "retentionDays": 30,
+    "failureRetentionDays": 7,
+    "compressionLevel": 6
+  },
+  "paths": {
+    "testResults": "test-results",
+    "playwrightReport": "playwright-report",
+    "chapters": "chapters",
+    "assets": "assets",
+    "scripts": "scripts"
+  },
+  "performance": {
+    "maxLoadTime": 3000,
+    "maxFirstContentfulPaint": 1500,
+    "maxLargestContentfulPaint": 2500
+  },
+  "environment": {
+    "ci": {
+      "server": {
+        "timeout": 180000
+      },
+      "performance": {
+        "maxLoadTime": 5000
+      },
+      "testing": {
+        "retryCount": 2
+      }
+    },
+    "development": {
+      "testing": {
+        "retryCount": 0
+      },
+      "artifacts": {
+        "retentionDays": 1
+      }
+    }
+  }
+}
