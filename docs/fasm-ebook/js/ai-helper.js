@@ -2,10 +2,25 @@
 class FASMeBookAI {
     constructor() {
         this.isOpen = false;
+        this.isExpanded = false;
         this.conversationHistory = [];
         this.knowledgeBase = this.initializeKnowledgeBase();
         this.currentChapter = null;
         this.userSkillLevel = 'intermediate'; // beginner, intermediate, advanced
+        
+        // Dragging functionality
+        this.isDragging = false;
+        this.isDraggingToggle = false;
+        this.dragOffset = { x: 0, y: 0 };
+        this.togglePosition = this.loadTogglePosition();
+        
+        // Virtual scrolling for performance
+        this.virtualScrolling = {
+            enabled: false,
+            visibleRange: { start: 0, end: 50 },
+            itemHeight: 40,
+            containerHeight: 0
+        };
         
         this.init();
     }
@@ -15,6 +30,54 @@ class FASMeBookAI {
         this.loadConversationHistory();
         this.detectCurrentChapter();
         this.initializeContextualHelp();
+        this.initializeDraggableToggle();
+        this.initializeVirtualScrolling();
+        this.setupChatBoundaries();
+    }
+    
+    loadTogglePosition() {
+        const saved = localStorage.getItem('aiTogglePosition');
+        if (saved) {
+            return JSON.parse(saved);
+        }
+        return { right: '1rem', bottom: '7rem' }; // Default position
+    }
+    
+    saveTogglePosition() {
+        localStorage.setItem('aiTogglePosition', JSON.stringify(this.togglePosition));
+    }
+    
+    initializeDraggableToggle() {
+        const aiToggle = document.getElementById('ai-toggle');
+        if (aiToggle) {
+            // Apply saved position
+            aiToggle.style.right = this.togglePosition.right;
+            aiToggle.style.bottom = this.togglePosition.bottom;
+            
+            // Make draggable
+            this.makeDraggable(aiToggle, true);
+        }
+    }
+    
+    initializeVirtualScrolling() {
+        const aiChat = document.getElementById('ai-chat');
+        if (aiChat && this.conversationHistory.length > 100) {
+            this.virtualScrolling.enabled = true;
+            this.virtualScrolling.containerHeight = aiChat.clientHeight;
+            this.setupVirtualScrollContainer();
+        }
+    }
+    
+    setupChatBoundaries() {
+        const aiChat = document.getElementById('ai-chat');
+        if (aiChat) {
+            // Ensure proper containment and scrolling
+            aiChat.style.overflowY = 'auto';
+            aiChat.style.overflowX = 'hidden';
+            aiChat.style.height = '100%';
+            aiChat.style.maxHeight = '100%';
+            aiChat.style.boxSizing = 'border-box';
+        }
     }
     
     detectCurrentChapter() {
@@ -485,6 +548,319 @@ Smaller instructions are better because:
         });
     }
     
+    makeDraggable(element, isToggleButton = false) {
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        
+        const onMouseDown = (e) => {
+            // Only allow dragging from header for window, anywhere for toggle button
+            if (!isToggleButton && !e.target.closest('.ai-header')) return;
+            
+            isDragging = true;
+            const rect = element.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            
+            element.style.cursor = 'grabbing';
+            e.preventDefault();
+        };
+        
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
+            
+            const newLeft = e.clientX - dragOffset.x;
+            const newTop = e.clientY - dragOffset.y;
+            
+            // Constrain to viewport
+            const maxLeft = window.innerWidth - element.offsetWidth;
+            const maxTop = window.innerHeight - element.offsetHeight;
+            
+            const constrainedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            const constrainedTop = Math.max(0, Math.min(newTop, maxTop));
+            
+            if (isToggleButton) {
+                // For toggle button, use right/bottom positioning
+                const right = window.innerWidth - constrainedLeft - element.offsetWidth;
+                const bottom = window.innerHeight - constrainedTop - element.offsetHeight;
+                
+                element.style.right = `${right}px`;
+                element.style.bottom = `${bottom}px`;
+                element.style.left = 'auto';
+                element.style.top = 'auto';
+                
+                this.togglePosition = { 
+                    right: `${right}px`, 
+                    bottom: `${bottom}px` 
+                };
+            } else {
+                element.style.left = `${constrainedLeft}px`;
+                element.style.top = `${constrainedTop}px`;
+                element.style.right = 'auto';
+                element.style.bottom = 'auto';
+            }
+            
+            e.preventDefault();
+        };
+        
+        const onMouseUp = () => {
+            if (isDragging) {
+                isDragging = false;
+                element.style.cursor = isToggleButton ? 'pointer' : 'default';
+                
+                if (isToggleButton) {
+                    this.saveTogglePosition();
+                }
+            }
+        };
+        
+        element.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        
+        // Touch events for mobile
+        element.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            onMouseDown({ clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => e.preventDefault() });
+        });
+        
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                const touch = e.touches[0];
+                onMouseMove({ clientX: touch.clientX, clientY: touch.clientY, preventDefault: () => e.preventDefault() });
+            }
+        });
+        
+        document.addEventListener('touchend', onMouseUp);
+    }
+    
+    toggleExpansion() {
+        const aiWindow = document.getElementById('ai-window');
+        if (!aiWindow) return;
+        
+        this.isExpanded = !this.isExpanded;
+        
+        if (this.isExpanded) {
+            // Save current position and size
+            this.savedWindowState = {
+                width: aiWindow.style.width || aiWindow.offsetWidth + 'px',
+                height: aiWindow.style.height || aiWindow.offsetHeight + 'px',
+                left: aiWindow.style.left,
+                top: aiWindow.style.top,
+                right: aiWindow.style.right,
+                bottom: aiWindow.style.bottom
+            };
+            
+            // Expand to fullscreen
+            aiWindow.style.width = '95vw';
+            aiWindow.style.height = '90vh';
+            aiWindow.style.left = '50%';
+            aiWindow.style.top = '50%';
+            aiWindow.style.right = 'auto';
+            aiWindow.style.bottom = 'auto';
+            aiWindow.style.transform = 'translate(-50%, -50%)';
+            aiWindow.classList.add('expanded');
+        } else {
+            // Restore previous size and position
+            if (this.savedWindowState) {
+                Object.keys(this.savedWindowState).forEach(prop => {
+                    aiWindow.style[prop] = this.savedWindowState[prop];
+                });
+            }
+            aiWindow.style.transform = '';
+            aiWindow.classList.remove('expanded');
+        }
+    }
+    
+    setupVirtualScrollContainer() {
+        const aiChat = document.getElementById('ai-chat');
+        if (!aiChat) return;
+        
+        const virtualContainer = document.createElement('div');
+        virtualContainer.className = 'virtual-scroll-container';
+        virtualContainer.style.height = `${this.conversationHistory.length * this.virtualScrolling.itemHeight}px`;
+        
+        const visibleContainer = document.createElement('div');
+        visibleContainer.className = 'virtual-visible-container';
+        visibleContainer.style.transform = `translateY(${this.virtualScrolling.visibleRange.start * this.virtualScrolling.itemHeight}px)`;
+        
+        virtualContainer.appendChild(visibleContainer);
+        aiChat.innerHTML = '';
+        aiChat.appendChild(virtualContainer);
+        
+        // Setup scroll handler
+        aiChat.addEventListener('scroll', () => {
+            this.handleVirtualScroll();
+        });
+        
+        this.renderVisibleMessages();
+    }
+    
+    handleVirtualScroll() {
+        const aiChat = document.getElementById('ai-chat');
+        if (!aiChat || !this.virtualScrolling.enabled) return;
+        
+        const scrollTop = aiChat.scrollTop;
+        const visibleStart = Math.floor(scrollTop / this.virtualScrolling.itemHeight);
+        const visibleEnd = Math.min(
+            visibleStart + Math.ceil(this.virtualScrolling.containerHeight / this.virtualScrolling.itemHeight) + 5,
+            this.conversationHistory.length
+        );
+        
+        if (visibleStart !== this.virtualScrolling.visibleRange.start || 
+            visibleEnd !== this.virtualScrolling.visibleRange.end) {
+            this.virtualScrolling.visibleRange = { start: visibleStart, end: visibleEnd };
+            this.renderVisibleMessages();
+        }
+    }
+    
+    renderVisibleMessages() {
+        if (!this.virtualScrolling.enabled) return;
+        
+        const visibleContainer = document.querySelector('.virtual-visible-container');
+        if (!visibleContainer) return;
+        
+        visibleContainer.innerHTML = '';
+        visibleContainer.style.transform = `translateY(${this.virtualScrolling.visibleRange.start * this.virtualScrolling.itemHeight}px)`;
+        
+        for (let i = this.virtualScrolling.visibleRange.start; i < this.virtualScrolling.visibleRange.end; i++) {
+            if (i < this.conversationHistory.length) {
+                const message = this.conversationHistory[i];
+                const messageElement = this.createMessageElement(message, i);
+                visibleContainer.appendChild(messageElement);
+            }
+        }
+    }
+    
+    createMessageElement(message, index) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `ai-message ${message.sender}`;
+        messageDiv.style.minHeight = `${this.virtualScrolling.itemHeight}px`;
+        
+        const senderName = message.sender === 'user' ? 'You' : 'Assistant';
+        const messageContent = this.formatMessageContent(message.content);
+        
+        messageDiv.innerHTML = `<strong>${senderName}:</strong> ${messageContent}`;
+        
+        return messageDiv;
+    }
+    
+    setupEnhancedHeader() {
+        const aiHeader = document.querySelector('.ai-header');
+        if (!aiHeader) return;
+        
+        // Clear existing content and rebuild with enhanced controls
+        const title = aiHeader.querySelector('h3');
+        const closeBtn = aiHeader.querySelector('.ai-close');
+        
+        aiHeader.innerHTML = '';
+        
+        // Add drag handle area
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'ai-drag-handle';
+        dragHandle.innerHTML = '⋮⋮⋮';
+        dragHandle.title = 'Drag to move window';
+        aiHeader.appendChild(dragHandle);
+        
+        // Add title
+        if (title) {
+            aiHeader.appendChild(title);
+        }
+        
+        // Add navigation controls
+        const navControls = document.createElement('div');
+        navControls.className = 'ai-nav-controls';
+        
+        // Settings button
+        const settingsBtn = document.createElement('button');
+        settingsBtn.className = 'ai-nav-btn';
+        settingsBtn.title = 'Open Settings';
+        settingsBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+        </svg>`;
+        settingsBtn.addEventListener('click', () => {
+            const settingsToggle = document.getElementById('settings-toggle');
+            if (settingsToggle) settingsToggle.click();
+        });
+        
+        // Drawing button
+        const drawingBtn = document.createElement('button');
+        drawingBtn.className = 'ai-nav-btn';
+        drawingBtn.title = 'Toggle Drawing Mode';
+        drawingBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
+            <polygon points="18,2 22,6 12,16 8,16 8,12 18,2"></polygon>
+        </svg>`;
+        drawingBtn.addEventListener('click', () => {
+            const drawingMode = document.getElementById('drawing-mode');
+            if (drawingMode) {
+                drawingMode.checked = !drawingMode.checked;
+                drawingMode.dispatchEvent(new Event('change'));
+            }
+        });
+        
+        // Navigation button
+        const navBtn = document.createElement('button');
+        navBtn.className = 'ai-nav-btn';
+        navBtn.title = 'Toggle Navigation';
+        navBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>`;
+        navBtn.addEventListener('click', () => {
+            const navToggle = document.getElementById('nav-toggle');
+            if (navToggle) navToggle.click();
+        });
+        
+        // Expand button
+        const expandBtn = document.createElement('button');
+        expandBtn.className = 'ai-nav-btn ai-expand-btn';
+        expandBtn.title = 'Expand/Collapse';
+        expandBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15,3 21,3 21,9"></polyline>
+            <polyline points="9,21 3,21 3,15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>`;
+        expandBtn.addEventListener('click', () => {
+            this.toggleExpansion();
+            // Update icon based on state
+            if (this.isExpanded) {
+                expandBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="4,14 10,14 10,20"></polyline>
+                    <polyline points="20,10 14,10 14,4"></polyline>
+                    <line x1="14" y1="10" x2="21" y2="3"></line>
+                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>`;
+                expandBtn.title = 'Restore Window';
+            } else {
+                expandBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15,3 21,3 21,9"></polyline>
+                    <polyline points="9,21 3,21 3,15"></polyline>
+                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>`;
+                expandBtn.title = 'Expand Window';
+            }
+        });
+        
+        navControls.appendChild(settingsBtn);
+        navControls.appendChild(drawingBtn);
+        navControls.appendChild(navBtn);
+        navControls.appendChild(expandBtn);
+        
+        // Add close button
+        if (closeBtn) {
+            navControls.appendChild(closeBtn);
+        }
+        
+        aiHeader.appendChild(navControls);
+        
+        // Make header draggable area
+        aiHeader.style.cursor = 'move';
+    }
+    
     toggleWindow() {
         if (this.isOpen) {
             this.closeWindow();
@@ -501,6 +877,12 @@ Smaller instructions are better because:
             aiWindow.classList.add('visible');
             this.isOpen = true;
             
+            // Enable dragging for the window
+            this.makeDraggable(aiWindow, false);
+            
+            // Setup enhanced header with navigation controls
+            this.setupEnhancedHeader();
+            
             // Focus on input
             const aiInput = document.getElementById('ai-input-field');
             if (aiInput) {
@@ -511,6 +893,9 @@ Smaller instructions are better because:
             if (this.conversationHistory.length === 0) {
                 this.addWelcomeMessage();
             }
+            
+            // Setup chat boundaries to prevent overflow
+            this.setupChatBoundaries();
         }
     }
     
@@ -607,21 +992,7 @@ Smaller instructions are better because:
     }
     
     addMessage(sender, content, isHtml = false) {
-        const aiChat = document.getElementById('ai-chat');
-        if (!aiChat) return;
-        
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `ai-message ${sender}`;
-        
-        const senderName = sender === 'user' ? 'You' : 'Assistant';
-        const messageContent = isHtml ? content : this.formatMessageContent(content);
-        
-        messageDiv.innerHTML = `<strong>${senderName}:</strong> ${messageContent}`;
-        
-        aiChat.appendChild(messageDiv);
-        aiChat.scrollTop = aiChat.scrollHeight;
-        
-        // Save to conversation history
+        // Save to conversation history first
         this.conversationHistory.push({
             sender,
             content,
@@ -629,6 +1000,49 @@ Smaller instructions are better because:
         });
         
         this.saveConversationHistory();
+        
+        const aiChat = document.getElementById('ai-chat');
+        if (!aiChat) return;
+        
+        if (this.virtualScrolling.enabled) {
+            // Update virtual scrolling container height
+            const virtualContainer = document.querySelector('.virtual-scroll-container');
+            if (virtualContainer) {
+                virtualContainer.style.height = `${this.conversationHistory.length * this.virtualScrolling.itemHeight}px`;
+            }
+            
+            // Re-render visible messages if we're at the bottom
+            const isAtBottom = aiChat.scrollTop + aiChat.clientHeight >= aiChat.scrollHeight - 10;
+            if (isAtBottom) {
+                // Scroll to bottom to show new message
+                this.virtualScrolling.visibleRange.end = this.conversationHistory.length;
+                this.virtualScrolling.visibleRange.start = Math.max(0, this.virtualScrolling.visibleRange.end - 50);
+                this.renderVisibleMessages();
+                
+                setTimeout(() => {
+                    aiChat.scrollTop = aiChat.scrollHeight;
+                }, 0);
+            }
+        } else {
+            // Standard message rendering for smaller conversation histories
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `ai-message ${sender}`;
+            
+            const senderName = sender === 'user' ? 'You' : 'Assistant';
+            const messageContent = isHtml ? content : this.formatMessageContent(content);
+            
+            messageDiv.innerHTML = `<strong>${senderName}:</strong> ${messageContent}`;
+            
+            aiChat.appendChild(messageDiv);
+            aiChat.scrollTop = aiChat.scrollHeight;
+        }
+        
+        // Enable virtual scrolling if conversation gets too long
+        if (!this.virtualScrolling.enabled && this.conversationHistory.length > 100) {
+            this.virtualScrolling.enabled = true;
+            this.virtualScrolling.containerHeight = aiChat.clientHeight;
+            this.setupVirtualScrollContainer();
+        }
     }
     
     formatMessageContent(content) {
