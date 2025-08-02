@@ -130,6 +130,15 @@
     border-right: 3px solid #cccccc;
 }
 
+/* Control Icons for eInk */
+.eink-mode .control-icons {
+    opacity: 1; /* Always visible in eInk mode */
+}
+
+.eink-mode .control-icons.fade-out {
+    opacity: 0.7; /* Less aggressive fade for eInk */
+}
+
 .eink-mode .nav-toggle,
 .eink-mode .nav-btn,
 .eink-mode .page-btn,
@@ -140,7 +149,7 @@
     border-color: #333333;
     background-color: #ffffff;
     color: #000000;
-    border-radius: 0; /* No rounded corners for eInk */
+    border-radius: 4px; /* Minimal rounded corners for eInk */
     
     /* Larger touch targets for stylus/finger */
     min-height: 44px;
@@ -156,8 +165,8 @@
 
 /* AI Helper optimizations */
 .eink-mode .ai-toggle {
-    width: 70px;
-    height: 70px;
+    width: 52px;
+    height: 52px;
     font-size: 2.5rem;
     box-shadow: none; /* No shadows for eInk */
 }
@@ -184,9 +193,8 @@
 
 /* Settings panel optimizations */
 .eink-mode .settings-toggle {
-    width: 60px;
-    height: 60px;
-    font-size: 1.8rem;
+    width: 52px;
+    height: 52px;
     box-shadow: none;
 }
 
@@ -376,15 +384,13 @@
     }
     
     .eink-mode .ai-toggle {
-        width: 60px;
-        height: 60px;
-        font-size: 2rem;
+        width: 48px;
+        height: 48px;
     }
     
     .eink-mode .settings-toggle {
-        width: 50px;
-        height: 50px;
-        font-size: 1.5rem;
+        width: 48px;
+        height: 48px;
     }
 }
 

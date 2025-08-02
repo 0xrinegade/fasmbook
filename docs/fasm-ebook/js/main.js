@@ -51,6 +51,7 @@ class FASMeBook {
             this.initNavigation();
             this.initEventListeners();
             this.initSettings();
+            this.initControlIcons();
             
             // Set initial responsive layout
             this.adjustLayout();
@@ -883,6 +884,72 @@ class FASMeBook {
                 indicator.classList.remove('active');
             }
         });
+    }
+    
+    // Control Icons Management
+    initControlIcons() {
+        const controlIcons = document.getElementById('control-icons');
+        const zenModeCheckbox = document.getElementById('zen-mode');
+        let fadeTimeout;
+        
+        // Zen mode functionality
+        if (zenModeCheckbox) {
+            zenModeCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    controlIcons.classList.add('zen-mode');
+                } else {
+                    controlIcons.classList.remove('zen-mode');
+                }
+            });
+        }
+        
+        // Mouse movement tracking for fade behavior
+        let lastMousePosition = { x: 0, y: 0 };
+        
+        document.addEventListener('mousemove', (e) => {
+            lastMousePosition.x = e.clientX;
+            lastMousePosition.y = e.clientY;
+            
+            const viewportWidth = window.innerWidth;
+            const rightQuarter = viewportWidth * 0.75; // Right 25% starts at 75% of width
+            
+            // Clear existing timeout
+            clearTimeout(fadeTimeout);
+            
+            if (e.clientX >= rightQuarter) {
+                // Mouse is in right 25%, show icons
+                controlIcons.classList.remove('fade-out');
+            } else {
+                // Mouse is outside right 25%, fade out after delay
+                fadeTimeout = setTimeout(() => {
+                    // Check if mouse is still outside right quarter
+                    if (lastMousePosition.x < rightQuarter) {
+                        controlIcons.classList.add('fade-out');
+                    }
+                }, 2000); // 2 second delay before fading
+            }
+        });
+        
+        // Show icons when hovering over them
+        controlIcons.addEventListener('mouseenter', () => {
+            clearTimeout(fadeTimeout);
+            controlIcons.classList.remove('fade-out');
+        });
+        
+        // Handle mouse leave with delay
+        controlIcons.addEventListener('mouseleave', () => {
+            const viewportWidth = window.innerWidth;
+            const rightQuarter = viewportWidth * 0.75;
+            
+            if (lastMousePosition.x < rightQuarter) {
+                fadeTimeout = setTimeout(() => {
+                    controlIcons.classList.add('fade-out');
+                }, 1000); // 1 second delay after leaving icons
+            }
+        });
+        
+        // Initially show icons
+        controlIcons.classList.remove('fade-out');
     }
 }
 
