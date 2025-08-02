@@ -52,6 +52,9 @@ class FASMeBook {
             this.initEventListeners();
             this.initSettings();
             
+            // Set initial responsive layout
+            this.adjustLayout();
+            
             // Load initial chapter
             const urlParams = new URLSearchParams(window.location.search);
             const chapter = urlParams.get('chapter') || 'preface';
@@ -694,9 +697,17 @@ class FASMeBook {
     
     adjustLayout() {
         // Responsive layout adjustments
-        if (window.innerWidth < 768) {
-            document.getElementById('navigation-panel')?.classList.add('hidden');
-            document.getElementById('main-content')?.classList.add('expanded');
+        const navPanel = document.getElementById('navigation-panel');
+        const mainContent = document.getElementById('main-content');
+        
+        if (window.innerWidth <= 768) {
+            // Mobile/tablet view - hide navigation
+            navPanel?.classList.add('hidden');
+            mainContent?.classList.add('expanded');
+        } else {
+            // Desktop view - show navigation
+            navPanel?.classList.remove('hidden');
+            mainContent?.classList.remove('expanded');
         }
         
         // Reposition AI window and settings panel if they're open
