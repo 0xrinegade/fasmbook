@@ -626,11 +626,79 @@ class FASMeBook {
         const mainContent = document.getElementById('main-content');
         
         if (navToggle && navPanel && mainContent) {
-            navToggle.addEventListener('click', () => {
-                navPanel.classList.toggle('hidden');
-                mainContent.classList.toggle('expanded');
+            navToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleNavigation();
             });
         }
+        
+        // Add external nav toggle for when nav is hidden
+        this.createExternalNavToggle();
+    }
+    
+    toggleNavigation() {
+        const navPanel = document.getElementById('navigation-panel');
+        const mainContent = document.getElementById('main-content');
+        
+        if (!navPanel || !mainContent) return;
+        
+        // Check if we're on mobile/tablet
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+            // On mobile, use visible class
+            navPanel.classList.toggle('visible');
+            this.updateExternalNavToggle();
+        } else {
+            // On desktop, use hidden class
+            navPanel.classList.toggle('hidden');
+            mainContent.classList.toggle('expanded');
+        }
+    }
+    
+    createExternalNavToggle() {
+        // Create a fixed nav toggle button that's always accessible
+        const externalNavToggle = document.createElement('button');
+        externalNavToggle.id = 'external-nav-toggle';
+        externalNavToggle.className = 'external-nav-toggle';
+        externalNavToggle.innerHTML = '☰';
+        externalNavToggle.title = 'Toggle Navigation';
+        externalNavToggle.setAttribute('aria-label', 'Toggle Navigation');
+        
+        externalNavToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleNavigation();
+        });
+        
+        document.body.appendChild(externalNavToggle);
+        
+        // Show/hide based on nav state and screen size
+        this.updateExternalNavToggle();
+        
+        // Update on window resize
+        window.addEventListener('resize', () => {
+            this.updateExternalNavToggle();
+        });
+    }
+    
+    updateExternalNavToggle() {
+        const externalNavToggle = document.getElementById('external-nav-toggle');
+        const navPanel = document.getElementById('navigation-panel');
+        
+        if (!externalNavToggle || !navPanel) return;
+        
+        const isMobile = window.innerWidth <= 768;
+        const isNavVisible = isMobile ? navPanel.classList.contains('visible') : !navPanel.classList.contains('hidden');
+        
+        // Show external toggle on mobile when nav is hidden
+        if (isMobile && !isNavVisible) {
+            externalNavToggle.style.display = 'block';
+        } else {
+            externalNavToggle.style.display = 'none';
+        }
+    }
         
         // Handle keyboard navigation
         document.addEventListener('keydown', (e) => {

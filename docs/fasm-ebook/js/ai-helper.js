@@ -433,7 +433,11 @@ Smaller instructions are better because:
         const aiWindow = document.getElementById('ai-window');
         
         if (aiToggle) {
-            aiToggle.addEventListener('click', () => this.toggleWindow());
+            aiToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleWindow();
+            });
         }
         
         if (aiClose) {
