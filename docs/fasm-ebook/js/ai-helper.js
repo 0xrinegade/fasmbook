@@ -59,6 +59,24 @@ class FASMeBookAI {
         });
     }
     
+    addCrossReferenceHelpers() {
+        // Add cross-reference links for related sections
+        const crossRefElements = document.querySelectorAll('.cross-ref, .see-also');
+        crossRefElements.forEach((element) => {
+            element.style.cursor = 'pointer';
+            element.title = 'Click to view related section';
+            element.onclick = () => this.handleCrossReference(element);
+        });
+        
+        // Add helpful hints for instruction links
+        const instructionLinks = document.querySelectorAll('.asm-instruction');
+        instructionLinks.forEach((link) => {
+            link.style.cursor = 'pointer';
+            link.title = 'Click for instruction details';
+            link.onclick = () => this.showInstructionHelp(link.textContent);
+        });
+    }
+    
     explainCodeBlock(codeBlock, index) {
         const code = codeBlock.textContent;
         const response = this.analyzeCode(code);
@@ -83,6 +101,71 @@ class FASMeBookAI {
         const explanation = this.getPerformanceExplanation(metric);
         this.openWindow();
         this.addMessage('assistant', explanation);
+    }
+    
+    handleCrossReference(element) {
+        const refText = element.textContent;
+        const refTarget = element.getAttribute('data-ref') || element.getAttribute('href');
+        
+        this.openWindow();
+        this.addMessage('assistant', `
+            **Cross Reference: ${refText}**
+            
+            This refers to a related section that provides additional context or examples.
+            
+            ${refTarget ? `Target: ${refTarget}` : 'Use the navigation panel to find related topics.'}
+            
+            Would you like me to explain how this relates to the current topic?
+        `);
+    }
+    
+    showInstructionHelp(instruction) {
+        const cleanInstruction = instruction.trim().toLowerCase();
+        
+        // Check if we have detailed instruction information
+        if (window.instructionGlossary) {
+            const instructionInfo = window.instructionGlossary.getInstruction(cleanInstruction);
+            if (instructionInfo) {
+                this.openWindow();
+                this.addMessage('assistant', `
+                    **${instruction.toUpperCase()} Instruction**
+                    
+                    **Description:** ${instructionInfo.description}
+                    
+                    **Syntax:** ${instructionInfo.syntax}
+                    
+                    **Flags Affected:** ${instructionInfo.flags || 'None specified'}
+                    
+                    **Performance:** ${instructionInfo.cycles || 'Variable'}
+                    
+                    **Use Cases:** ${instructionInfo.examples || 'General purpose instruction'}
+                    
+                    Would you like me to show examples or explain optimization techniques for this instruction?
+                `);
+                return;
+            }
+        }
+        
+        // Fallback explanation
+        const explanation = this.getBasicInstructionHelp(cleanInstruction);
+        this.openWindow();
+        this.addMessage('assistant', explanation);
+    }
+    
+    getBasicInstructionHelp(instruction) {
+        const basicHelp = {
+            'mov': 'MOV moves data from source to destination. Most fundamental x86 instruction.',
+            'add': 'ADD performs arithmetic addition and sets flags based on the result.',
+            'sub': 'SUB performs arithmetic subtraction and sets flags based on the result.',
+            'cmp': 'CMP compares two operands by performing subtraction but only affects flags.',
+            'jmp': 'JMP unconditionally transfers control to the specified address.',
+            'call': 'CALL pushes return address and transfers control to a subroutine.',
+            'ret': 'RET returns from a subroutine by popping the return address.',
+            'push': 'PUSH decrements ESP and stores operand on the stack.',
+            'pop': 'POP loads operand from stack and increments ESP.'
+        };
+        
+        return basicHelp[instruction] || `${instruction.toUpperCase()} is an assembly instruction. Check the instruction glossary for detailed information.`;
     }
     
     analyzeCode(code) {
@@ -386,6 +469,16 @@ Smaller instructions are better because:
                 this.closeWindow();
             }
         });
+        
+        // Handle window resize for responsive positioning
+        window.addEventListener('resize', () => {
+            if (this.isOpen) {
+                const aiWindow = document.getElementById('ai-window');
+                if (aiWindow) {
+                    this.adjustWindowPosition(aiWindow);
+                }
+            }
+        });
     }
     
     toggleWindow() {
@@ -417,28 +510,50 @@ Smaller instructions are better because:
         }
     }
     
-    adjustWindowPosition(window) {
+    adjustWindowPosition(aiWindow) {
         // Reset position classes
-        window.classList.remove('adjust-left', 'adjust-up');
+        aiWindow.classList.remove('adjust-left', 'adjust-up');
         
         // Get viewport dimensions
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
         
-        // Get window dimensions (use computed or fallback values)
-        const windowWidth = 400; // min(400px, calc(100vw - 2rem))
-        const windowHeight = 500; // min(500px, calc(100vh - 10rem))
-        
-        // Check if window would go outside right edge (considering right: 1rem positioning)
-        const availableWidth = viewportWidth - 32; // Account for margins
-        if (windowWidth > availableWidth * 0.8) {
-            window.classList.add('adjust-left');
+        // Enhanced responsive breakpoints
+        if (viewportWidth <= 768) {
+            // Mobile - use full width behavior
+            aiWindow.style.width = 'calc(100vw - 1rem)';
+            aiWindow.style.height = 'calc(100vh - 6rem)';
+            aiWindow.style.right = '0.5rem';
+            aiWindow.style.bottom = '4rem';
+        } else if (viewportWidth <= 1024) {
+            // Tablet - constrained width
+            aiWindow.style.width = 'min(380px, calc(100vw - 2rem))';
+            aiWindow.style.height = 'min(480px, calc(100vh - 8rem))';
+            aiWindow.style.right = '1rem';
+            aiWindow.style.bottom = '6rem';
+        } else {
+            // Desktop - default behavior
+            aiWindow.style.width = 'min(400px, calc(100vw - 2rem))';
+            aiWindow.style.height = 'min(500px, calc(100vh - 10rem))';
+            aiWindow.style.right = '1rem';
+            aiWindow.style.bottom = '6rem';
         }
         
-        // Check if window would go outside bottom edge (considering bottom: 6rem positioning)
-        const availableHeight = viewportHeight - 160; // Account for button and margins
-        if (windowHeight > availableHeight) {
-            window.classList.add('adjust-up');
+        // Get actual computed dimensions after CSS changes
+        const rect = aiWindow.getBoundingClientRect();
+        const windowWidth = rect.width;
+        const windowHeight = rect.height;
+        
+        // Check if window would go outside right edge
+        const rightEdge = viewportWidth - parseInt(aiWindow.style.right || '16px');
+        if (windowWidth > rightEdge - 16) {
+            aiWindow.classList.add('adjust-left');
+        }
+        
+        // Check if window would go outside bottom edge
+        const bottomEdge = viewportHeight - parseInt(aiWindow.style.bottom || '96px');
+        if (windowHeight > bottomEdge - 16) {
+            aiWindow.classList.add('adjust-up');
         }
     }
     

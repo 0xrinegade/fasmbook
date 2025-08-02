@@ -805,7 +805,6 @@ function searchInstructions(query) {
         glossaryList.appendChild(li);
     }
 }
-}
 
 // CSS for syntax highlighting
 const syntaxHighlightingCSS = `
