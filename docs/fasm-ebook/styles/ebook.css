@@ -31,23 +31,23 @@
 }
 
 .nav-hint.prerequisite {
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-    border-left-color: #ef4444;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+    border-left-color: #666666;
 }
 
 .nav-hint.advanced {
-    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-    border-left-color: #8b5cf6;
+    background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+    border-left-color: #555555;
 }
 
 .nav-hint.performance {
-    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-    border-left-color: #10b981;
+    background: linear-gradient(135deg, #f8f8f8 0%, #e8e8e8 100%);
+    border-left-color: #666666;
 }
 
 /* Did you know boxes */
 .did-you-know {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
     border: 2px solid #3b82f6;
     border-radius: 12px;
     padding: 1rem;
@@ -64,14 +64,14 @@
     background: white;
     padding: 0 8px;
     font-weight: bold;
-    color: #3b82f6;
+    color: #333333;
     font-style: normal;
 }
 
 /* Historical trivia boxes */
 .historical-trivia {
-    background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
-    border: 2px solid #eab308;
+    background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
+    border: 2px solid #888888;
     border-radius: 12px;
     padding: 1rem;
     margin: 1.2rem 0;
@@ -86,7 +86,7 @@
     background: white;
     padding: 0 8px;
     font-weight: bold;
-    color: #eab308;
+    color: #333333;
 }
 
 /* Cross-reference links */
@@ -102,11 +102,11 @@
 .see-also::before {
     content: "🔗 See Also: ";
     font-weight: bold;
-    color: #3b82f6;
+    color: #333333;
 }
 
 .see-also a {
-    color: #3b82f6;
+    color: #333333;
     text-decoration: none;
     font-weight: 500;
 }
@@ -117,8 +117,8 @@
 
 /* Performance analysis annotations */
 .perf-annotation {
-    background: #f0fdf4;
-    color: #166534;
+    background: #f0f0f0;
+    color: #333333;
     padding: 0.15rem 0.3rem;
     border-radius: 4px;
     font-size: 0.75rem;
@@ -127,35 +127,35 @@
 }
 
 .perf-annotation.cycles {
-    background: #fef3c7;
-    color: #92400e;
+    background: #e8e8e8;
+    color: #333333;
 }
 
 .perf-annotation.memory {
-    background: #e0f2fe;
-    color: #0369a1;
+    background: #f0f0f0;
+    color: #333333;
 }
 
 .perf-annotation.decision {
-    background: #f3e8ff;
-    color: #7c3aed;
+    background: #e8e8e8;
+    color: #333333;
 }
 
 /* Code explanation enhancements */
 .code-explanation {
-    background: #f8fafc;
-    border-left: 4px solid #3b82f6;
+    background: #f8f8f8;
+    border-left: 4px solid #666666;
     padding: 0.7rem;
     margin: 0.7rem 0;
     font-size: 0.9rem;
 }
 
 .code-explanation .pros {
-    color: #059669;
+    color: #333333;
 }
 
 .code-explanation .cons {
-    color: #dc2626;
+    color: #333333;
 }
 
 .code-explanation .pros::before {
@@ -180,8 +180,8 @@
 }
 
 .exercise-category h3 {
-    color: #3b82f6;
-    border-bottom: 2px solid #3b82f6;
+    color: #333333;
+    border-bottom: 2px solid #666666;
     padding-bottom: 0.5rem;
 }
 
@@ -195,31 +195,31 @@
 }
 
 .exercise-difficulty.beginner {
-    background: #d1fae5;
-    color: #065f46;
+    background: #e8e8e8;
+    color: #333333;
 }
 
 .exercise-difficulty.intermediate {
-    background: #fef3c7;
-    color: #92400e;
+    background: #f0f0f0;
+    color: #333333;
 }
 
 .exercise-difficulty.advanced {
-    background: #fee2e2;
-    color: #991b1b;
+    background: #e0e0e0;
+    color: #333333;
 }
 
 /* Chapter summary boxes */
 .chapter-summary {
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    border: 2px solid #22c55e;
+    background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
+    border: 2px solid #888888;
     border-radius: 12px;
     padding: 1.2rem;
     margin: 2rem 0;
 }
 
 .chapter-summary h3 {
-    color: #166534;
+    color: #333333;
     margin-top: 0;
 }
 
@@ -234,7 +234,7 @@
 
 .summary-section li::before {
     content: "✅ ";
-    color: #22c55e;
+    color: #333333;
     font-weight: bold;
 }
 
@@ -456,12 +456,12 @@
     font-family: 'Courier New', monospace;
     font-size: 1.1rem;
     font-weight: bold;
-    color: #0066cc;
+    color: #333333;
 }
 
 .instruction-category {
-    background: #f0f8ff;
-    color: #0066cc;
+    background: #f0f0f0;
+    color: #333333;
     padding: 0.2rem 0.5rem;
     border-radius: 12px;
     font-size: 0.75rem;
@@ -523,14 +523,14 @@
 .instruction-usages {
     margin: 0.5rem 0;
     padding: 0.5rem;
-    background: #e7f3ff;
-    border-left: 3px solid #007acc;
+    background: #f0f0f0;
+    border-left: 3px solid #666666;
     border-radius: 4px;
     font-size: 0.85rem;
 }
 
 .usage-link {
-    color: #007acc;
+    color: #333333;
     text-decoration: none;
     font-family: 'Courier New', monospace;
     font-weight: bold;
@@ -548,7 +548,7 @@
 }
 
 .cross-ref-link {
-    color: #0066cc;
+    color: #333333;
     text-decoration: none;
     font-family: 'Courier New', monospace;
     font-weight: bold;
@@ -562,7 +562,7 @@
 /* Dark mode support for tooltips */
 .dark-mode .instruction-tooltip-popup {
     background: #2d2d2d;
-    border-color: #4da6ff;
+    border-color: #888888;
     color: #ffffff;
 }
 
@@ -571,17 +571,17 @@
 }
 
 .dark-mode .instruction-mnemonic {
-    color: #4da6ff;
+    color: #cccccc;
 }
 
 .dark-mode .instruction-category {
-    background: #1a3d5c;
-    color: #4da6ff;
+    background: #404040;
+    color: #cccccc;
 }
 
 .dark-mode .instruction-syntax {
     background: #363636;
-    border-left-color: #4da6ff;
+    border-left-color: #888888;
 }
 
 .dark-mode .instruction-examples {
@@ -589,21 +589,21 @@
 }
 
 .dark-mode .instruction-notes {
-    background: #3d3519;
-    border-left-color: #ffb84d;
+    background: #3a3a3a;
+    border-left-color: #888888;
 }
 
 .dark-mode .instruction-usages {
-    background: #1a2733;
-    border-left-color: #4da6ff;
+    background: #2a2a2a;
+    border-left-color: #888888;
 }
 
 .dark-mode .usage-link {
-    color: #4da6ff;
+    color: #cccccc;
 }
 
 .dark-mode .cross-ref-link {
-    color: #4da6ff;
+    color: #cccccc;
 }
 
 .dark-mode .instruction-cross-refs {
@@ -721,23 +721,23 @@
 }
 
 .exercise-box {
-    background-color: #f0f8ff;
-    border-left-color: #4a90e2;
+    background-color: #f0f0f0;
+    border-left-color: #888888;
 }
 
 .example-box {
-    background-color: #f8fff0;
-    border-left-color: #7ed321;
+    background-color: #f8f8f8;
+    border-left-color: #666666;
 }
 
 .tip-box {
-    background-color: #fff8e1;
-    border-left-color: #ffa726;
+    background-color: #f5f5f5;
+    border-left-color: #777777;
 }
 
 .warning-box {
-    background-color: #ffebee;
-    border-left-color: #e57373;
+    background-color: #f0f0f0;
+    border-left-color: #999999;
 }
 
 .exercise-box::before {
@@ -745,7 +745,7 @@
     font-weight: bold;
     display: block;
     margin-bottom: 0.7rem;
-    color: #4a90e2;
+    color: #333333;
 }
 
 .example-box::before {
@@ -753,7 +753,7 @@
     font-weight: bold;
     display: block;
     margin-bottom: 0.7rem;
-    color: #7ed321;
+    color: #333333;
 }
 
 .tip-box::before {
@@ -761,7 +761,7 @@
     font-weight: bold;
     display: block;
     margin-bottom: 0.7rem;
-    color: #ffa726;
+    color: #333333;
 }
 
 .warning-box::before {
@@ -769,7 +769,7 @@
     font-weight: bold;
     display: block;
     margin-bottom: 0.7rem;
-    color: #e57373;
+    color: #333333;
 }
 
 /* Reading tools */
@@ -814,7 +814,7 @@
     top: 0;
     width: 30px;
     height: 40px;
-    background-color: #ffa726;
+    background-color: #888888;
     clip-path: polygon(0 0, 100% 0, 100% 80%, 50% 60%, 0 80%);
     cursor: pointer;
     opacity: 0;
@@ -828,7 +828,7 @@
 
 .bookmark-indicator.active {
     opacity: 1;
-    background-color: #ff6b35;
+    background-color: #666666;
 }
 
 /* Reading mode enhancements */
@@ -910,23 +910,23 @@
 }
 
 .dark-mode .exercise-box {
-    background-color: #1e2a3a;
-    border-left-color: #4a90e2;
+    background-color: #2a2a2a;
+    border-left-color: #888888;
 }
 
 .dark-mode .example-box {
-    background-color: #1e3a1e;
-    border-left-color: #7ed321;
+    background-color: #2a2a2a;
+    border-left-color: #888888;
 }
 
 .dark-mode .tip-box {
-    background-color: #3a3a1e;
-    border-left-color: #ffa726;
+    background-color: #2a2a2a;
+    border-left-color: #888888;
 }
 
 .dark-mode .warning-box {
-    background-color: #3a1e1e;
-    border-left-color: #e57373;
+    background-color: #2a2a2a;
+    border-left-color: #888888;
 }
 
 /* Smooth scrolling */
