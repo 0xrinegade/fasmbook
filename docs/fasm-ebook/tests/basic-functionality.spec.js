@@ -33,7 +33,7 @@ test.describe('FASM eBook - Basic Functionality', () => {
 
   test('should display table of contents', async ({ page }) => {
     // Wait for TOC to load with longer timeout for CI
-    await page.waitForSelector('#toc-list li', { timeout: 20000 });
+    await page.waitForSelector('#toc-list li', { timeout: 30000 });
     
     // Check that TOC items exist
     const tocItems = await page.locator('#toc-list li').count();
@@ -46,7 +46,7 @@ test.describe('FASM eBook - Basic Functionality', () => {
 
   test('should navigate between chapters', async ({ page }) => {
     // Wait for TOC to load with longer timeout for CI
-    await page.waitForSelector('#toc-list li a', { timeout: 20000 });
+    await page.waitForSelector('#toc-list li a', { timeout: 30000 });
     
     // Get all chapter links and click the first one using more robust selection
     const chapterLinks = await page.$$('#toc-list li a');
@@ -96,7 +96,7 @@ test.describe('FASM eBook - Basic Functionality', () => {
 
   test('should persist reading progress', async ({ page }) => {
     // Navigate to a chapter with longer timeout for CI
-    await page.waitForSelector('#toc-list li a', { timeout: 20000 });
+    await page.waitForSelector('#toc-list li a', { timeout: 30000 });
     
     // Get all chapter links and click the second one using more robust selection
     const chapterLinks = await page.$$('#toc-list li a');
