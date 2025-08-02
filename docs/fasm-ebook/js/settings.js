@@ -20,6 +20,9 @@ class FASMeBookSettings {
         this.settings = {};
         this.isOpen = false;
         
+        // PWA install prompt
+        this.deferredPrompt = null;
+        
         this.init();
     }
     
@@ -28,6 +31,7 @@ class FASMeBookSettings {
         this.setupEventListeners();
         this.applySettings();
         this.setupKeyboardShortcuts();
+        this.setupPWAInstall();
     }
     
     loadSettings() {
@@ -173,6 +177,9 @@ class FASMeBookSettings {
         toggleSettings.forEach(({ id, setting, label }) => {
             this.createToggleControl(id, setting, label);
         });
+        
+        // Add PWA install button
+        this.createPWAInstallButton();
     }
     
     createToggleControl(id, settingKey, label) {
@@ -217,6 +224,148 @@ class FASMeBookSettings {
         document.getElementById('export-settings-btn')?.addEventListener('click', () => this.exportSettings());
         document.getElementById('import-settings-btn')?.addEventListener('click', () => this.importSettings());
         document.getElementById('reset-settings-btn')?.addEventListener('click', () => this.resetSettings());
+    }
+    
+    setupPWAInstall() {
+        // Listen for the beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            this.deferredPrompt = e;
+            // Update install button visibility
+            this.updateInstallButtonVisibility();
+        });
+        
+        // Listen for app installed event
+        window.addEventListener('appinstalled', (e) => {
+            console.log('PWA was installed');
+            this.updateInstallButtonVisibility();
+        });
+    }
+    
+    createPWAInstallButton() {
+        const settingsContent = document.querySelector('.settings-content');
+        if (!settingsContent || document.getElementById('pwa-install-btn')) return;
+        
+        const installGroup = document.createElement('div');
+        installGroup.className = 'setting-group pwa-install-group';
+        installGroup.innerHTML = `
+            <div class="pwa-info">
+                <h4>📱 Install App</h4>
+                <p>Install this eBook as a standalone app for offline reading and quick access.</p>
+            </div>
+            <button id="pwa-install-btn" class="tool-btn pwa-install-btn" style="display: none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7,10 12,15 17,10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Install FASM eBook
+            </button>
+            <div id="pwa-install-status" class="pwa-status"></div>
+        `;
+        
+        settingsContent.appendChild(installGroup);
+        
+        // Add click event for install button
+        const installBtn = document.getElementById('pwa-install-btn');
+        if (installBtn) {
+            installBtn.addEventListener('click', () => this.installPWA());
+        }
+        
+        // Check initial install state
+        this.updateInstallButtonVisibility();
+    }
+    
+    updateInstallButtonVisibility() {
+        const installBtn = document.getElementById('pwa-install-btn');
+        const statusElement = document.getElementById('pwa-install-status');
+        
+        if (!installBtn || !statusElement) return;
+        
+        // Check if app is already installed
+        if (window.matchMedia('(display-mode: standalone)').matches || 
+            window.navigator.standalone === true ||
+            document.referrer.includes('android-app://')) {
+            // App is installed
+            installBtn.style.display = 'none';
+            statusElement.innerHTML = '<span style="color: #4CAF50;">✅ App is installed</span>';
+        } else if (this.deferredPrompt) {
+            // Can install
+            installBtn.style.display = 'block';
+            statusElement.innerHTML = '<span style="color: #666;">Ready to install</span>';
+        } else if (this.isPWASupported()) {
+            // PWA supported but prompt not available yet
+            installBtn.style.display = 'none';
+            statusElement.innerHTML = '<span style="color: #666;">Install option will appear when available</span>';
+        } else {
+            // PWA not supported
+            installBtn.style.display = 'none';
+            statusElement.innerHTML = '<span style="color: #999;">Installation not supported on this browser</span>';
+        }
+    }
+    
+    isPWASupported() {
+        return 'serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window;
+    }
+    
+    async installPWA() {
+        if (!this.deferredPrompt) {
+            console.log('No install prompt available');
+            return;
+        }
+        
+        const installBtn = document.getElementById('pwa-install-btn');
+        const statusElement = document.getElementById('pwa-install-status');
+        
+        if (installBtn) {
+            installBtn.disabled = true;
+            installBtn.textContent = 'Installing...';
+        }
+        
+        try {
+            // Show the install prompt
+            this.deferredPrompt.prompt();
+            
+            // Wait for the user to respond to the prompt
+            const { outcome } = await this.deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+                if (statusElement) {
+                    statusElement.innerHTML = '<span style="color: #4CAF50;">✅ Installing...</span>';
+                }
+            } else {
+                console.log('User dismissed the install prompt');
+                if (statusElement) {
+                    statusElement.innerHTML = '<span style="color: #999;">Install cancelled</span>';
+                }
+            }
+        } catch (error) {
+            console.error('Error during installation:', error);
+            if (statusElement) {
+                statusElement.innerHTML = '<span style="color: #f44336;">Installation failed</span>';
+            }
+        } finally {
+            // Reset the deferred prompt
+            this.deferredPrompt = null;
+            
+            if (installBtn) {
+                installBtn.disabled = false;
+                installBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7,10 12,15 17,10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Install FASM eBook
+                `;
+            }
+            
+            // Update button visibility
+            setTimeout(() => this.updateInstallButtonVisibility(), 1000);
+        }
     }
     
     toggle() {
