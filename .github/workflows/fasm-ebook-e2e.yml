@@ -211,15 +211,18 @@ jobs:
         run: |
           ./run-tests.sh quality chromium
       
-      - name: Upload accessibility results
+      - name: Upload accessibility results (selective)
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: accessibility-test-results
           path: |
-            docs/fasm-ebook/test-results/
-            docs/fasm-ebook/playwright-report/
-          retention-days: 30
+            docs/fasm-ebook/test-results/*.json
+            docs/fasm-ebook/test-results/*.xml
+            docs/fasm-ebook/test-results/*accessibility*
+            docs/fasm-ebook/playwright-report/index.html
+          retention-days: 14
+          compression-level: 6
 
   visual-regression:
     name: Visual Regression Tests
@@ -254,15 +257,19 @@ jobs:
         run: |
           ./run-tests.sh visual chromium
       
-      - name: Upload visual test results
+      - name: Upload visual test results (selective)
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: visual-test-results
           path: |
-            docs/fasm-ebook/test-results/
-            docs/fasm-ebook/playwright-report/
-          retention-days: 30
+            docs/fasm-ebook/test-results/*.json
+            docs/fasm-ebook/test-results/*.xml
+            docs/fasm-ebook/test-results/*visual*
+            docs/fasm-ebook/test-results/*screenshot*
+            docs/fasm-ebook/playwright-report/index.html
+          retention-days: 14
+          compression-level: 6
 
   test-summary:
     name: Test Summary

@@ -185,19 +185,59 @@ fasm-ebook/
 │   └── eink.css            # eInk device optimizations
 ├── js/
 │   ├── main.js             # Core eBook functionality
+│   ├── config.js           # Configuration management system
+│   ├── markdown-parser.js  # Robust markdown parsing
 │   ├── storage.js          # Data persistence layer
 │   ├── ai-helper.js        # AI assistant features
 │   ├── drawing.js          # Drawing and annotation tools
 │   ├── settings.js         # Settings management
 │   ├── navigation.js       # Navigation utilities
 │   └── markdown.js         # Content parsing and highlighting
+├── scripts/
+│   └── cleanup-port.sh     # Enhanced port cleanup utility
+├── tests/                  # Comprehensive E2E test suite
 ├── chapters/
 │   ├── index.json          # Chapter metadata
 │   ├── preface.md          # Book preface
 │   └── chapter*.md         # Individual chapter files
-└── assets/
-    └── favicon.svg         # Book icon
+├── assets/
+│   └── favicon.svg         # Book icon
+├── test-config.json        # Test configuration
+├── run-tests.sh           # Enhanced test runner
+├── TECHNICAL_DEBT_IMPROVEMENTS.md  # Technical documentation
+└── DEVELOPMENT_REFERENCE.md        # Developer quick reference
 ```
+
+## Technical Improvements
+
+The FASM eBook includes comprehensive technical debt improvements for enhanced reliability and maintainability:
+
+### 🛠️ **Robust Infrastructure**
+- **Enhanced Error Handling**: Strict error checking (`set -euo pipefail`) with graceful recovery
+- **Configuration Management**: Centralized config system with environment-specific overrides
+- **Robust Markdown Parsing**: AST-based parsing replacing fragile regex patterns
+- **Cross-Platform Compatibility**: Support for Linux, macOS, and Windows development
+
+### 🔧 **Development Tools**
+- **Enhanced Test Runner**: Comprehensive E2E testing with 80+ test cases
+- **Smart Port Cleanup**: Cross-platform port management with multiple tool support
+- **Artifact Optimization**: Selective uploads with compression and size limits
+- **Input Validation**: Comprehensive validation for all user inputs and configurations
+
+### 📊 **Quality Assurance**
+- **Performance Monitoring**: Core Web Vitals tracking and optimization
+- **Accessibility Testing**: WCAG 2.1 AA compliance validation
+- **Cross-Browser Testing**: Chrome, Firefox, Safari with mobile variants
+- **Visual Regression Testing**: UI consistency validation across devices
+
+### 📚 **Documentation**
+- **Technical Documentation**: Comprehensive improvement guides
+- **Developer Reference**: Quick reference for common tasks
+- **Configuration Guide**: Complete configuration system documentation
+
+For detailed information, see:
+- [`TECHNICAL_DEBT_IMPROVEMENTS.md`](TECHNICAL_DEBT_IMPROVEMENTS.md) - Complete technical overview
+- [`DEVELOPMENT_REFERENCE.md`](DEVELOPMENT_REFERENCE.md) - Developer quick reference
 
 ## Customization
 
