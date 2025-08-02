@@ -219,8 +219,9 @@ generate_report() {
     fi
     
     # Generate HTML report
-    if npx playwright show-report --host=0.0.0.0 &; then
-        local report_pid=$!
+    npx playwright show-report --host=0.0.0.0 &
+    local report_pid=$!
+    if [ $? -eq 0 ]; then
         info "Test report server started (PID: $report_pid)"
         info "Report available at: http://localhost:9323"
         
