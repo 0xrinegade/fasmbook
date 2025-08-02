@@ -5,8 +5,8 @@
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     border: 2px solid #0284c7;
     border-radius: 12px;
-    padding: 1.5rem;
-    margin: 2rem 0;
+    padding: 1rem;
+    margin: 1.2rem 0;
     position: relative;
 }
 
@@ -24,8 +24,8 @@
 .nav-hint {
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
     border-left: 4px solid #f59e0b;
-    padding: 1rem;
-    margin: 1rem 0;
+    padding: 0.7rem;
+    margin: 0.7rem 0;
     border-radius: 0 8px 8px 0;
     font-size: 0.9rem;
 }
@@ -50,8 +50,8 @@
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     border: 2px solid #3b82f6;
     border-radius: 12px;
-    padding: 1.5rem;
-    margin: 2rem 0;
+    padding: 1rem;
+    margin: 1.2rem 0;
     position: relative;
     font-style: italic;
 }
@@ -73,8 +73,8 @@
     background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
     border: 2px solid #eab308;
     border-radius: 12px;
-    padding: 1.5rem;
-    margin: 2rem 0;
+    padding: 1rem;
+    margin: 1.2rem 0;
     position: relative;
 }
 
@@ -94,8 +94,8 @@
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 1rem;
-    margin: 1rem 0;
+    padding: 0.7rem;
+    margin: 0.7rem 0;
     font-size: 0.9rem;
 }
 
@@ -119,11 +119,11 @@
 .perf-annotation {
     background: #f0fdf4;
     color: #166534;
-    padding: 0.2rem 0.4rem;
+    padding: 0.15rem 0.3rem;
     border-radius: 4px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 500;
-    margin-left: 0.5rem;
+    margin-left: 0.3rem;
 }
 
 .perf-annotation.cycles {
@@ -145,8 +145,8 @@
 .code-explanation {
     background: #f8fafc;
     border-left: 4px solid #3b82f6;
-    padding: 1rem;
-    margin: 1rem 0;
+    padding: 0.7rem;
+    margin: 0.7rem 0;
     font-size: 0.9rem;
 }
 
@@ -171,12 +171,12 @@
     background: #fafafa;
     border: 2px solid #e5e5e5;
     border-radius: 12px;
-    padding: 2rem;
-    margin: 3rem 0;
+    padding: 1.2rem;
+    margin: 2rem 0;
 }
 
 .exercise-category {
-    margin: 2rem 0;
+    margin: 1.2rem 0;
 }
 
 .exercise-category h3 {
@@ -214,8 +214,8 @@
     background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
     border: 2px solid #22c55e;
     border-radius: 12px;
-    padding: 2rem;
-    margin: 3rem 0;
+    padding: 1.2rem;
+    margin: 2rem 0;
 }
 
 .chapter-summary h3 {
@@ -224,7 +224,7 @@
 }
 
 .summary-section {
-    margin: 1.5rem 0;
+    margin: 1rem 0;
 }
 
 .summary-section ul {
@@ -653,7 +653,7 @@
 /* Enhanced lists */
 .chapter-content ul li {
     position: relative;
-    padding-left: 0.5rem;
+    padding-left: 0.3rem;
 }
 
 .chapter-content ul li::before {
@@ -670,9 +670,9 @@
 
 .chapter-content ol li {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.3rem;
     position: relative;
-    padding-left: 2rem;
+    padding-left: 1.5rem;
 }
 
 .chapter-content ol li::before {
@@ -683,20 +683,20 @@
     top: 0;
     color: var(--accent-color);
     font-weight: bold;
-    width: 1.5rem;
+    width: 1.2rem;
 }
 
 /* Table styling */
 .chapter-content table {
     width: 100%;
     border-collapse: collapse;
-    margin: 2rem 0;
+    margin: 1.2rem 0;
     font-size: 0.9rem;
 }
 
 .chapter-content th,
 .chapter-content td {
-    padding: 1rem;
+    padding: 0.6rem;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
@@ -713,8 +713,8 @@
 
 /* Exercise and example boxes */
 .exercise-box, .example-box, .tip-box, .warning-box {
-    margin: 2rem 0;
-    padding: 1.5rem;
+    margin: 1.2rem 0;
+    padding: 1rem;
     border-radius: 8px;
     border-left: 4px solid;
     position: relative;
@@ -744,7 +744,7 @@
     content: "🏋️ Exercise";
     font-weight: bold;
     display: block;
-    margin-bottom: 1rem;
+    margin-bottom: 0.7rem;
     color: #4a90e2;
 }
 
@@ -752,7 +752,7 @@
     content: "💡 Example";
     font-weight: bold;
     display: block;
-    margin-bottom: 1rem;
+    margin-bottom: 0.7rem;
     color: #7ed321;
 }
 
@@ -760,7 +760,7 @@
     content: "💡 Tip";
     font-weight: bold;
     display: block;
-    margin-bottom: 1rem;
+    margin-bottom: 0.7rem;
     color: #ffa726;
 }
 
@@ -768,7 +768,7 @@
     content: "⚠️ Warning";
     font-weight: bold;
     display: block;
-    margin-bottom: 1rem;
+    margin-bottom: 0.7rem;
     color: #e57373;
 }
 
