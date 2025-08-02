@@ -7,7 +7,7 @@
     --highlight-color: #f5f5f5;
     --font-family: 'Charter', 'Georgia', 'Times New Roman', serif;
     --font-size: 16px;
-    --line-height: 1.8;
+    --line-height: 1.5;
 }
 
 .eink-mode * {
@@ -37,7 +37,7 @@
 
 .eink-mode .chapter-content p {
     /* Better paragraph spacing for eInk reading */
-    margin-bottom: 2rem;
+    margin-bottom: 1.2rem;
     text-align: left; /* Left align for better eInk readability */
     
     /* Prevent orphans and widows */

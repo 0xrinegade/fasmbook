@@ -156,6 +156,49 @@ class FASMeBook {
             li.appendChild(a);
             tocList.appendChild(li);
         });
+        
+        // Also populate the instruction glossary
+        this.populateGlossary();
+    }
+    
+    populateGlossary() {
+        const glossaryList = document.getElementById('glossary-list');
+        if (!glossaryList || !window.instructionGlossary) return;
+        
+        glossaryList.innerHTML = '';
+        
+        const instructions = window.instructionGlossary.getAllInstructions();
+        instructions.forEach(instruction => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = '#';
+            a.onclick = (e) => {
+                e.preventDefault();
+                this.showInstructionDetails(instruction.mnemonic);
+            };
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = instruction.mnemonic;
+            a.appendChild(nameSpan);
+            
+            const categorySpan = document.createElement('span');
+            categorySpan.className = 'instruction-category-badge';
+            categorySpan.textContent = instruction.category.substr(0, 4).toUpperCase();
+            a.appendChild(categorySpan);
+            
+            li.appendChild(a);
+            glossaryList.appendChild(li);
+        });
+    }
+    
+    showInstructionDetails(mnemonic) {
+        // Show instruction details in a modal or dedicated view
+        const instruction = window.instructionGlossary.getInstruction(mnemonic);
+        if (!instruction) return;
+        
+        // For now, create a temporary tooltip to show details
+        const event = { target: document.body, preventDefault: () => {}, stopPropagation: () => {} };
+        showInstructionTooltip(event, mnemonic);
     }
     
     async loadChapter(chapterId, page = 1) {
@@ -258,25 +301,15 @@ class FASMeBook {
     }
     
     markdownToHTML(markdown) {
-        // Simple markdown parser - in production, use a proper library like marked.js
-        let html = markdown
-            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-            .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-            .replace(/^\* (.*$)/gim, '<li>$1</li>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/`(.*?)`/g, '<code>$1</code>')
-            .replace(/^```([\s\S]*?)```/gm, '<pre><code>$1</code></pre>')
-            .replace(/\n\n/g, '</p><p>')
-            .replace(/^\s*$/gm, '')
-            .replace(/^(?!<[h|l|p|d])/gm, '<p>')
-            .replace(/<\/li>\s*<li>/g, '</li><li>')
-            .replace(/<li>(.*?)<\/li>/gs, '<ul><li>$1</li></ul>')
-            .replace(/<\/ul>\s*<ul>/g, '');
+        // Use the enhanced markdown parser with instruction tracking
+        if (!this.markdownParser) {
+            this.markdownParser = new FASMMarkdownParser();
+        }
         
-        return html;
+        // Set current chapter context for instruction tracking
+        this.markdownParser.setCurrentChapter(this.currentChapter);
+        
+        return this.markdownParser.parse(markdown);
     }
     
     addSyntaxHighlighting() {

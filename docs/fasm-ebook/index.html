@@ -50,6 +50,18 @@
                     <!-- Will be populated by JavaScript -->
                 </ul>
             </div>
+            
+            <!-- Instruction Glossary -->
+            <div class="glossary-section">
+                <h3>Instruction Reference</h3>
+                <div class="glossary-search">
+                    <input type="text" id="glossary-search" placeholder="Search instructions..." 
+                           onkeyup="searchInstructions(this.value)">
+                </div>
+                <ul id="glossary-list" class="glossary-list">
+                    <!-- Will be populated by JavaScript -->
+                </ul>
+            </div>
         </div>
     </nav>
     
@@ -145,6 +157,7 @@
     </div>
     
     <!-- JavaScript -->
+    <script src="js/instruction-glossary.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/markdown.js"></script>
     <script src="js/navigation.js"></script>

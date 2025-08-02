@@ -98,11 +98,14 @@ class FASMMarkdownParser {
     processCodeBlocks(html) {
         return html.replace(this.patterns.codeBlock, (match, language, code) => {
             const lang = language || 'text';
-            const highlightedCode = this.highlightCode(code.trim(), lang);
+            const highlightedCode = this.highlightCode(code.trim(), lang, this.currentChapter);
             
-            return `<div class="code-block">
+            return `<div class="code-block interactive-code-block">
+                <div class="code-header">
+                    <span class="code-language">${lang.toUpperCase()}</span>
+                    <button class="code-copy" onclick="copyCodeToClipboard(this)" title="Copy to clipboard">📋</button>
+                </div>
                 <pre><code class="language-${lang}">${highlightedCode}</code></pre>
-                <button class="code-copy" onclick="this.copyCode(this)">Copy</button>
             </div>`;
         });
     }
@@ -342,7 +345,7 @@ class FASMMarkdownParser {
         return html.replace(/\n(?![\n<])/g, '<br>\n');
     }
     
-    highlightCode(code, language) {
+    highlightCode(code, language, chapterInfo = null) {
         if (!this.extensions.codeHighlighting) {
             return this.escapeHtml(code);
         }
@@ -353,7 +356,7 @@ class FASMMarkdownParser {
             case 'assembly':
             case 'asm':
             case 'fasm':
-                return this.highlightAssembly(escapedCode);
+                return this.highlightAssembly(escapedCode, chapterInfo);
             case 'javascript':
             case 'js':
                 return this.highlightJavaScript(escapedCode);
@@ -366,23 +369,38 @@ class FASMMarkdownParser {
         }
     }
     
-    highlightAssembly(code) {
-        // FASM/Assembly syntax highlighting
+    highlightAssembly(code, chapterInfo = null) {
+        // FASM/Assembly syntax highlighting with interactive features
         let highlighted = code;
         
-        // Instructions
+        // Extended instructions list including all glossary entries
         const instructions = [
             'mov', 'add', 'sub', 'mul', 'div', 'inc', 'dec', 'cmp', 'test',
             'jmp', 'je', 'jne', 'jl', 'jle', 'jg', 'jge', 'ja', 'jb', 'jo', 'jno',
             'call', 'ret', 'push', 'pop', 'lea', 'int', 'nop',
             'and', 'or', 'xor', 'not', 'shl', 'shr', 'sal', 'sar',
             'loop', 'loope', 'loopne', 'rep', 'repe', 'repne',
-            'movs', 'stos', 'scas', 'cmps', 'lods'
+            'movs', 'stos', 'scas', 'cmps', 'lods', 'imul', 'idiv', 'cdq'
         ];
         
+        // Create clickable instruction links with tooltips
         instructions.forEach(instruction => {
             const regex = new RegExp(`\\b${instruction}\\b`, 'gi');
-            highlighted = highlighted.replace(regex, `<span class="asm-instruction">${instruction}</span>`);
+            highlighted = highlighted.replace(regex, (match) => {
+                // Track usage if chapter info is available
+                if (chapterInfo && window.instructionGlossary) {
+                    window.instructionGlossary.addUsage(instruction.toUpperCase(), {
+                        chapter: chapterInfo.id || 'unknown',
+                        line: this.getCurrentLineNumber() || 0,
+                        context: this.getInstructionContext(code, match)
+                    });
+                }
+                
+                return `<span class="asm-instruction clickable-instruction" 
+                             data-instruction="${instruction.toUpperCase()}"
+                             onclick="showInstructionTooltip(event, '${instruction.toUpperCase()}')"
+                             title="Click for ${instruction.toUpperCase()} reference">${match}</span>`;
+            });
         });
         
         // Registers
@@ -597,6 +615,173 @@ class FASMMarkdownParser {
         
         return results;
     }
+    
+    // Helper methods for instruction tracking
+    getCurrentLineNumber() {
+        // This would need to be implemented based on parsing context
+        return Math.floor(Math.random() * 1000); // Placeholder
+    }
+    
+    getInstructionContext(code, instruction) {
+        // Extract a few characters around the instruction for context
+        const index = code.indexOf(instruction);
+        if (index === -1) return instruction;
+        
+        const start = Math.max(0, index - 20);
+        const end = Math.min(code.length, index + instruction.length + 20);
+        return code.substring(start, end).trim();
+    }
+    
+    setCurrentChapter(chapterInfo) {
+        this.currentChapter = chapterInfo;
+    }
+}
+
+// Global helper functions for code interaction
+function copyCodeToClipboard(button) {
+    const codeBlock = button.closest('.code-block').querySelector('code');
+    if (codeBlock) {
+        // Get plain text without HTML tags
+        const text = codeBlock.textContent || codeBlock.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = button.textContent;
+            button.textContent = '✓';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy code:', err);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            button.textContent = '✓';
+            setTimeout(() => {
+                button.textContent = '📋';
+            }, 2000);
+        });
+    }
+}
+
+function showInstructionTooltip(event, instruction) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Remove any existing tooltip
+    hideInstructionTooltip();
+    
+    if (!window.instructionGlossary) {
+        console.warn('Instruction glossary not loaded');
+        return;
+    }
+    
+    const tooltipHTML = window.instructionGlossary.generateTooltipHTML(instruction);
+    if (!tooltipHTML) {
+        console.warn(`No glossary entry found for instruction: ${instruction}`);
+        return;
+    }
+    
+    // Create tooltip element
+    const tooltip = document.createElement('div');
+    tooltip.className = 'instruction-tooltip-popup';
+    tooltip.innerHTML = tooltipHTML;
+    
+    // Position tooltip near the clicked instruction
+    const rect = event.target.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    
+    // Initial positioning
+    tooltip.style.position = 'absolute';
+    tooltip.style.left = (rect.left + scrollLeft) + 'px';
+    tooltip.style.top = (rect.bottom + scrollTop + 5) + 'px';
+    tooltip.style.zIndex = '10000';
+    
+    document.body.appendChild(tooltip);
+    
+    // Adjust position if tooltip goes off screen
+    const tooltipRect = tooltip.getBoundingClientRect();
+    if (tooltipRect.right > window.innerWidth) {
+        tooltip.style.left = (window.innerWidth - tooltipRect.width - 10) + 'px';
+    }
+    if (tooltipRect.bottom > window.innerHeight) {
+        tooltip.style.top = (rect.top + scrollTop - tooltipRect.height - 5) + 'px';
+    }
+    
+    // Add click outside to close
+    setTimeout(() => {
+        document.addEventListener('click', hideInstructionTooltip, { once: true });
+    }, 10);
+}
+
+function hideInstructionTooltip() {
+    const tooltip = document.querySelector('.instruction-tooltip-popup');
+    if (tooltip) {
+        tooltip.remove();
+    }
+}
+
+function scrollToLine(lineNumber) {
+    // Implementation to scroll to a specific line in the content
+    // This is a placeholder - would need to be implemented based on actual line tracking
+    console.log(`Scrolling to line ${lineNumber}`);
+}
+
+// Global function for glossary search
+function searchInstructions(query) {
+    const glossaryList = document.getElementById('glossary-list');
+    if (!glossaryList || !window.instructionGlossary) return;
+    
+    glossaryList.innerHTML = '';
+    
+    let instructions;
+    if (query.trim() === '') {
+        // Show all instructions when no search query
+        instructions = window.instructionGlossary.getAllInstructions();
+    } else {
+        // Search for matching instructions
+        instructions = window.instructionGlossary.searchInstructions(query);
+    }
+    
+    instructions.forEach(instruction => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = '#';
+        a.onclick = (e) => {
+            e.preventDefault();
+            if (window.fasmEbook) {
+                window.fasmEbook.showInstructionDetails(instruction.mnemonic);
+            }
+        };
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = instruction.mnemonic;
+        a.appendChild(nameSpan);
+        
+        const categorySpan = document.createElement('span');
+        categorySpan.className = 'instruction-category-badge';
+        categorySpan.textContent = instruction.category.substr(0, 4).toUpperCase();
+        a.appendChild(categorySpan);
+        
+        li.appendChild(a);
+        glossaryList.appendChild(li);
+    });
+    
+    // Show "no results" message if no matches
+    if (instructions.length === 0 && query.trim() !== '') {
+        const li = document.createElement('li');
+        li.textContent = 'No instructions found';
+        li.style.color = '#666';
+        li.style.fontStyle = 'italic';
+        li.style.textAlign = 'center';
+        li.style.padding = '1rem';
+        glossaryList.appendChild(li);
+    }
+}
 }
 
 // CSS for syntax highlighting
