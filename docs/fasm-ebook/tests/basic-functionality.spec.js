@@ -33,7 +33,7 @@ test.describe('FASM eBook - Basic Functionality', () => {
 
   test('should display table of contents', async ({ page }) => {
     // Wait for TOC to load with longer timeout for CI
-    await page.waitForSelector('#toc-list li', { timeout: 20000 });
+    await page.waitForSelector('#toc-list li', { timeout: 30000 });
     
     // Check that TOC items exist
     const tocItems = await page.locator('#toc-list li').count();
@@ -46,10 +46,19 @@ test.describe('FASM eBook - Basic Functionality', () => {
 
   test('should navigate between chapters', async ({ page }) => {
     // Wait for TOC to load with longer timeout for CI
-    await page.waitForSelector('#toc-list li a', { timeout: 20000 });
+    await page.waitForSelector('#toc-list li a', { timeout: 30000 });
     
-    // Click on first chapter
-    await page.click('#toc-list li a:first-child');
+    // Get all chapter links and click the first one using more robust selection
+    const chapterLinks = await page.$$('#toc-list li a');
+    if (chapterLinks.length === 0) {
+      throw new Error('No chapter links found in TOC');
+    }
+    
+    // Wait for network response when clicking chapter link
+    await Promise.all([
+      page.waitForLoadState('networkidle', { timeout: 30000 }),
+      chapterLinks[0].click()
+    ]);
     
     // Wait for new content to load - check for content change rather than just headers
     await page.waitForFunction(() => {
@@ -57,7 +66,7 @@ test.describe('FASM eBook - Basic Functionality', () => {
       return contentElement && 
              !contentElement.querySelector('.initial-loading') &&
              contentElement.textContent.length > 300;
-    }, { timeout: 20000 });
+    }, { timeout: 30000 });
     
     // Check that content has loaded
     const contentText = await page.locator('#chapter-content').textContent();
@@ -87,8 +96,19 @@ test.describe('FASM eBook - Basic Functionality', () => {
 
   test('should persist reading progress', async ({ page }) => {
     // Navigate to a chapter with longer timeout for CI
-    await page.waitForSelector('#toc-list li a', { timeout: 20000 });
-    await page.click('#toc-list li a:nth-child(2)'); // Second chapter
+    await page.waitForSelector('#toc-list li a', { timeout: 30000 });
+    
+    // Get all chapter links and click the second one using more robust selection
+    const chapterLinks = await page.$$('#toc-list li a');
+    if (chapterLinks.length < 2) {
+      throw new Error('Not enough chapter links found in TOC for testing');
+    }
+    
+    // Wait for network response when clicking chapter link
+    await Promise.all([
+      page.waitForLoadState('networkidle', { timeout: 30000 }),
+      chapterLinks[1].click() // Second chapter
+    ]);
     
     // Wait for content to load using the same pattern as other tests
     await page.waitForFunction(() => {
@@ -96,7 +116,7 @@ test.describe('FASM eBook - Basic Functionality', () => {
       return contentElement && 
              !contentElement.querySelector('.initial-loading') &&
              contentElement.textContent.length > 300;
-    }, { timeout: 20000 });
+    }, { timeout: 30000 });
     
     // Wait for progress to be saved
     await page.waitForTimeout(1000);

@@ -27,20 +27,26 @@ export default defineConfig({
     trace: 'on-first-retry',
     /* Screenshot on failure */
     screenshot: 'only-on-failure',
-    /* Video recording on first retry */
-    video: 'retain-on-failure',
+    /* Disable video recording to avoid ffmpeg dependency */
+    video: 'off',
   },
 
   /* Configure projects for major browsers */
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        channel: 'chrome'
+      },
     },
 
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: { 
+        ...devices['Desktop Firefox'],
+        channel: 'firefox'
+      },
     },
 
     {
