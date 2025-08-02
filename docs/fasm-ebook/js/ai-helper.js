@@ -54,6 +54,20 @@ class FASMeBookAI {
             aiToggle.style.right = this.togglePosition.right;
             aiToggle.style.bottom = this.togglePosition.bottom;
             
+            // Add direct click handler for toggle functionality
+            if (!aiToggle.hasAttribute('data-click-handler')) {
+                aiToggle.addEventListener('click', (e) => {
+                    // Prevent event if we're dragging
+                    if (this.isDraggingToggle) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
+                    this.toggleWindow();
+                });
+                aiToggle.setAttribute('data-click-handler', 'true');
+            }
+            
             // Make draggable only once
             if (!aiToggle.hasAttribute('data-draggable')) {
                 this.makeDraggable(aiToggle, true);
@@ -567,14 +581,18 @@ Smaller instructions are better because:
         let startPosition = { x: 0, y: 0 };
         
         const onMouseDown = (e) => {
-            // Only allow dragging from header for window, anywhere for toggle button
-            if (!isToggleButton && !e.target.closest('.ai-header')) return;
+            // Only allow dragging from header area for window, anywhere for toggle button
+            if (!isToggleButton && !e.target.closest('.ai-header, .ai-drag-handle')) return;
             
             // Reset movement tracking
             hasMoved = false;
             startPosition = { x: e.clientX, y: e.clientY };
             
             isDragging = true;
+            if (isToggleButton) {
+                this.isDraggingToggle = true;
+            }
+            
             const rect = element.getBoundingClientRect();
             dragOffset.x = e.clientX - rect.left;
             dragOffset.y = e.clientY - rect.top;
@@ -621,6 +639,8 @@ Smaller instructions are better because:
                         bottom: `${bottom}px` 
                     };
                 } else {
+                    // For AI window, clear transform and use absolute positioning
+                    element.style.transform = 'none';
                     element.style.left = `${constrainedLeft}px`;
                     element.style.top = `${constrainedTop}px`;
                     element.style.right = 'auto';
@@ -634,12 +654,16 @@ Smaller instructions are better because:
         const onMouseUp = (e) => {
             if (isDragging) {
                 isDragging = false;
+                if (isToggleButton) {
+                    this.isDraggingToggle = false;
+                }
+                
                 element.style.cursor = isToggleButton ? 'pointer' : 'default';
                 
                 // If we haven't moved much, this was a click, not a drag
                 if (!hasMoved && isToggleButton) {
-                    // Trigger the toggle window function for the AI button
-                    this.toggleWindow();
+                    // For toggle button, click is handled by separate click event listener
+                    // Don't trigger toggle here to avoid double-triggering
                 }
                 
                 if (isToggleButton && hasMoved) {
