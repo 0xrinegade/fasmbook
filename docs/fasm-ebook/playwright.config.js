@@ -79,7 +79,7 @@ export default defineConfig({
   webServer: {
     command: 'node server.js --port 8081',
     url: 'http://127.0.0.1:8081',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true, // Always allow reusing existing server to avoid port conflicts
     timeout: 120 * 1000,
   },
 });

@@ -72,12 +72,11 @@ jobs:
           npm ci
           npx playwright install --with-deps ${{ matrix.browser }}
       
-      - name: Start application server
+      - name: Clean up any existing server processes
         working-directory: docs/fasm-ebook
         run: |
-          node server.js --port 8081 &
-          sleep 5
-          curl -f http://localhost:8081 || exit 1
+          # Kill any processes using port 8081
+          ./scripts/cleanup-port.sh 8081
       
       - name: Run E2E tests
         working-directory: docs/fasm-ebook
@@ -128,11 +127,11 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
       
-      - name: Start application server
+      - name: Clean up any existing server processes (mobile)
         working-directory: docs/fasm-ebook
         run: |
-          node server.js --port 8081 &
-          sleep 5
+          # Kill any processes using port 8081
+          ./scripts/cleanup-port.sh 8081
       
       - name: Run mobile tests
         working-directory: docs/fasm-ebook
@@ -171,11 +170,11 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
       
-      - name: Start application server
+      - name: Clean up any existing server processes (accessibility)
         working-directory: docs/fasm-ebook
         run: |
-          node server.js --port 8081 &
-          sleep 5
+          # Kill any processes using port 8081
+          ./scripts/cleanup-port.sh 8081
       
       - name: Run accessibility tests
         working-directory: docs/fasm-ebook
@@ -214,11 +213,11 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
       
-      - name: Start application server
+      - name: Clean up any existing server processes (visual)
         working-directory: docs/fasm-ebook
         run: |
-          node server.js --port 8081 &
-          sleep 5
+          # Kill any processes using port 8081
+          ./scripts/cleanup-port.sh 8081
       
       - name: Run visual tests
         working-directory: docs/fasm-ebook

@@ -234,6 +234,57 @@ The eBook is built with vanilla HTML, CSS, and JavaScript for maximum compatibil
 - Responsive and accessible interface
 - Progressive enhancement approach
 
+### Development Server
+
+The eBook includes a Node.js-based development server for local testing:
+
+```bash
+# Start development server (default port 8000)
+node server.js
+
+# Start on custom port
+node server.js --port 8081
+
+# Using npm scripts
+npm run serve         # Port 8000
+npm run serve:test   # Port 8081
+```
+
+### Testing
+
+Comprehensive E2E testing with Playwright ensures quality across all browsers and devices:
+
+```bash
+# Install dependencies
+npm install
+
+# Run different test suites
+./run-tests.sh quick      # Basic functionality tests
+./run-tests.sh core       # Essential features (AI, settings, navigation)
+./run-tests.sh visual     # UI and responsive design tests
+./run-tests.sh quality    # Performance and accessibility validation
+./run-tests.sh mobile     # Mobile-specific testing
+./run-tests.sh full       # Complete test suite (80+ test cases)
+
+# Cross-browser testing
+./run-tests.sh core firefox
+./run-tests.sh full webkit
+```
+
+#### Port Management
+
+If you encounter port conflicts during testing:
+
+```bash
+# Clean up processes on port 8081
+./scripts/cleanup-port.sh 8081
+
+# Or manually
+fuser -k 8081/tcp || true
+```
+
+The Playwright configuration automatically handles server startup and port reuse to prevent conflicts in CI/CD environments.
+
 ## License
 
 This eBook implementation is part of the KolibriOS documentation project. The content and code are available under the same license as the KolibriOS project.
