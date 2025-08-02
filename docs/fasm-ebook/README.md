@@ -74,8 +74,11 @@ A comprehensive, interactive eBook for learning FASM (Flat Assembler) programmin
 #### Local Development:
 ```bash
 # Start local server
-python3 serve.py
+node server.js
 # Visit http://localhost:8000
+
+# For testing (port 8081)
+node server.js --port 8081
 ```
 
 #### Deployment:

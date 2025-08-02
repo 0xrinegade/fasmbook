@@ -18,8 +18,8 @@
     "test:chrome": "./run-tests.sh core chromium",
     "test:firefox": "./run-tests.sh core firefox",
     "test:safari": "./run-tests.sh core webkit",
-    "serve": "python serve.py",
-    "serve:test": "python serve.py --port 8081",
+    "serve": "node server.js",
+    "serve:test": "node server.js --port 8081",
     "install:browsers": "npx playwright install",
     "install:deps": "npx playwright install-deps",
     "ci:test": "npx playwright test --reporter=html,junit"

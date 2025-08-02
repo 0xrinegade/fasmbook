@@ -66,11 +66,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'docs/fasm-ebook/package.json'
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      
       - name: Install dependencies
         working-directory: docs/fasm-ebook
         run: |
@@ -80,7 +75,7 @@ jobs:
       - name: Start application server
         working-directory: docs/fasm-ebook
         run: |
-          python serve.py --port 8081 &
+          node server.js --port 8081 &
           sleep 5
           curl -f http://localhost:8081 || exit 1
       
@@ -127,11 +122,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'docs/fasm-ebook/package.json'
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      
       - name: Install dependencies
         working-directory: docs/fasm-ebook
         run: |
@@ -141,7 +131,7 @@ jobs:
       - name: Start application server
         working-directory: docs/fasm-ebook
         run: |
-          python serve.py --port 8081 &
+          node server.js --port 8081 &
           sleep 5
       
       - name: Run mobile tests
@@ -175,11 +165,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'docs/fasm-ebook/package.json'
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      
       - name: Install dependencies
         working-directory: docs/fasm-ebook
         run: |
@@ -189,7 +174,7 @@ jobs:
       - name: Start application server
         working-directory: docs/fasm-ebook
         run: |
-          python serve.py --port 8081 &
+          node server.js --port 8081 &
           sleep 5
       
       - name: Run accessibility tests
@@ -223,11 +208,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'docs/fasm-ebook/package.json'
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      
       - name: Install dependencies
         working-directory: docs/fasm-ebook
         run: |
@@ -237,7 +217,7 @@ jobs:
       - name: Start application server
         working-directory: docs/fasm-ebook
         run: |
-          python serve.py --port 8081 &
+          node server.js --port 8081 &
           sleep 5
       
       - name: Run visual tests

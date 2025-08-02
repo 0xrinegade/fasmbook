@@ -21,12 +21,6 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
-# Check if Python is available for serving
-if ! command -v python &> /dev/null && ! command -v python3 &> /dev/null; then
-    echo -e "${RED}❌ Python is not installed. Please install Python to serve the application.${NC}"
-    exit 1
-fi
-
 # Install dependencies if needed
 if [ ! -d "node_modules" ]; then
     echo -e "${YELLOW}📦 Installing dependencies...${NC}"

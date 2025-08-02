@@ -77,7 +77,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'python serve.py --port 8081',
+    command: 'node server.js --port 8081',
     url: 'http://127.0.0.1:8081',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
