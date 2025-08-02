@@ -1,9 +1,11 @@
-// AI Helper for FASM eBook
+// AI Helper for FASM eBook - Enhanced for Professional Assembly Programming
 class FASMeBookAI {
     constructor() {
         this.isOpen = false;
         this.conversationHistory = [];
         this.knowledgeBase = this.initializeKnowledgeBase();
+        this.currentChapter = null;
+        this.userSkillLevel = 'intermediate'; // beginner, intermediate, advanced
         
         this.init();
     }
@@ -11,6 +13,333 @@ class FASMeBookAI {
     init() {
         this.setupEventListeners();
         this.loadConversationHistory();
+        this.detectCurrentChapter();
+        this.initializeContextualHelp();
+    }
+    
+    detectCurrentChapter() {
+        // Detect current chapter from URL or page content
+        const path = window.location.pathname;
+        const chapterMatch = path.match(/chapter(\d+)/);
+        if (chapterMatch) {
+            this.currentChapter = parseInt(chapterMatch[1]);
+        }
+    }
+    
+    initializeContextualHelp() {
+        // Add contextual help buttons to code blocks and complex sections
+        this.addCodeBlockHelpers();
+        this.addPerformanceAnalysisHelpers();
+        this.addCrossReferenceHelpers();
+    }
+    
+    addCodeBlockHelpers() {
+        const codeBlocks = document.querySelectorAll('pre code');
+        codeBlocks.forEach((block, index) => {
+            const helpButton = document.createElement('button');
+            helpButton.className = 'code-help-btn';
+            helpButton.innerHTML = '❓';
+            helpButton.title = 'Explain this code';
+            helpButton.onclick = () => this.explainCodeBlock(block, index);
+            
+            const container = block.closest('pre');
+            if (container) {
+                container.style.position = 'relative';
+                container.appendChild(helpButton);
+            }
+        });
+    }
+    
+    addPerformanceAnalysisHelpers() {
+        const perfAnnotations = document.querySelectorAll('.perf-annotation');
+        perfAnnotations.forEach((annotation) => {
+            annotation.style.cursor = 'pointer';
+            annotation.title = 'Click for detailed explanation';
+            annotation.onclick = () => this.explainPerformanceMetric(annotation);
+        });
+    }
+    
+    explainCodeBlock(codeBlock, index) {
+        const code = codeBlock.textContent;
+        const response = this.analyzeCode(code);
+        this.openWindow();
+        this.addMessage('assistant', `
+            **Code Block Analysis #${index + 1}:**
+            
+            ${response}
+            
+            **Performance Characteristics:**
+            ${this.getPerformanceAnalysis(code)}
+            
+            **Alternative Approaches:**
+            ${this.suggestAlternatives(code)}
+            
+            Would you like me to explain any specific instruction or optimization opportunity?
+        `);
+    }
+    
+    explainPerformanceMetric(annotation) {
+        const metric = annotation.textContent;
+        const explanation = this.getPerformanceExplanation(metric);
+        this.openWindow();
+        this.addMessage('assistant', explanation);
+    }
+    
+    analyzeCode(code) {
+        // Enhanced code analysis with professional-level explanations
+        const lines = code.split('\n').filter(line => line.trim());
+        let analysis = "Let me break down this assembly code for you:\n\n";
+        
+        lines.forEach((line, index) => {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith(';') && !trimmed.startsWith('.')) {
+                const instruction = this.parseInstruction(trimmed);
+                if (instruction) {
+                    analysis += `**Line ${index + 1}: \`${trimmed}\`**\n`;
+                    analysis += `- **Purpose**: ${instruction.purpose}\n`;
+                    analysis += `- **Cycles**: ${instruction.cycles}\n`;
+                    analysis += `- **Why chosen**: ${instruction.rationale}\n\n`;
+                }
+            }
+        });
+        
+        return analysis;
+    }
+    
+    parseInstruction(line) {
+        // Enhanced instruction parsing with comprehensive knowledge
+        const instructionMap = {
+            'mov': {
+                purpose: 'Data movement - transfers data between registers, memory, or immediate values',
+                cycles: '1 cycle (reg-reg), 2-3 cycles (memory involved)',
+                rationale: 'Most fundamental operation - efficient data transfer with minimal overhead'
+            },
+            'add': {
+                purpose: 'Arithmetic addition - adds source to destination and stores result',
+                cycles: '1 cycle (reg-reg), 3-4 cycles (memory involved)',
+                rationale: 'Fast arithmetic operation that also sets flags for conditional operations'
+            },
+            'sub': {
+                purpose: 'Arithmetic subtraction - subtracts source from destination',
+                cycles: '1 cycle (reg-reg), 3-4 cycles (memory involved)',
+                rationale: 'Essential for calculations and pointer arithmetic with flag setting'
+            },
+            'cmp': {
+                purpose: 'Compare operation - performs subtraction but only affects flags',
+                cycles: '1 cycle (reg-reg), 3-4 cycles (memory involved)',
+                rationale: 'Sets up conditional branches without modifying data values'
+            },
+            'jmp': {
+                purpose: 'Unconditional jump - transfers control to specified address',
+                cycles: '1-3 cycles (depending on branch prediction)',
+                rationale: 'Program flow control - essential for loops and function calls'
+            },
+            'je': {
+                purpose: 'Conditional jump if equal (ZF=1) - branches based on previous comparison',
+                cycles: '1 cycle (not taken), 3-4 cycles (taken)',
+                rationale: 'Efficient conditional execution based on comparison results'
+            },
+            'jl': {
+                purpose: 'Conditional jump if less than (SF≠OF) - signed comparison branch',
+                cycles: '1 cycle (not taken), 3-4 cycles (taken)',
+                rationale: 'Handles signed arithmetic comparisons for loop bounds and conditions'
+            },
+            'push': {
+                purpose: 'Stack push - decrements ESP and stores value on stack',
+                cycles: '2 cycles (stack operation + memory write)',
+                rationale: 'Function parameter passing and register preservation'
+            },
+            'pop': {
+                purpose: 'Stack pop - retrieves value from stack and increments ESP',
+                cycles: '1-2 cycles (memory read + register update)',
+                rationale: 'Efficient register restoration and data retrieval'
+            },
+            'call': {
+                purpose: 'Function call - pushes return address and jumps to target',
+                cycles: '3-4 cycles + pipeline flush overhead',
+                rationale: 'Structured programming with automatic return address management'
+            },
+            'ret': {
+                purpose: 'Return from function - pops return address and jumps back',
+                cycles: '2-3 cycles + potential pipeline refill',
+                rationale: 'Efficient function exit with stack-based return addressing'
+            },
+            'inc': {
+                purpose: 'Increment by 1 - adds 1 to destination operand',
+                cycles: '1 cycle (register), 4-5 cycles (memory)',
+                rationale: 'Optimized single-increment operation, faster than add reg, 1'
+            },
+            'dec': {
+                purpose: 'Decrement by 1 - subtracts 1 from destination operand',
+                cycles: '1 cycle (register), 4-5 cycles (memory)',
+                rationale: 'Optimized single-decrement, commonly used in loop counters'
+            },
+            'xor': {
+                purpose: 'Exclusive OR - bitwise XOR operation between operands',
+                cycles: '1 cycle (register), 3-4 cycles (memory)',
+                rationale: 'Efficient zeroing (xor reg,reg) and bit manipulation'
+            },
+            'and': {
+                purpose: 'Bitwise AND - logical AND operation for bit masking',
+                cycles: '1 cycle (register), 3-4 cycles (memory)',
+                rationale: 'Bit clearing and flag extraction operations'
+            },
+            'or': {
+                purpose: 'Bitwise OR - logical OR operation for bit setting',
+                cycles: '1 cycle (register), 3-4 cycles (memory)',
+                rationale: 'Bit setting and flag combination operations'
+            },
+            'shl': {
+                purpose: 'Shift left - logical left shift, equivalent to multiply by 2^n',
+                cycles: '1 cycle (immediate count), 2+ cycles (variable count)',
+                rationale: 'Fast multiplication by powers of 2, bit manipulation'
+            },
+            'shr': {
+                purpose: 'Shift right - logical right shift, equivalent to divide by 2^n',
+                cycles: '1 cycle (immediate count), 2+ cycles (variable count)',
+                rationale: 'Fast division by powers of 2, bit extraction'
+            },
+            'imul': {
+                purpose: 'Signed multiply - performs signed integer multiplication',
+                cycles: '3-4 cycles (32-bit), varies by CPU generation',
+                rationale: 'Efficient signed multiplication with overflow detection'
+            },
+            'idiv': {
+                purpose: 'Signed divide - performs signed integer division with remainder',
+                cycles: '20-30+ cycles (expensive operation)',
+                rationale: 'Complete division operation, avoid when possible due to high cost'
+            }
+        };
+        
+        // Extract instruction mnemonic
+        const parts = line.toLowerCase().split(/\s+/);
+        const mnemonic = parts[0];
+        
+        return instructionMap[mnemonic] || {
+            purpose: 'Assembly instruction - check FASM documentation for specific details',
+            cycles: 'Varies by instruction and operands',
+            rationale: 'Part of x86 instruction set - analyze operands for performance characteristics'
+        };
+    }
+    
+    getPerformanceAnalysis(code) {
+        // Enhanced performance analysis
+        const lines = code.split('\n').filter(line => line.trim() && !line.trim().startsWith(';'));
+        let totalCycles = 0;
+        let memoryOps = 0;
+        let branchOps = 0;
+        
+        lines.forEach(line => {
+            const trimmed = line.trim().toLowerCase();
+            
+            // Count cycles (simplified estimation)
+            if (trimmed.includes('[') || trimmed.includes('dword ptr')) {
+                totalCycles += 3; // Memory operation
+                memoryOps++;
+            } else if (trimmed.startsWith('j') || trimmed.startsWith('call')) {
+                totalCycles += 3; // Branch operation
+                branchOps++;
+            } else {
+                totalCycles += 1; // Register operation
+            }
+        });
+        
+        return `
+**Estimated Performance:**
+- **Total Cycles**: ~${totalCycles} cycles
+- **Memory Operations**: ${memoryOps} (3+ cycles each)
+- **Branch Operations**: ${branchOps} (variable cost)
+- **Register Operations**: ${lines.length - memoryOps - branchOps}
+
+**Optimization Opportunities:**
+${memoryOps > lines.length / 2 ? '⚠️ High memory usage - consider register optimization' : '✅ Good register utilization'}
+${branchOps > 2 ? '⚠️ Multiple branches - consider loop unrolling or restructuring' : '✅ Minimal branching overhead'}
+        `;
+    }
+    
+    suggestAlternatives(code) {
+        // Context-aware optimization suggestions
+        let suggestions = [];
+        
+        if (code.includes('mov eax, 0')) {
+            suggestions.push('• Replace `mov eax, 0` with `xor eax, eax` (saves 3 bytes, same performance)');
+        }
+        
+        if (code.includes('add') && code.includes('1')) {
+            suggestions.push('• Consider `inc` instead of `add reg, 1` (smaller instruction size)');
+        }
+        
+        if (code.includes('cmp') && code.includes('jl')) {
+            suggestions.push('• For countdown loops, consider `dec` + `jnz` pattern (eliminates compare)');
+        }
+        
+        if (code.includes('[') && code.includes('inc dword')) {
+            suggestions.push('• Memory-based counters are slow - use registers when possible');
+        }
+        
+        if (code.includes('imul') || code.includes('idiv')) {
+            suggestions.push('• Division/multiplication are expensive - consider bit shifts for powers of 2');
+        }
+        
+        return suggestions.length > 0 ? suggestions.join('\n') : '✅ Code looks well optimized for its purpose';
+    }
+    
+    getPerformanceExplanation(metric) {
+        const explanations = {
+            'Cycles': `
+**CPU Cycles Explained:**
+
+CPU cycles measure the fundamental unit of processor time. Modern CPUs execute instructions in a pipeline, so actual cycle counts depend on:
+
+• **Instruction Type**: Simple register operations (1 cycle) vs complex operations (20+ cycles)
+• **Memory Hierarchy**: L1 cache hits (2-3 cycles) vs RAM access (100+ cycles)  
+• **Pipeline Stalls**: Dependencies and branch mispredictions add overhead
+• **Superscalar Execution**: Modern CPUs can execute multiple instructions per cycle
+
+**Why It Matters:**
+Optimizing for cycle count directly translates to execution speed. A 1000-cycle optimization in a function called million times saves 1 billion cycles!
+            `,
+            'Memory': `
+**Memory Access Patterns:**
+
+Memory operations are much slower than register operations:
+
+• **L1 Cache**: 2-3 cycles (32KB instruction + 32KB data)
+• **L2 Cache**: 8-12 cycles (256KB unified)
+• **L3 Cache**: 20-40 cycles (8MB+ shared)
+• **Main RAM**: 100-300 cycles (depends on memory controller)
+
+**Optimization Strategies:**
+1. Keep frequently used data in registers
+2. Use sequential access patterns (cache-friendly)
+3. Align data structures to cache line boundaries (64 bytes)
+4. Minimize pointer chasing and random access patterns
+            `,
+            'Size': `
+**Instruction Encoding and Size:**
+
+Smaller instructions are better because:
+
+• **Cache Efficiency**: More instructions fit in L1 instruction cache
+• **Decode Bandwidth**: CPU can decode more instructions per cycle
+• **Branch Prediction**: Smaller code improves branch target buffer efficiency
+
+**Size Optimization:**
+• Use single-byte opcodes when possible (inc vs add reg,1)
+• Prefer register addressing over memory addressing
+• Use short jumps for nearby branches
+• Consider instruction selection for size vs speed trade-offs
+            `
+        };
+        
+        // Extract metric type from annotation text
+        for (const [key, explanation] of Object.entries(explanations)) {
+            if (metric.toLowerCase().includes(key.toLowerCase())) {
+                return explanation;
+            }
+        }
+        
+        return `**Performance Metric: ${metric}**\n\nThis metric relates to assembly performance characteristics. Would you like me to explain specific aspects of performance optimization?`;
     }
     
     setupEventListeners() {

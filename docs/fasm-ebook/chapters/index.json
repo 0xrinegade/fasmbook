@@ -6,10 +6,16 @@
     "pages": 3
   },
   {
+    "id": "chapter0",
+    "title": "Chapter 0: How to Use This Book",
+    "file": "chapter0.md",
+    "pages": 12
+  },
+  {
     "id": "chapter1",
     "title": "Chapter 1: Welcome to the Machine",
     "file": "chapter1.md",
-    "pages": 10
+    "pages": 15
   },
   {
     "id": "chapter2",
@@ -111,6 +117,6 @@
     "id": "chapter18",
     "title": "Chapter 18: Advanced Concurrent Programming and GPU Computing",
     "file": "chapter18.md",
-    "pages": 89
+    "pages": 95
   }
 ]

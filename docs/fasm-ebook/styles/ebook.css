@@ -1,5 +1,243 @@
 /* eBook-specific enhancements */
 
+/* Educational enhancement styles */
+.learning-objectives {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #0284c7;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    position: relative;
+}
+
+.learning-objectives::before {
+    content: "🎯";
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: white;
+    padding: 0 8px;
+    font-size: 1.2rem;
+}
+
+/* Navigation hints and flags */
+.nav-hint {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left: 4px solid #f59e0b;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.9rem;
+}
+
+.nav-hint.prerequisite {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border-left-color: #ef4444;
+}
+
+.nav-hint.advanced {
+    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+    border-left-color: #8b5cf6;
+}
+
+.nav-hint.performance {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border-left-color: #10b981;
+}
+
+/* Did you know boxes */
+.did-you-know {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    position: relative;
+    font-style: italic;
+}
+
+.did-you-know::before {
+    content: "💡 Did You Know?";
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: white;
+    padding: 0 8px;
+    font-weight: bold;
+    color: #3b82f6;
+    font-style: normal;
+}
+
+/* Historical trivia boxes */
+.historical-trivia {
+    background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+    border: 2px solid #eab308;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    position: relative;
+}
+
+.historical-trivia::before {
+    content: "📜 Historical Trivia";
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: white;
+    padding: 0 8px;
+    font-weight: bold;
+    color: #eab308;
+}
+
+/* Cross-reference links */
+.see-also {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+
+.see-also::before {
+    content: "🔗 See Also: ";
+    font-weight: bold;
+    color: #3b82f6;
+}
+
+.see-also a {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.see-also a:hover {
+    text-decoration: underline;
+}
+
+/* Performance analysis annotations */
+.perf-annotation {
+    background: #f0fdf4;
+    color: #166534;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-left: 0.5rem;
+}
+
+.perf-annotation.cycles {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.perf-annotation.memory {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.perf-annotation.decision {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+/* Code explanation enhancements */
+.code-explanation {
+    background: #f8fafc;
+    border-left: 4px solid #3b82f6;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+
+.code-explanation .pros {
+    color: #059669;
+}
+
+.code-explanation .cons {
+    color: #dc2626;
+}
+
+.code-explanation .pros::before {
+    content: "✅ ";
+}
+
+.code-explanation .cons::before {
+    content: "🔴 ";
+}
+
+/* Exercise sections */
+.exercises {
+    background: #fafafa;
+    border: 2px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 3rem 0;
+}
+
+.exercise-category {
+    margin: 2rem 0;
+}
+
+.exercise-category h3 {
+    color: #3b82f6;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 0.5rem;
+}
+
+.exercise-difficulty {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.exercise-difficulty.beginner {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.exercise-difficulty.intermediate {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.exercise-difficulty.advanced {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* Chapter summary boxes */
+.chapter-summary {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 2px solid #22c55e;
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 3rem 0;
+}
+
+.chapter-summary h3 {
+    color: #166534;
+    margin-top: 0;
+}
+
+.summary-section {
+    margin: 1.5rem 0;
+}
+
+.summary-section ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.summary-section li::before {
+    content: "✅ ";
+    color: #22c55e;
+    font-weight: bold;
+}
+
 /* Reading experience enhancements */
 .ebook-page {
     min-height: 100vh;
