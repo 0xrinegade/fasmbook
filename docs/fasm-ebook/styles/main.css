@@ -526,6 +526,15 @@ body {
     justify-content: space-between;
     align-items: center;
     background-color: var(--highlight-color);
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.ai-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
 }
 
 .ai-header h3 {
@@ -569,6 +578,8 @@ body {
     padding: 1rem;
     display: flex;
     gap: 0.5rem;
+    flex-shrink: 0; /* Prevent input area from shrinking */
+    border-top: 1px solid var(--border-color);
 }
 
 .ai-input input {

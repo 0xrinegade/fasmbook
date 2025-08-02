@@ -77,6 +77,24 @@ class FASMeBookAI {
             aiChat.style.height = '100%';
             aiChat.style.maxHeight = '100%';
             aiChat.style.boxSizing = 'border-box';
+            aiChat.style.display = 'flex';
+            aiChat.style.flexDirection = 'column';
+        }
+        
+        // Ensure AI content container has proper layout
+        const aiContent = document.querySelector('.ai-content');
+        if (aiContent) {
+            aiContent.style.display = 'flex';
+            aiContent.style.flexDirection = 'column';
+            aiContent.style.height = '100%';
+            aiContent.style.overflow = 'hidden';
+        }
+        
+        // Ensure AI window has proper flex layout
+        const aiWindow = document.getElementById('ai-window');
+        if (aiWindow) {
+            aiWindow.style.display = 'flex';
+            aiWindow.style.flexDirection = 'column';
         }
     }
     
@@ -762,9 +780,9 @@ Smaller instructions are better because:
         aiHeader.appendChild(dragHandle);
         
         // Add title
-        if (title) {
-            aiHeader.appendChild(title);
-        }
+        const newTitle = document.createElement('h3');
+        newTitle.textContent = title ? title.textContent : 'FASM Programming Assistant';
+        aiHeader.appendChild(newTitle);
         
         // Add navigation controls
         const navControls = document.createElement('div');
@@ -851,9 +869,14 @@ Smaller instructions are better because:
         navControls.appendChild(expandBtn);
         
         // Add close button
-        if (closeBtn) {
-            navControls.appendChild(closeBtn);
-        }
+        const newCloseBtn = document.createElement('button');
+        newCloseBtn.className = 'ai-close';
+        newCloseBtn.id = 'ai-close';
+        newCloseBtn.title = 'Close Assistant';
+        newCloseBtn.innerHTML = '×';
+        newCloseBtn.addEventListener('click', () => this.closeWindow());
+        
+        navControls.appendChild(newCloseBtn);
         
         aiHeader.appendChild(navControls);
         
@@ -880,8 +903,11 @@ Smaller instructions are better because:
             // Enable dragging for the window
             this.makeDraggable(aiWindow, false);
             
-            // Setup enhanced header with navigation controls
-            this.setupEnhancedHeader();
+            // Setup enhanced header only once
+            if (!aiWindow.hasAttribute('data-enhanced')) {
+                this.setupEnhancedHeader();
+                aiWindow.setAttribute('data-enhanced', 'true');
+            }
             
             // Focus on input
             const aiInput = document.getElementById('ai-input-field');
