@@ -29,6 +29,54 @@ body {
     transition: all 0.3s ease;
 }
 
+/* Loading Animation */
+@keyframes loadingBar {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+}
+
+.initial-loading {
+    text-align: center;
+    padding: 60px 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.initial-loading h2 {
+    margin-bottom: 20px;
+    color: var(--accent-color);
+}
+
+.error-message {
+    text-align: center;
+    padding: 40px 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: var(--highlight-color);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.error-message h2 {
+    margin-bottom: 15px;
+    color: var(--accent-color);
+}
+
+.error-message button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.error-message button:hover {
+    background-color: #555;
+}
+
 /* Navigation Panel */
 .nav-panel {
     width: var(--nav-width);

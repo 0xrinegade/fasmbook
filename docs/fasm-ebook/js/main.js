@@ -6,44 +6,82 @@ class FASMeBook {
         this.totalPages = 1;
         this.chapters = [];
         this.isLoading = false;
+        this.debugMode = window.location.search.includes('debug=1');
+        
+        if (this.debugMode) {
+            console.log('Debug mode enabled');
+            this.enableDebugLogging();
+        }
         
         this.init();
+    }
+    
+    enableDebugLogging() {
+        // Log all fetch requests
+        const originalFetch = window.fetch;
+        window.fetch = (...args) => {
+            console.log('Fetch request:', args[0]);
+            return originalFetch(...args)
+                .then(response => {
+                    console.log('Fetch response:', response.status, response.url);
+                    return response;
+                })
+                .catch(error => {
+                    console.log('Fetch error:', error);
+                    throw error;
+                });
+        };
     }
     
     async init() {
         console.log('Initializing FASM eBook...');
         
-        // Load chapter index
-        await this.loadChapterIndex();
-        
-        // Initialize components
-        this.initNavigation();
-        this.initEventListeners();
-        this.initSettings();
-        
-        // Load initial chapter
-        const urlParams = new URLSearchParams(window.location.search);
-        const chapter = urlParams.get('chapter') || 'preface';
-        const page = parseInt(urlParams.get('page')) || 1;
-        
-        await this.loadChapter(chapter, page);
-        
-        // Load user data
-        this.loadUserData();
-        
-        console.log('FASM eBook initialized successfully');
+        try {
+            // Add initialization error boundary
+            window.addEventListener('error', (event) => {
+                console.error('JavaScript error:', event.error);
+                this.handleInitializationError(event.error);
+                event.preventDefault(); // Prevent default error handling
+            });
+            
+            // Load chapter index
+            await this.loadChapterIndex();
+            
+            // Initialize components
+            this.initNavigation();
+            this.initEventListeners();
+            this.initSettings();
+            
+            // Load initial chapter
+            const urlParams = new URLSearchParams(window.location.search);
+            const chapter = urlParams.get('chapter') || 'preface';
+            const page = parseInt(urlParams.get('page')) || 1;
+            
+            await this.loadChapter(chapter, page);
+            
+            // Load user data
+            this.loadUserData();
+            
+            console.log('FASM eBook initialized successfully');
+        } catch (error) {
+            console.error('Initialization error:', error);
+            this.handleInitializationError(error);
+        }
     }
     
     async loadChapterIndex() {
         try {
             const response = await fetch('chapters/index.json');
             if (!response.ok) {
-                throw new Error('Failed to load chapter index');
+                console.warn('Chapter index not found, using default chapters');
+                this.chapters = this.getDefaultChapters();
+                this.populateTableOfContents();
+                return;
             }
             this.chapters = await response.json();
             this.populateTableOfContents();
         } catch (error) {
-            console.error('Error loading chapter index:', error);
+            console.warn('Error loading chapter index, using fallback:', error);
             // Fallback to hardcoded chapters
             this.chapters = this.getDefaultChapters();
             this.populateTableOfContents();
@@ -129,12 +167,16 @@ class FASMeBook {
         try {
             const chapter = this.chapters.find(ch => ch.id === chapterId);
             if (!chapter) {
-                throw new Error(`Chapter ${chapterId} not found`);
+                console.warn(`Chapter ${chapterId} not found, loading preface instead`);
+                this.loadChapter('preface', 1);
+                return;
             }
             
             const response = await fetch(`chapters/${chapter.file}`);
             if (!response.ok) {
-                throw new Error(`Failed to load chapter: ${response.statusText}`);
+                console.warn(`Failed to load chapter file: ${chapter.file}`);
+                this.showError(`Chapter not available: ${chapter.title}. Please try another chapter.`);
+                return;
             }
             
             const markdown = await response.text();
@@ -151,8 +193,8 @@ class FASMeBook {
             this.saveReadingHistory();
             
         } catch (error) {
-            console.error('Error loading chapter:', error);
-            this.showError(`Failed to load chapter: ${error.message}`);
+            console.warn('Error loading chapter:', error);
+            this.showError(`Unable to load chapter. Please check your connection or try another chapter.`);
         } finally {
             this.hideLoadingIndicator(loadingIndicator);
             this.isLoading = false;
@@ -416,12 +458,47 @@ class FASMeBook {
         if (contentElement) {
             contentElement.innerHTML = `
                 <div class="error-message">
-                    <h2>Error Loading Chapter</h2>
+                    <h2>Notice</h2>
                     <p>${message}</p>
-                    <button onclick="window.fasmEbook.loadChapter('preface', 1)">Go to Preface</button>
-                    <button onclick="location.reload()" style="margin-left: 10px;">Reload Page</button>
+                    <div style="margin-top: 20px;">
+                        <button onclick="window.fasmEbook.loadChapter('preface', 1)" style="margin-right: 10px;">Go to Preface</button>
+                        <button onclick="window.fasmEbook.showTableOfContents()">Browse Chapters</button>
+                    </div>
                 </div>
             `;
+        }
+    }
+    
+    handleInitializationError(error) {
+        console.warn('Initialization error handled:', error.message);
+        const contentElement = document.getElementById('chapter-content');
+        if (contentElement) {
+            contentElement.innerHTML = `
+                <div class="error-message">
+                    <h2>FASM Programming eBook</h2>
+                    <p>Welcome to the FASM Programming eBook. The content is loading...</p>
+                    <p>If this message persists, please check that JavaScript is enabled in your browser.</p>
+                    <div style="margin-top: 20px;">
+                        <button onclick="window.fasmEbook.forceLoadPreface()">Load Preface</button>
+                        <button onclick="console.log('Debug info:', window.fasmEbook)" style="margin-left: 10px;">Debug Info</button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    forceLoadPreface() {
+        try {
+            this.loadChapter('preface', 1);
+        } catch (error) {
+            console.error('Force load failed:', error);
+        }
+    }
+    
+    showTableOfContents() {
+        const navPanel = document.getElementById('navigation-panel');
+        if (navPanel) {
+            navPanel.classList.remove('hidden');
         }
     }
     
@@ -665,22 +742,40 @@ class FASMeBook {
 
 // Initialize the eBook when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.fasmEbook = new FASMeBook();
+    try {
+        window.fasmEbook = new FASMeBook();
+        console.log('FASM eBook initialization started');
+    } catch (error) {
+        console.error('Failed to initialize FASM eBook:', error);
+        // Fallback initialization
+        document.getElementById('chapter-content').innerHTML = `
+            <div class="error-message">
+                <h2>FASM Programming eBook</h2>
+                <p>There was an issue loading the interactive features, but you can still read the content.</p>
+                <p>Please make sure JavaScript is enabled and try refreshing the page.</p>
+            </div>
+        `;
+    }
 });
 
 // Handle service worker for offline reading (if available)
-if ('serviceWorker' in navigator) {
-    // Only register service worker if it exists
-    fetch('/service-worker.js', { method: 'HEAD' })
+if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+    // Only register service worker on HTTPS and if it exists
+    // Use relative path for GitHub Pages compatibility
+    fetch('service-worker.js', { method: 'HEAD' })
         .then(response => {
             if (response.ok) {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => console.log('SW registered'))
-                    .catch(error => console.log('SW registration failed'));
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('Service worker registered successfully');
+                    })
+                    .catch(error => {
+                        console.log('Service worker registration failed (non-critical):', error);
+                    });
             }
         })
         .catch(() => {
-            // Service worker file doesn't exist, skip registration
-            console.log('Service worker not available');
+            // Service worker file doesn't exist, skip registration silently
+            console.log('Service worker not available (this is normal for GitHub Pages)');
         });
 }

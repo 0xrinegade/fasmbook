@@ -48,6 +48,47 @@ A comprehensive, interactive eBook for learning FASM (Flat Assembler) programmin
 1. Open `index.html` in a web browser
 2. For best experience on eInk devices, enable eInk mode in settings
 3. Use the navigation panel to browse chapters
+
+### Troubleshooting
+
+#### If the page keeps reloading:
+1. **Check JavaScript**: Make sure JavaScript is enabled in your browser
+2. **Clear Cache**: Clear your browser cache and cookies for this site
+3. **Try Debug Mode**: Add `?debug=1` to the URL to see detailed loading information
+4. **Browser Console**: Open developer tools (F12) and check the console for error messages
+5. **Different Browser**: Try opening in a different browser (Chrome, Firefox, Safari)
+
+#### Common Issues:
+- **Blank Page**: Wait a few seconds for content to load, or try refreshing once
+- **Missing Chapters**: Ensure all files are properly uploaded and accessible
+- **Navigation Issues**: Try using keyboard arrows or the table of contents
+- **eInk Display**: Enable eInk mode in settings for better contrast
+
+#### Debug Information:
+- Visit the page with `?debug=1` parameter for detailed logging
+- Check the browser console (F12) for any error messages
+- Verify network requests are completing successfully
+
+### For Developers
+
+#### Local Development:
+```bash
+# Start local server
+python3 serve.py
+# Visit http://localhost:8000
+```
+
+#### Deployment:
+- The eBook is designed to work on GitHub Pages
+- All resources use relative paths for portability
+- Service worker registration is optional and will fail gracefully
+
+### Browser Compatibility
+
+- **Recommended**: Chrome, Firefox, Safari (latest versions)
+- **eInk Devices**: Optimized for reMarkable, Kindle browsers
+- **Mobile**: Full responsive support for phones and tablets
+- **Offline**: Service worker enables offline reading when available
 4. Customize reading preferences in the settings panel
 
 ### Navigation
