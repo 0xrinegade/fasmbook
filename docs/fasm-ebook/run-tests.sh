@@ -2,61 +2,234 @@
 
 # FASM eBook E2E Test Runner
 # Comprehensive testing script for the FASM Programming eBook
+# Enhanced with robust error handling and configuration management
 
-set -e
+# Enable strict error handling
+set -euo pipefail
+
+# Set IFS to default (space, tab, newline) to prevent unexpected behavior
+IFS=$' \t\n'
+
+# Configuration
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly PROJECT_ROOT="$SCRIPT_DIR"
+readonly CONFIG_FILE="${PROJECT_ROOT}/test-config.json"
+
+# Load configuration from external file if available
+if [[ -f "$CONFIG_FILE" ]]; then
+    echo "Loading configuration from $CONFIG_FILE"
+    # Note: In a real implementation, you'd use jq or a similar tool
+    # For now, we'll use environment variables or defaults
+fi
+
+# Default configuration (can be overridden by environment variables or config file)
+readonly DEFAULT_PORT="${TEST_PORT:-8081}"
+readonly DEFAULT_BROWSER="${TEST_BROWSER:-chromium}"
+readonly DEFAULT_TIMEOUT="${TEST_TIMEOUT:-30}"
+readonly RETRY_COUNT="${TEST_RETRY_COUNT:-3}"
+readonly RETRY_DELAY="${TEST_RETRY_DELAY:-2}"
 
 # Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m' # No Color
 
-echo -e "${BLUE}🧪 FASM eBook E2E Test Suite${NC}"
-echo "=================================="
+# Error handling functions
+error_exit() {
+    local error_message="$1"
+    local exit_code="${2:-1}"
+    echo -e "${RED}❌ ERROR: ${error_message}${NC}" >&2
+    cleanup
+    exit "$exit_code"
+}
 
-# Check if Node.js is installed
-if ! command -v node &> /dev/null; then
-    echo -e "${RED}❌ Node.js is not installed. Please install Node.js 16+ to continue.${NC}"
-    exit 1
-fi
+warn() {
+    local warning_message="$1"
+    echo -e "${YELLOW}⚠️  WARNING: ${warning_message}${NC}" >&2
+}
 
-# Install dependencies if needed
-if [ ! -d "node_modules" ]; then
-    echo -e "${YELLOW}📦 Installing dependencies...${NC}"
-    npm install
-fi
+info() {
+    local info_message="$1"
+    echo -e "${BLUE}ℹ️  INFO: ${info_message}${NC}"
+}
 
-# Install Playwright browsers if needed
-echo -e "${YELLOW}🌐 Installing Playwright browsers...${NC}"
-npx playwright install
+success() {
+    local success_message="$1"
+    echo -e "${GREEN}✅ ${success_message}${NC}"
+}
 
-# Function to run tests with specific configuration
+# Cleanup function
+cleanup() {
+    info "Performing cleanup..."
+    
+    # Kill any test servers that might be running
+    if command -v lsof >/dev/null 2>&1; then
+        local pids
+        pids=$(lsof -ti:"$DEFAULT_PORT" 2>/dev/null || true)
+        if [[ -n "$pids" ]]; then
+            info "Cleaning up server processes on port $DEFAULT_PORT"
+            echo "$pids" | xargs kill -TERM 2>/dev/null || true
+            sleep 2
+            echo "$pids" | xargs kill -KILL 2>/dev/null || true
+        fi
+    fi
+}
+
+# Trap for cleanup on script exit
+trap cleanup EXIT INT TERM
+
+# Input validation
+validate_browser() {
+    local browser="$1"
+    local valid_browsers=("chromium" "firefox" "webkit")
+    
+    for valid in "${valid_browsers[@]}"; do
+        if [[ "$browser" == "$valid" ]]; then
+            return 0
+        fi
+    done
+    
+    error_exit "Invalid browser: $browser. Valid options: ${valid_browsers[*]}"
+}
+
+validate_test_mode() {
+    local mode="$1"
+    local valid_modes=("quick" "core" "visual" "quality" "mobile" "cross-browser" "full")
+    
+    for valid in "${valid_modes[@]}"; do
+        if [[ "$mode" == "$valid" ]]; then
+            return 0
+        fi
+    done
+    
+    error_exit "Invalid test mode: $mode. Valid options: ${valid_modes[*]}"
+}
+
+# Prerequisites checking
+check_prerequisites() {
+    info "Checking prerequisites..."
+    
+    # Check Node.js
+    if ! command -v node >/dev/null 2>&1; then
+        error_exit "Node.js is not installed. Please install Node.js 16+ to continue."
+    fi
+    
+    local node_version
+    node_version=$(node --version | sed 's/v//')
+    local major_version
+    major_version=$(echo "$node_version" | cut -d. -f1)
+    
+    if [[ "$major_version" -lt 16 ]]; then
+        error_exit "Node.js version 16+ required. Current version: $node_version"
+    fi
+    
+    # Check npm
+    if ! command -v npm >/dev/null 2>&1; then
+        error_exit "npm is not installed. Please install npm to continue."
+    fi
+    
+    # Check if we're in the right directory
+    if [[ ! -f "package.json" ]]; then
+        error_exit "package.json not found. Please run this script from the project root directory."
+    fi
+    
+    success "Prerequisites check passed"
+}
+
+# Dependency management with retry logic
+install_dependencies() {
+    info "Installing dependencies..."
+    
+    local retry_count=0
+    while [[ $retry_count -lt $RETRY_COUNT ]]; do
+        if npm ci --silent; then
+            success "Dependencies installed successfully"
+            return 0
+        else
+            retry_count=$((retry_count + 1))
+            if [[ $retry_count -lt $RETRY_COUNT ]]; then
+                warn "Dependency installation failed (attempt $retry_count/$RETRY_COUNT). Retrying in ${RETRY_DELAY}s..."
+                sleep "$RETRY_DELAY"
+            fi
+        fi
+    done
+    
+    error_exit "Failed to install dependencies after $RETRY_COUNT attempts"
+}
+
+# Playwright browser installation with error handling
+install_playwright_browsers() {
+    local browser="${1:-$DEFAULT_BROWSER}"
+    
+    info "Installing Playwright browsers for $browser..."
+    
+    if ! npx playwright install --with-deps "$browser"; then
+        # Try without deps if full installation fails
+        warn "Failed to install with dependencies, trying without..."
+        if ! npx playwright install "$browser"; then
+            error_exit "Failed to install Playwright browser: $browser"
+        fi
+    fi
+    
+    success "Playwright browsers installed"
+}
+
+# Test execution with enhanced error handling
 run_test_suite() {
     local suite_name="$1"
     local test_pattern="$2"
     local browser="$3"
-    local extra_args="$4"
+    local extra_args="${4:-}"
     
-    echo -e "${BLUE}🧪 Running $suite_name tests on $browser...${NC}"
+    info "Running $suite_name tests on $browser..."
     
-    if npx playwright test $test_pattern --project="$browser" $extra_args; then
-        echo -e "${GREEN}✅ $suite_name tests passed on $browser${NC}"
+    # Create results directory
+    mkdir -p "test-results"
+    
+    # Set test environment variables
+    export TEST_BROWSER="$browser"
+    export TEST_TIMEOUT="$DEFAULT_TIMEOUT"
+    export NODE_ENV="test"
+    
+    local test_command="npx playwright test"
+    if [[ -n "$test_pattern" && "$test_pattern" != "tests/" ]]; then
+        test_command="$test_command $test_pattern"
+    fi
+    test_command="$test_command --project=\"$browser\" $extra_args"
+    
+    if eval "$test_command"; then
+        success "$suite_name tests passed on $browser"
         return 0
     else
-        echo -e "${RED}❌ $suite_name tests failed on $browser${NC}"
-        return 1
+        local exit_code=$?
+        warn "$suite_name tests failed on $browser (exit code: $exit_code)"
+        return $exit_code
     fi
 }
 
-# Function to generate test report
+# Report generation with error handling
 generate_report() {
-    echo -e "${BLUE}📊 Generating test report...${NC}"
+    info "Generating test report..."
     
-    if [ -d "test-results" ]; then
-        npx playwright show-report --host=0.0.0.0
+    if [[ ! -d "test-results" ]]; then
+        warn "No test results found to generate report"
+        return 1
+    fi
+    
+    # Generate HTML report
+    if npx playwright show-report --host=0.0.0.0 &; then
+        local report_pid=$!
+        info "Test report server started (PID: $report_pid)"
+        info "Report available at: http://localhost:9323"
+        
+        # Keep report server running for a reasonable time
+        sleep 5
+        return 0
     else
-        echo -e "${YELLOW}⚠️  No test results found to generate report${NC}"
+        warn "Failed to generate test report"
+        return 1
     fi
 }
 

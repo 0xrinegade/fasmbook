@@ -85,25 +85,53 @@ jobs:
           browser="${{ github.event.inputs.browser || matrix.browser }}"
           ./run-tests.sh "$test_mode" "$browser"
       
-      - name: Upload test results
+      - name: Upload test results (selective)
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-${{ matrix.browser }}
           path: |
-            docs/fasm-ebook/test-results/
-            docs/fasm-ebook/playwright-report/
+            docs/fasm-ebook/test-results/*.json
+            docs/fasm-ebook/test-results/*.xml
+            docs/fasm-ebook/playwright-report/index.html
+            docs/fasm-ebook/playwright-report/data.js
           retention-days: 30
+          compression-level: 6
       
-      - name: Upload screenshots on failure
+      - name: Upload detailed results on failure
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: screenshots-${{ matrix.browser }}
+          name: failure-details-${{ matrix.browser }}
           path: |
             docs/fasm-ebook/test-results/
             docs/fasm-ebook/playwright-report/
           retention-days: 7
+          compression-level: 9
+      
+      - name: Prune large artifacts
+        if: always()
+        run: |
+          cd docs/fasm-ebook
+          # Remove large video files if tests passed
+          if [[ "${{ job.status }}" == "success" ]]; then
+            find test-results -name "*.webm" -delete 2>/dev/null || true
+            find test-results -name "*.mp4" -delete 2>/dev/null || true
+          fi
+          
+          # Compress screenshots if they exist
+          if command -v gzip >/dev/null 2>&1; then
+            find test-results -name "*.png" -exec gzip {} \; 2>/dev/null || true
+          fi
+          
+          # Limit artifact size to 100MB
+          if command -v du >/dev/null 2>&1; then
+            total_size=$(du -sm test-results playwright-report 2>/dev/null | awk '{sum += $1} END {print sum}' || echo "0")
+            if [[ "$total_size" -gt 100 ]]; then
+              echo "Artifacts too large (${total_size}MB), pruning oldest files..."
+              find test-results -type f -printf '%T@ %p\n' | sort -n | head -20 | cut -d' ' -f2- | xargs rm -f || true
+            fi
+          fi
 
   mobile-tests:
     name: Mobile E2E Tests
@@ -138,15 +166,17 @@ jobs:
         run: |
           npx playwright test --project="Mobile Chrome" --project="Mobile Safari"
       
-      - name: Upload mobile test results
+      - name: Upload mobile test results (selective)
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: mobile-test-results
           path: |
-            docs/fasm-ebook/test-results/
-            docs/fasm-ebook/playwright-report/
-          retention-days: 30
+            docs/fasm-ebook/test-results/*.json
+            docs/fasm-ebook/test-results/*.xml
+            docs/fasm-ebook/playwright-report/index.html
+          retention-days: 14
+          compression-level: 6
 
   accessibility-tests:
     name: Accessibility & Performance Tests

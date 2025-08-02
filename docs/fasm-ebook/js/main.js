@@ -75,7 +75,8 @@ class FASMeBook {
     
     async loadChapterIndex() {
         try {
-            const response = await fetch('chapters/index.json');
+            const indexPath = fasmeBookConfig.get('files.chapterIndex');
+            const response = await fetch(indexPath);
             if (!response.ok) {
                 console.warn('Chapter index not found, using default chapters');
                 this.chapters = this.getDefaultChapters();
@@ -175,7 +176,8 @@ class FASMeBook {
         
         for (const chapter of this.chapters) {
             try {
-                const response = await fetch(`chapters/${chapter.file}`);
+                const chaptersPath = fasmeBookConfig.get('paths.chapters');
+                const response = await fetch(`${chaptersPath}/${chapter.file}`);
                 if (!response.ok) continue;
                 
                 const markdown = await response.text();
@@ -189,31 +191,56 @@ class FASMeBook {
     }
     
     scanMarkdownForInstructions(markdown, chapter) {
-        // Extract code blocks and scan for instructions
-        const codeBlockRegex = /^```(?:assembly|asm|fasm)\n([\s\S]*?)```$/gm;
-        let match;
-        let lineNumber = 1;
+        // Use robust markdown parser instead of fragile regex patterns
+        if (!this.markdownParser) {
+            this.markdownParser = new MarkdownParser();
+        }
         
-        // Count lines before each code block
+        try {
+            const codeBlocks = this.markdownParser.parseCodeBlocks(markdown, chapter);
+            
+            codeBlocks.forEach(block => {
+                this.scanCodeBlockForInstructions(block.rawContent, chapter, block.startLine);
+            });
+            
+            // Optional: Track platform-specific code usage
+            if (this.debugMode) {
+                const platformInfo = this.markdownParser.detectPlatformSpecificCode(markdown);
+                console.log(`Platform detection for ${chapter.id}:`, platformInfo);
+            }
+        } catch (error) {
+            console.error(`Error parsing markdown for chapter ${chapter.id}:`, error);
+            // Fallback to basic scanning if parser fails
+            this.fallbackScanMarkdown(markdown, chapter);
+        }
+    }
+    
+    // Fallback method for emergency cases
+    fallbackScanMarkdown(markdown, chapter) {
+        console.warn('Using fallback markdown scanning for', chapter.id);
         const lines = markdown.split('\n');
+        let inCodeBlock = false;
+        let currentBlock = '';
         
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             
-            // Check if this line starts a code block
-            if (line.startsWith('```assembly') || line.startsWith('```asm') || line.startsWith('```fasm')) {
-                // Scan the code block
-                let codeBlock = '';
-                let j = i + 1;
-                
-                while (j < lines.length && !lines[j].startsWith('```')) {
-                    codeBlock += lines[j] + '\n';
-                    j++;
-                }
-                
-                // Scan this code block for instructions
-                this.scanCodeBlockForInstructions(codeBlock, chapter, i + 1);
-                i = j; // Skip to end of code block
+            if (line.trim().startsWith('```') && 
+                (line.includes('assembly') || line.includes('asm') || line.includes('fasm'))) {
+                inCodeBlock = true;
+                currentBlock = '';
+                continue;
+            }
+            
+            if (line.trim() === '```' && inCodeBlock) {
+                this.scanCodeBlockForInstructions(currentBlock, chapter, i);
+                inCodeBlock = false;
+                currentBlock = '';
+                continue;
+            }
+            
+            if (inCodeBlock) {
+                currentBlock += line + '\n';
             }
         }
     }
@@ -300,7 +327,8 @@ class FASMeBook {
                 return;
             }
             
-            const response = await fetch(`chapters/${chapter.file}`);
+            const chaptersPath = fasmeBookConfig.get('paths.chapters');
+            const response = await fetch(`${chaptersPath}/${chapter.file}`);
             if (!response.ok) {
                 console.warn(`Failed to load chapter file: ${chapter.file}`);
                 this.showError(`Chapter not available: ${chapter.title}. Please try another chapter.`);
