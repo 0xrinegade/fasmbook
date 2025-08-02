@@ -18,21 +18,39 @@
     "pages": 87
   },
   {
+    "id": "chapter3",
+    "title": "Chapter 3: Data Types & Memory Architecture",
+    "file": "chapter3.md",
+    "pages": 45
+  },
+  {
     "id": "chapter4",
     "title": "Chapter 4: The Instruction Cookbook",
     "file": "chapter4.md",
-    "pages": 10
+    "pages": 67
   },
   {
     "id": "chapter5",
     "title": "Chapter 5: Registers - Your Digital Toolkit",
     "file": "chapter5.md",
-    "pages": 10
+    "pages": 58
   },
   {
     "id": "chapter6",
-    "title": "Chapter 6: Program Flow - The Story Your Code Tells  ",
+    "title": "Chapter 6: Program Flow - The Story Your Code Tells",
     "file": "chapter6.md",
-    "pages": 10
+    "pages": 73
+  },
+  {
+    "id": "chapter7",
+    "title": "Chapter 7: Advanced System Programming",
+    "file": "chapter7.md",
+    "pages": 62
+  },
+  {
+    "id": "chapter8",
+    "title": "Chapter 8: Optimization and Performance Engineering",
+    "file": "chapter8.md",
+    "pages": 59
   }
 ]
