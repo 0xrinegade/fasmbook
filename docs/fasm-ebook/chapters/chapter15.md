@@ -958,7 +958,249 @@ LOG_LEVEL_ERROR     equ 3
 LOG_LEVEL_FATAL     equ 4
 ```
 
-This comprehensive chapter demonstrates how to build sophisticated frameworks and libraries in assembly language. From modular architecture and memory management to plugin systems and testing frameworks, you now have the foundation to create reusable components that can serve as building blocks for complex applications.
+## GitHub Actions Integration for FASM Development
+
+### Automated Build and Test Pipeline
+
+Modern FASM development benefits enormously from continuous integration. Here's how to create a comprehensive GitHub Actions workflow that automatically compiles, tests, and validates your assembly code:
+
+```yaml
+name: FASM Code Compilation and Testing
+
+on:
+  push:
+    branches: [ main, master ]
+    paths: ['**/*.asm', '**/*.inc']
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  compile-windows:
+    runs-on: windows-latest
+    name: Compile FASM Code (Windows)
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download and setup FASM
+        run: |
+          Invoke-WebRequest -Uri "https://flatassembler.net/fasm.zip" -OutFile "fasm.zip"
+          Expand-Archive -Path "fasm.zip" -DestinationPath "fasm"
+          $fasmPath = Join-Path $PWD "fasm"
+          echo $fasmPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: powershell
+
+      - name: Compile assembly sources
+        run: |
+          Get-ChildItem -Path "." -Filter "*.asm" -Recurse | ForEach-Object {
+            Write-Host "Compiling: $($_.FullName)"
+            & "fasm\fasm.exe" $_.FullName
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "✅ Success: $($_.Name)" -ForegroundColor Green
+            } else {
+              Write-Host "❌ Failed: $($_.Name)" -ForegroundColor Red
+            }
+          }
+        shell: powershell
+
+  compile-linux:
+    runs-on: ubuntu-latest
+    name: Compile FASM Code (Linux)
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download and setup FASM
+        run: |
+          wget https://flatassembler.net/fasm.tgz
+          tar -xzf fasm.tgz
+          chmod +x fasm/fasm
+          echo "$(pwd)/fasm" >> $GITHUB_PATH
+
+      - name: Compile assembly sources
+        run: |
+          find . -name "*.asm" -type f | while read -r asmfile; do
+            echo "Compiling: $asmfile"
+            if ./fasm/fasm "$asmfile"; then
+              echo "✅ Success: $(basename "$asmfile")"
+            else
+              echo "❌ Failed: $(basename "$asmfile")"
+            fi
+          done
+
+  test-executables:
+    needs: [compile-windows, compile-linux]
+    runs-on: ubuntu-latest
+    name: Test Compiled Programs
+    
+    steps:
+      - name: Run test suite
+        run: |
+          echo "Testing FASM compiled programs..."
+          # Add specific test logic here
+          echo "All tests passed!"
+```
+
+### Advanced Documentation Extraction
+
+```yaml
+  extract-documentation:
+    runs-on: ubuntu-latest
+    name: Extract and Validate Code Examples
+    
+    steps:
+      - name: Extract FASM code from documentation
+        run: |
+          #!/bin/bash
+          
+          # Extract all assembly code blocks from markdown files
+          find docs/ -name "*.md" -exec grep -Pzo '(?s)```assembly.*?```' {} \; > extracted_code.txt
+          
+          # Validate syntax and create compilable examples
+          example_count=0
+          while IFS= read -r -d '' code_block; do
+            if [[ "$code_block" =~ (mov|push|call|add|sub|ret|jmp) ]]; then
+              ((example_count++))
+              filename="auto_example_${example_count}.asm"
+              
+              # Clean and prepare code
+              echo "$code_block" | sed 's/```assembly//g' | sed 's/```//g' > "$filename"
+              
+              echo "Created: $filename"
+              
+              # Try to compile
+              if ./fasm/fasm "$filename" 2>/dev/null; then
+                echo "✅ Compilation successful: $filename"
+              else
+                echo "❌ Compilation failed: $filename"
+              fi
+            fi
+          done <<< "$(grep -Pzo '(?s)```assembly.*?```' docs/**/*.md)"
+          
+          echo "Processed $example_count code examples"
+```
+
+### Performance Benchmarking Pipeline
+
+```assembly
+; Performance testing framework integration
+format PE console
+entry start
+
+include 'win32a.inc'
+
+section '.data' data readable writeable
+    benchmark_results   dd 1000 dup(?)
+    test_iterations     dd 10000
+    timer_frequency     dq ?
+    start_time          dq ?
+    end_time            dq ?
+    
+    ; GitHub Actions environment detection
+    ci_environment      db 'GITHUB_ACTIONS', 0
+    ci_env_value        rb 256
+    
+section '.code' code readable executable
+start:
+    ; Detect if running in CI environment
+    call detect_ci_environment
+    test eax, eax
+    jz .run_local_tests
+    
+    ; CI-specific optimizations
+    call setup_ci_benchmarks
+    jmp .run_benchmarks
+    
+    .run_local_tests:
+        call setup_local_benchmarks
+    
+    .run_benchmarks:
+        call run_performance_suite
+        call generate_ci_report
+        
+    invoke ExitProcess, 0
+
+detect_ci_environment:
+    ; Check for GitHub Actions environment variable
+    invoke GetEnvironmentVariableA, ci_environment, ci_env_value, 256
+    test eax, eax
+    setnz al
+    ret
+
+setup_ci_benchmarks:
+    ; Optimize for CI environment constraints
+    mov dword [test_iterations], 1000  ; Fewer iterations for CI
+    call init_performance_counters
+    ret
+
+run_performance_suite:
+    ; High-precision timing using QueryPerformanceCounter
+    invoke QueryPerformanceFrequency, timer_frequency
+    
+    mov ecx, [test_iterations]
+    .benchmark_loop:
+        push ecx
+        
+        ; Start timing
+        invoke QueryPerformanceCounter, start_time
+        
+        ; Run test code here
+        call benchmark_target_function
+        
+        ; End timing
+        invoke QueryPerformanceCounter, end_time
+        
+        ; Calculate and store result
+        call calculate_benchmark_result
+        
+        pop ecx
+        loop .benchmark_loop
+    
+    ret
+
+generate_ci_report:
+    ; Generate GitHub Actions compatible output
+    ; Format: ::notice title=Performance::Average cycles: 123
+    ; This appears in the GitHub Actions summary
+    call format_github_actions_output
+    ret
+```
+
+### Code Quality Validation
+
+```yaml
+  code-quality:
+    runs-on: ubuntu-latest
+    name: FASM Code Quality Checks
+    
+    steps:
+      - name: Syntax validation
+        run: |
+          # Check for common FASM syntax issues
+          find . -name "*.asm" | xargs grep -n -E "(^[[:space:]]*[[:alpha:]]+:$|^[[:space:]]*[[:alpha:]]+[[:space:]]+)" || true
+          
+      - name: Performance analysis
+        run: |
+          # Extract cycle count annotations and validate
+          grep -r "📊 Cycles:" . | while read -r line; do
+            echo "Found performance annotation: $line"
+          done
+          
+      - name: Documentation coverage
+        run: |
+          # Ensure all assembly instructions are documented
+          instructions=$(grep -ho -E '\b(mov|push|call|add|sub|ret|jmp|inc|dec|cmp|test)\b' **/*.asm | sort -u)
+          for inst in $instructions; do
+            if ! grep -r "## 📚.*$inst" docs/; then
+              echo "⚠️ Missing documentation for instruction: $inst"
+            fi
+          done
+```
+
+This comprehensive framework demonstrates how to build sophisticated frameworks and libraries in assembly language, complete with modern CI/CD integration. From modular architecture and memory management to plugin systems and automated testing, you now have the foundation to create professional-grade FASM development environments.
 
 ## Exercises
 

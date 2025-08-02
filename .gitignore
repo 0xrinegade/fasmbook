@@ -9,3 +9,21 @@ ehthumbs_vista.db
 ._*
 programs/cmm/cmm.code-workspace
 programs/cmm/menu/.gitignore
+
+### FASM Build Artifacts ###
+*.exe
+*.obj
+*.o
+*.bin
+*.com
+*.tmp
+fasm/
+fasm.zip
+fasm.tgz
+
+### Examples and Testing ###
+examples/*
+!examples/*.asm
+!examples/README.md
+auto_example_*.asm
+extracted_code.txt

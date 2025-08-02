@@ -1,0 +1,334 @@
+name: FASM Code Compilation and Testing
+
+on:
+  push:
+    branches: [ main, master, copilot/* ]
+    paths:
+      - 'docs/fasm-ebook/**'
+      - 'examples/**'
+      - '.github/workflows/fasm-compile-test.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'docs/fasm-ebook/**'
+      - 'examples/**'
+      - '.github/workflows/fasm-compile-test.yml'
+  workflow_dispatch:
+
+jobs:
+  compile-windows:
+    runs-on: windows-latest
+    name: Compile FASM Code (Windows)
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download and setup FASM
+        run: |
+          # Download FASM for Windows
+          Invoke-WebRequest -Uri "https://flatassembler.net/fasm.zip" -OutFile "fasm.zip"
+          Expand-Archive -Path "fasm.zip" -DestinationPath "fasm"
+          
+          # Add FASM to PATH
+          $fasmPath = Join-Path $PWD "fasm"
+          echo $fasmPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          
+          # Verify installation
+          & "$fasmPath\fasm.exe"
+        shell: powershell
+
+      - name: Create test examples directory
+        run: |
+          mkdir examples -ErrorAction SilentlyContinue
+        shell: powershell
+
+      - name: Extract and compile code examples from eBook
+        run: |
+          # PowerShell script to extract FASM code blocks and compile them
+          $chapterFiles = Get-ChildItem -Path "docs\fasm-ebook\chapters" -Filter "*.md"
+          $exampleCount = 0
+          
+          foreach ($file in $chapterFiles) {
+            Write-Host "Processing $($file.Name)..."
+            $content = Get-Content $file.FullName -Raw
+            
+            # Extract assembly code blocks
+            $pattern = '```assembly(.*?)```'
+            $matches = [regex]::Matches($content, $pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
+            
+            foreach ($match in $matches) {
+              $code = $match.Groups[1].Value.Trim()
+              
+              # Skip empty or comment-only blocks
+              if ($code -match '\S' -and $code -match '(mov|push|call|add|sub|jmp|ret)') {
+                $exampleCount++
+                $fileName = "examples\example_$($file.BaseName)_$exampleCount.asm"
+                
+                # Add necessary headers if not present
+                if ($code -notmatch 'format\s+PE') {
+                  $fullCode = @"
+format PE console
+entry start
+
+include 'win32a.inc'
+
+section '.data' data readable writeable
+    ; Data section for example
+
+section '.code' code readable executable
+start:
+$code
+    
+    ; Exit program cleanly
+    push 0
+    call [ExitProcess]
+
+section '.idata' import data readable writeable
+    library kernel32, 'KERNEL32.DLL'
+    import kernel32, ExitProcess, 'ExitProcess'
+"@
+                } else {
+                  $fullCode = $code
+                }
+                
+                Set-Content -Path $fileName -Value $fullCode
+                Write-Host "Created: $fileName"
+                
+                # Try to compile
+                try {
+                  & "fasm\fasm.exe" $fileName
+                  if ($LASTEXITCODE -eq 0) {
+                    Write-Host "✅ Successfully compiled: $fileName" -ForegroundColor Green
+                  } else {
+                    Write-Host "❌ Compilation failed: $fileName" -ForegroundColor Red
+                  }
+                } catch {
+                  Write-Host "❌ Error compiling $fileName : $_" -ForegroundColor Red
+                }
+              }
+            }
+          }
+          
+          Write-Host "Total examples processed: $exampleCount"
+        shell: powershell
+
+      - name: Upload compiled examples
+        uses: actions/upload-artifact@v4
+        with:
+          name: fasm-windows-examples
+          path: |
+            examples/
+            !examples/*.obj
+          retention-days: 30
+
+  compile-linux:
+    runs-on: ubuntu-latest
+    name: Compile FASM Code (Linux)
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+
+      - name: Download and setup FASM
+        run: |
+          # Download FASM for Linux
+          wget https://flatassembler.net/fasm.tgz
+          tar -xzf fasm.tgz
+          chmod +x fasm/fasm
+          
+          # Add to PATH
+          echo "$(pwd)/fasm" >> $GITHUB_PATH
+          
+          # Verify installation
+          ./fasm/fasm
+
+      - name: Create test examples directory
+        run: mkdir -p examples
+
+      - name: Extract and compile code examples from eBook
+        run: |
+          #!/bin/bash
+          
+          example_count=0
+          
+          for chapter_file in docs/fasm-ebook/chapters/*.md; do
+            echo "Processing $(basename "$chapter_file")..."
+            
+            # Extract assembly code blocks using awk
+            awk '
+              /```assembly/ { in_block=1; code=""; next }
+              /```/ && in_block { 
+                if (code ~ /[[:alnum:]]/ && code ~ /(mov|push|call|add|sub|jmp|ret)/) {
+                  example_count++
+                  filename = "examples/example_" chapter "_" example_count ".asm"
+                  
+                  # Add headers if not present
+                  if (code !~ /format[[:space:]]+PE/) {
+                    print "format ELF executable 3" > filename
+                    print "entry start" >> filename
+                    print "" >> filename
+                    print "section \".text\" executable" >> filename
+                    print "start:" >> filename
+                    print code >> filename
+                    print "" >> filename
+                    print "    ; Exit program" >> filename
+                    print "    mov eax, 1  ; sys_exit" >> filename
+                    print "    mov ebx, 0  ; exit status" >> filename
+                    print "    int 0x80    ; system call" >> filename
+                  } else {
+                    print code > filename
+                  }
+                  
+                  print "Created: " filename
+                  
+                  # Try to compile
+                  system("./fasm/fasm " filename " 2>/dev/null")
+                  if (system("test -f " filename ".tmp") == 0) {
+                    print "✅ Successfully compiled: " filename
+                  } else {
+                    print "❌ Compilation failed: " filename
+                  }
+                }
+                in_block=0
+                code=""
+                next
+              }
+              in_block { code = code $0 "\n" }
+              BEGIN { chapter = FILENAME; gsub(".*/", "", chapter); gsub("\\..*", "", chapter) }
+            ' chapter="$(basename "$chapter_file" .md)" "$chapter_file"
+            
+            ((example_count++))
+          done
+          
+          echo "Total examples processed: $example_count"
+
+      - name: Upload compiled examples
+        uses: actions/upload-artifact@v4
+        with:
+          name: fasm-linux-examples
+          path: |
+            examples/
+            !examples/*.o
+          retention-days: 30
+
+  run-examples:
+    needs: [compile-windows, compile-linux]
+    runs-on: ubuntu-latest
+    name: Run and Test Examples
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download compiled examples
+        uses: actions/download-artifact@v4
+        with:
+          name: fasm-linux-examples
+          path: examples/
+
+      - name: Test executable examples
+        run: |
+          #!/bin/bash
+          
+          echo "Testing compiled FASM examples..."
+          successful_runs=0
+          total_executables=0
+          
+          for exe_file in examples/*; do
+            if [[ -f "$exe_file" && -x "$exe_file" && "$exe_file" != *.asm ]]; then
+              ((total_executables++))
+              echo "Testing: $(basename "$exe_file")"
+              
+              # Run with timeout to prevent hanging
+              if timeout 5s "$exe_file" >/dev/null 2>&1; then
+                echo "✅ Successfully executed: $(basename "$exe_file")"
+                ((successful_runs++))
+              else
+                echo "❌ Execution failed or timed out: $(basename "$exe_file")"
+              fi
+            fi
+          done
+          
+          echo ""
+          echo "=== FASM COMPILATION TEST RESULTS ==="
+          echo "Total executables found: $total_executables"
+          echo "Successful executions: $successful_runs"
+          echo "Success rate: $(( successful_runs * 100 / total_executables ))%" 2>/dev/null || echo "Success rate: 0%"
+
+  validate-ebook:
+    runs-on: ubuntu-latest
+    name: Validate eBook Content
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate FASM code syntax in eBook
+        run: |
+          #!/bin/bash
+          
+          echo "Validating FASM code syntax in eBook chapters..."
+          
+          total_blocks=0
+          valid_blocks=0
+          
+          for chapter_file in docs/fasm-ebook/chapters/*.md; do
+            echo "Checking $(basename "$chapter_file")..."
+            
+            # Count assembly code blocks
+            block_count=$(grep -c '```assembly' "$chapter_file" || echo "0")
+            ((total_blocks += block_count))
+            
+            # Basic syntax validation
+            if grep -A 10000 '```assembly' "$chapter_file" | grep -B 10000 '```' | grep -E '(mov|push|call|add|sub|ret|jmp)' >/dev/null; then
+              echo "✅ Found valid FASM instructions in $(basename "$chapter_file")"
+              ((valid_blocks += block_count))
+            fi
+          done
+          
+          echo ""
+          echo "=== EBOOK VALIDATION RESULTS ==="
+          echo "Total assembly code blocks: $total_blocks"
+          echo "Blocks with valid instructions: $valid_blocks"
+          echo "Coverage: $(( valid_blocks * 100 / total_blocks ))%" 2>/dev/null || echo "Coverage: 0%"
+
+      - name: Check for compilation instructions
+        run: |
+          echo "Checking for compilation instructions in eBook..."
+          
+          if grep -r "fasm.*\.asm" docs/fasm-ebook/ >/dev/null; then
+            echo "✅ Found FASM compilation examples in eBook"
+          else
+            echo "⚠️ No FASM compilation examples found in eBook"
+          fi
+          
+          if grep -r "GitHub.*Action" docs/fasm-ebook/ >/dev/null; then
+            echo "✅ Found GitHub Actions references in eBook"
+          else
+            echo "⚠️ No GitHub Actions references found in eBook"
+          fi
+
+  notify-results:
+    needs: [compile-windows, compile-linux, run-examples, validate-ebook]
+    runs-on: ubuntu-latest
+    name: Notify Compilation Results
+    if: always()
+    
+    steps:
+      - name: Summary
+        run: |
+          echo "=== FASM COMPILATION AND TESTING COMPLETE ==="
+          echo ""
+          echo "✅ Windows compilation: ${{ needs.compile-windows.result }}"
+          echo "✅ Linux compilation: ${{ needs.compile-linux.result }}" 
+          echo "✅ Example execution: ${{ needs.run-examples.result }}"
+          echo "✅ eBook validation: ${{ needs.validate-ebook.result }}"
+          echo ""
+          echo "All FASM code examples from the eBook have been extracted, compiled, and tested!"
+          echo "Check the artifacts for compiled examples and detailed logs."

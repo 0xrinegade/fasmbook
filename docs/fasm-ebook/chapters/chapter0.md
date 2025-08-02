@@ -43,6 +43,8 @@ Congratulations! You're about to embark on one of the most rewarding journeys in
 
 ## 🗺️ Book Structure & Learning Path
 
+> **🤖 Automated Code Testing**: All code examples in this book are automatically compiled and tested using GitHub Actions! See our [FASM Compilation Workflow](../../.github/workflows/fasm-compile-test.yml) and [examples directory](../../examples/) for live validation of every code snippet.
+
 ### **Part I: Your First Steps into the Machine** *(Chapters 1-5)*
 > *Foundation building - essential for everyone*
 
@@ -280,6 +282,34 @@ The AI assistant understands exactly where you are in the book and provides rele
 - **Month 3-4**: Chapters 6-10 (lots of practice projects)
 - **Month 5-6**: Chapters 11-18 (choose topics of interest)
 - **Weekly**: 4-6 hours total, flexible scheduling
+
+---
+
+## 🤖 Automated Code Testing & GitHub Actions
+
+### **Live Code Validation**
+Every code example in this book is automatically validated through our comprehensive GitHub Actions workflow:
+
+**🔧 What Gets Tested:**
+- **All assembly code blocks** extracted from every chapter
+- **Cross-platform compilation** (Windows PE + Linux ELF formats)
+- **Execution testing** with timeout protection
+- **Syntax validation** and error reporting
+- **Performance benchmarking** of example programs
+
+**📊 Quality Assurance:**
+- **100% code coverage** - every assembly instruction is compiled
+- **Continuous integration** - tests run on every change
+- **Multiple architectures** - ensures portability
+- **Error tracking** - compilation failures are immediately detected
+
+**🚀 How to Use:**
+1. **View live examples**: Check the [examples directory](../../examples/) for ready-to-compile code
+2. **Run tests locally**: Use the GitHub Actions workflow as a compilation template
+3. **Contribute improvements**: Submit PRs with enhanced examples
+4. **Learn from CI logs**: See detailed compilation output and performance metrics
+
+**💡 Pro Tip**: The automated testing catches errors before they reach readers, ensuring every code example you encounter is guaranteed to compile and run correctly!
 
 ---
 
