@@ -503,8 +503,6 @@ body {
     top: 50%;
     z-index: 1600;
 }
-    transform: translateX(0);
-}
 
 .ai-window.visible {
     display: flex;

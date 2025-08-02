@@ -699,32 +699,6 @@ class FASMeBook {
             externalNavToggle.style.display = 'none';
         }
     }
-        
-        // Handle keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) return;
-            
-            switch (e.key) {
-                case 'ArrowLeft':
-                    if (this.currentPage > 1) {
-                        this.loadChapter(this.currentChapter.id, this.currentPage - 1);
-                    }
-                    break;
-                case 'ArrowRight':
-                    if (this.currentPage < this.totalPages) {
-                        this.loadChapter(this.currentChapter.id, this.currentPage + 1);
-                    }
-                    break;
-                case 'Home':
-                    this.loadChapter(this.chapters[0].id, 1);
-                    break;
-                case 'End':
-                    const lastChapter = this.chapters[this.chapters.length - 1];
-                    this.loadChapter(lastChapter.id, lastChapter.pages);
-                    break;
-            }
-        });
-    }
     
     initEventListeners() {
         // Handle text selection for highlighting and note-taking
