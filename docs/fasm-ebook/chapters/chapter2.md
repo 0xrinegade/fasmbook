@@ -89,6 +89,81 @@ start:
     ; scanf returns number of successfully parsed items in EAX
     cmp eax, 1                      ; Cycles: 1, Did we get exactly 1 number?
     jne input_error                 ; Cycles: 1-3, Branch if parsing failed
+
+## 📚 Comprehensive Instruction Reference: JNE
+
+> **🚩 Conditional Logic Mastery**: JNE (Jump if Not Equal) is your primary tool for implementing inequality logic and error handling in programs.
+
+### Historical Context and Evolution 📜
+
+JNE represents the logical complement to JE (Jump if Equal), providing the fundamental building block for implementing conditional logic. Together, these instructions enable computers to make binary decisions—the foundation of all digital logic.
+
+**Historical Development:**
+- **1972**: Basic inequality testing in Intel 8008
+- **1978**: Enhanced with 16-bit addressing in 8086
+- **1985**: 32-bit relative jumps in 80386
+- **1993**: Branch prediction optimization for conditional jumps in Pentium
+
+### Complete Instruction Theory and Specification
+
+**JNE** tests the Zero Flag (ZF) and jumps to the target address if ZF is clear (0). It's used after comparison operations to branch when operands are not equal.
+
+**Fundamental Operation:**
+```
+if (ZF == 0) then
+    EIP ← EIP + signed_displacement
+else
+    Continue to next instruction
+```
+
+**Flag Dependency:**
+- **Primary**: ZF (Zero Flag) - jumps when ZF = 0
+- **Aliases**: JNZ (Jump if Not Zero) - identical functionality
+
+### Complete Syntax and Usage Patterns
+
+**Basic Forms:**
+```assembly
+jne target_label        ; Jump if not equal (short or near form)
+jnz target_label        ; Identical to JNE - alternative mnemonic
+```
+
+**Common Usage Patterns:**
+```assembly
+; After CMP instruction:
+cmp eax, 42
+jne not_equal_case      ; Jump if EAX ≠ 42
+
+; After TEST instruction:
+test eax, eax
+jne non_zero_case       ; Jump if EAX ≠ 0
+
+; After SUB instruction:
+sub eax, ebx
+jne not_equal_case      ; Jump if EAX ≠ EBX
+
+; Loop termination:
+dec ecx
+jne loop_continue       ; Continue loop while ECX ≠ 0
+```
+
+### Performance and Optimization Considerations
+
+**Branch Prediction Impact:**
+```assembly
+; Predictable pattern (efficient):
+mov ecx, 1000
+loop_start:
+    ; ... loop body ...
+    dec ecx
+    jne loop_start      ; Taken 999 times, not taken once - highly predictable
+
+; Unpredictable pattern (inefficient):
+cmp eax, [random_data]
+jne random_case         ; Unpredictable - causes pipeline stalls
+```
+
+---
     
     ; Get second number - same pattern for consistency
     push prompt2                    ; Cycles: 2
@@ -156,6 +231,405 @@ do_multiplication:
     ; imul for signed multiplication, mul for unsigned
     ; Decision: Use imul for signed arithmetic (handles negative numbers)
     imul eax, ebx                   ; Cycles: 3-4, Signed multiplication
+
+## 📚 Comprehensive Instruction Reference: IMUL
+
+> **🚩 Signed Multiplication Mastery**: IMUL provides sophisticated signed multiplication with multiple forms for different programming needs.
+
+### Historical Context and Evolution 📜
+
+IMUL (Integer Multiply) was introduced to handle signed multiplication properly, complementing the unsigned MUL instruction. The distinction between signed and unsigned multiplication is crucial because they produce different results for negative numbers.
+
+**Why Two Multiplication Instructions?**
+- **MUL**: Treats operands as unsigned integers
+- **IMUL**: Treats operands as signed two's complement integers
+- **Example**: 0xFF × 0xFF = 65025 (MUL) vs. (-1) × (-1) = 1 (IMUL)
+
+**Historical Development:**
+- **1978**: Basic IMUL in 8086 with single form
+- **1985**: Multiple IMUL forms introduced in 80386
+- **1993**: Optimized multiplication units in Pentium
+- **2006**: Enhanced multipliers in Core architecture
+
+### Complete Instruction Theory and Specification
+
+**IMUL** performs signed integer multiplication with multiple syntactic forms, each optimized for different use cases.
+
+**Three Primary Forms:**
+1. **Single Operand**: `imul source` - Full precision multiplication
+2. **Two Operand**: `imul dest, source` - Result fits in destination register
+3. **Three Operand**: `imul dest, source, immediate` - Multiply and scale in one instruction
+
+### Complete Syntax Reference and API
+
+**Form 1: Single Operand (Full Precision)**
+```assembly
+; 8-bit multiplication: AL × source → AX
+imul bl                 ; F6 EB - AL × BL → AX
+imul byte [esi]         ; F6 2E - AL × memory byte → AX
+
+; 16-bit multiplication: AX × source → DX:AX  
+imul bx                 ; 66 F7 EB - AX × BX → DX:AX
+imul word [esi]         ; 66 F7 2E - AX × memory word → DX:AX
+
+; 32-bit multiplication: EAX × source → EDX:EAX
+imul ebx                ; F7 EB - EAX × EBX → EDX:EAX
+imul dword [esi]        ; F7 2E - EAX × memory dword → EDX:EAX
+
+; 64-bit multiplication: RAX × source → RDX:RAX (x64 mode)
+imul rbx                ; 48 F7 EB - RAX × RBX → RDX:RAX
+```
+
+**Form 2: Two Operand (Register Size Result)**
+```assembly
+; dest = dest × source (result truncated to register size)
+imul eax, ebx           ; 0F AF C3 - EAX = EAX × EBX
+imul ecx, edx           ; 0F AF CA - ECX = ECX × EDX
+imul esi, edi           ; 0F AF F7 - ESI = ESI × EDI
+
+; dest = source1 × source2
+imul eax, [variable]    ; 0F AF 05 + addr - EAX = EAX × memory
+imul ebx, [esi + 4]     ; 0F AF 5E 04 - EBX = EBX × memory[ESI+4]
+```
+
+**Form 3: Three Operand (Immediate Multiplier)**
+```assembly
+; dest = source × immediate
+imul eax, ebx, 10       ; 6B C3 0A - EAX = EBX × 10 (8-bit immediate)
+imul ecx, edx, 1000     ; 69 CA E8 03 00 00 - ECX = EDX × 1000 (32-bit immediate)
+imul esi, [variable], 5 ; 6B 35 addr 05 - ESI = memory × 5
+
+; Address calculation optimization
+imul eax, esi, 4        ; 6B C6 04 - EAX = ESI × 4 (array indexing)
+imul ebx, ecx, 12       ; 6B D9 0C - EBX = ECX × 12 (structure size)
+```
+
+### Flag Behavior and Overflow Detection
+
+**Flag Updates:**
+- **CF and OF**: Set if result cannot fit in destination size (overflow)
+- **SF, ZF, PF**: Undefined after IMUL (don't rely on them)
+
+**Overflow Detection Examples:**
+```assembly
+; Two-operand form overflow detection
+imul eax, ebx           ; EAX = EAX × EBX
+jo overflow_occurred    ; Jump if result doesn't fit in 32 bits
+
+; Single-operand form for full precision
+mov eax, large_value
+imul large_multiplier   ; Result in EDX:EAX
+test edx, edx           ; Check high part
+jnz result_too_large    ; Jump if high part is non-zero
+```
+
+### Performance Characteristics and Optimization
+
+**Modern CPU Performance:**
+```assembly
+; Multiplication speed has improved dramatically:
+imul eax, ebx           ; 3-4 cycles on modern CPUs
+                       ; Was 20+ cycles on early processors
+
+; Latency vs. Throughput:
+imul eax, ebx           ; 3 cycle latency
+imul ecx, edx           ; Can start 1 cycle after previous IMUL
+; Modern CPUs can overlap multiplication operations
+```
+
+**Power-of-Two Optimization:**
+```assembly
+; For powers of 2, use shifts instead:
+imul eax, 8             ; 3-4 cycles
+shl eax, 3              ; 1 cycle (8 = 2³, so shift left 3 bits)
+
+imul eax, 16            ; 3-4 cycles  
+shl eax, 4              ; 1 cycle (16 = 2⁴, so shift left 4 bits)
+
+; But for non-powers-of-2, IMUL is often better than shift sequences
+```
+
+**Address Calculation Optimization:**
+```assembly
+; Array element address calculation:
+; Traditional approach:
+mov eax, index
+mov ebx, 4              ; Element size
+imul eax, ebx           ; EAX = index × 4
+add eax, array_base     ; EAX = base + index × 4
+
+; Optimized using LEA:
+lea eax, [array_base + index*4]  ; Single instruction!
+
+; IMUL still useful for complex scaling:
+imul eax, index, 24     ; EAX = index × 24 (for 24-byte structures)
+add eax, array_base     ; Add base address
+```
+
+---
+
+## 📚 Comprehensive Instruction Reference: CDQ
+
+> **🚩 Sign Extension for Division**: CDQ prepares signed numbers for division by extending the sign bit from EAX into EDX.
+
+### Historical Context and Evolution 📜
+
+CDQ (Convert Doubleword to Quadword) is a specialized instruction that supports signed division operations. Division instructions require a double-width dividend, so CDQ extends a 32-bit signed number to 64 bits while preserving its sign.
+
+**Purpose and Necessity:**
+- **IDIV requires**: EDX:EAX as a 64-bit dividend
+- **Problem**: If you only have a 32-bit number in EAX, what should EDX contain?
+- **Solution**: CDQ sets EDX to 0x00000000 if EAX is positive, 0xFFFFFFFF if EAX is negative
+
+### Complete Instruction Theory and Specification
+
+**CDQ** sign-extends EAX into EDX, creating a properly formatted 64-bit signed number in EDX:EAX.
+
+**Fundamental Operation:**
+```
+if (EAX >= 0) then
+    EDX ← 0x00000000
+else
+    EDX ← 0xFFFFFFFF
+```
+
+**Mathematical Principle:**
+In two's complement arithmetic, negative numbers have all high-order bits set to 1. CDQ extends this pattern from 32 bits to 64 bits.
+
+### Complete Syntax and Related Instructions
+
+**CDQ Family Instructions:**
+```assembly
+; 32-bit sign extension (most common)
+cdq                     ; 99 - Sign extend EAX into EDX
+
+; 16-bit sign extension  
+cwd                     ; 66 99 - Sign extend AX into DX
+
+; 64-bit sign extension (x64 mode)
+cqo                     ; 48 99 - Sign extend RAX into RDX
+```
+
+**Encoding and Performance:**
+```assembly
+cdq                     ; Single byte: 99
+                       ; 1 cycle on modern CPUs
+                       ; No memory access required
+                       ; No flags affected
+```
+
+### Division Preparation Patterns
+
+**Proper Signed Division Setup:**
+```assembly
+; Divide EAX by EBX (signed division)
+cdq                     ; Sign extend EAX into EDX:EAX
+idiv ebx                ; EDX:EAX ÷ EBX → EAX=quotient, EDX=remainder
+
+; Example with positive number:
+mov eax, 100            ; EAX = 100
+cdq                     ; EDX = 0x00000000 (positive)
+idiv ebx                ; Divide 0x00000000:0x00000064 by EBX
+
+; Example with negative number:
+mov eax, -100           ; EAX = 0xFFFFFF9C
+cdq                     ; EDX = 0xFFFFFFFF (negative extension)
+idiv ebx                ; Divide 0xFFFFFFFF:0xFFFFFF9C by EBX
+```
+
+**Common Mistake - Forgetting CDQ:**
+```assembly
+; WRONG - will produce incorrect results:
+mov eax, -100           ; EAX = negative number
+; EDX contains random data!
+idiv ebx                ; Division of random_EDX:EAX by EBX
+
+; CORRECT - always use CDQ for signed division:
+mov eax, -100           ; EAX = negative number  
+cdq                     ; EDX = proper sign extension
+idiv ebx                ; Correct signed division
+```
+
+### Alternative Approaches and Comparisons
+
+**Manual Sign Extension (less efficient):**
+```assembly
+; Instead of CDQ:
+mov edx, eax            ; Copy EAX to EDX
+sar edx, 31             ; Arithmetic shift right 31 bits
+                       ; This creates 0x00000000 or 0xFFFFFFFF
+; CDQ is faster and more readable!
+```
+
+**Zero Extension for Unsigned Division:**
+```assembly
+; For unsigned division, don't use CDQ:
+mov eax, unsigned_value
+xor edx, edx            ; Clear EDX (zero extension)
+div ebx                 ; Unsigned division
+
+; CDQ would be wrong for unsigned numbers:
+mov eax, 0x80000000     ; Large unsigned number
+cdq                     ; EDX = 0xFFFFFFFF (WRONG for unsigned!)
+```
+
+---
+
+## 📚 Comprehensive Instruction Reference: IDIV
+
+> **🚩 Signed Division Master**: IDIV performs signed integer division with quotient and remainder results, handling the complexities of two's complement arithmetic.
+
+### Historical Context and Evolution 📜
+
+IDIV (Integer Divide) implements signed division using two's complement arithmetic. Division is the most complex basic arithmetic operation, requiring special handling for signs, remainders, and error conditions.
+
+**Complexity Factors:**
+- **Sign handling**: Results depend on dividend and divisor signs
+- **Remainder calculation**: Sign of remainder follows dividend sign
+- **Error conditions**: Division by zero and overflow must be detected
+- **Performance**: Division is the slowest basic arithmetic operation
+
+### Complete Instruction Theory and Specification
+
+**IDIV** divides a signed integer dividend by a signed integer divisor, producing both quotient and remainder.
+
+**Fundamental Operation:**
+```
+Quotient ← Dividend ÷ Divisor
+Remainder ← Dividend MOD Divisor
+```
+
+**Operand Sizes and Results:**
+```assembly
+; 16-bit dividend ÷ 8-bit divisor:
+idiv bl                 ; AX ÷ BL → AL=quotient, AH=remainder
+
+; 32-bit dividend ÷ 16-bit divisor:
+idiv bx                 ; DX:AX ÷ BX → AX=quotient, DX=remainder  
+
+; 64-bit dividend ÷ 32-bit divisor:
+idiv ebx                ; EDX:EAX ÷ EBX → EAX=quotient, EDX=remainder
+
+; 128-bit dividend ÷ 64-bit divisor (x64):
+idiv rbx                ; RDX:RAX ÷ RBX → RAX=quotient, RDX=remainder
+```
+
+### Sign Rules and Remainder Behavior
+
+**Quotient Sign Rules:**
+```
+(+) ÷ (+) = (+)    Example: +8 ÷ +3 = +2 remainder +2
+(+) ÷ (-) = (-)    Example: +8 ÷ -3 = -2 remainder +2  
+(-) ÷ (+) = (-)    Example: -8 ÷ +3 = -2 remainder -2
+(-) ÷ (-) = (+)    Example: -8 ÷ -3 = +2 remainder -2
+```
+
+**Critical Rule**: Remainder always has the same sign as the dividend!
+
+**Practical Examples:**
+```assembly
+; Positive dividend examples:
+mov eax, 17             ; Dividend = +17
+cdq                     ; Sign extend to EDX:EAX
+mov ebx, 5              ; Divisor = +5
+idiv ebx                ; Result: EAX = +3, EDX = +2 (17 = 3×5 + 2)
+
+mov eax, 17             ; Dividend = +17
+cdq                     ; Sign extend to EDX:EAX
+mov ebx, -5             ; Divisor = -5
+idiv ebx                ; Result: EAX = -3, EDX = +2 (17 = -3×(-5) + 2)
+
+; Negative dividend examples:
+mov eax, -17            ; Dividend = -17
+cdq                     ; Sign extend to EDX:EAX
+mov ebx, 5              ; Divisor = +5
+idiv ebx                ; Result: EAX = -3, EDX = -2 (-17 = -3×5 + (-2))
+```
+
+### Error Conditions and Exception Handling
+
+**Division by Zero:**
+```assembly
+; Always check for zero divisor:
+test ebx, ebx           ; Check if divisor is zero
+jz division_by_zero     ; Handle error case
+cdq                     ; Safe to proceed
+idiv ebx                ; Perform division
+```
+
+**Overflow Condition:**
+Division overflow occurs when the quotient doesn't fit in the result register:
+```assembly
+; Example: Dividing large number by 1
+mov eax, 0x80000000     ; Most negative 32-bit number
+cdq                     ; EDX:EAX = 0xFFFFFFFF:0x80000000
+mov ebx, -1             ; Divisor = -1
+idiv ebx                ; OVERFLOW! Result would be +2147483648
+                       ; But maximum positive 32-bit = +2147483647
+```
+
+**Safe Division Pattern:**
+```assembly
+safe_divide:
+    ; Check for division by zero
+    test ebx, ebx
+    jz div_by_zero_error
+    
+    ; Check for overflow condition  
+    cmp eax, 0x80000000
+    jne normal_division
+    cmp ebx, -1
+    je overflow_error
+    
+normal_division:
+    cdq
+    idiv ebx
+    ; EAX = quotient, EDX = remainder
+    ret
+    
+div_by_zero_error:
+overflow_error:
+    ; Handle error conditions
+    ret
+```
+
+### Performance Characteristics and Optimization
+
+**Division Performance:**
+```assembly
+idiv ebx                ; 20-30 cycles on modern CPUs
+                       ; Still the slowest basic arithmetic operation
+                       ; Cannot be executed in parallel with other operations
+```
+
+**Division Avoidance Techniques:**
+```assembly
+; For powers of 2, use arithmetic shift:
+; Instead of: divide by 8
+mov eax, dividend
+cdq
+mov ebx, 8
+idiv ebx                ; Slow: 20-30 cycles
+
+; Use: arithmetic shift right
+mov eax, dividend
+sar eax, 3              ; Fast: 1 cycle (8 = 2³)
+; Note: SAR handles negative numbers correctly for power-of-2 division
+```
+
+**Reciprocal Multiplication (Advanced):**
+```assembly
+; For constant divisors, precompute reciprocal:
+; Instead of: divide by 3 repeatedly
+idiv 3                  ; 20-30 cycles each time
+
+; Use: multiply by reciprocal
+; reciprocal_of_3 = (2³² + 3 - 1) / 3 = 0x55555556
+imul eax, 0x55555556    ; 3-4 cycles
+; Requires careful handling of precision and rounding
+```
+
+---
     jo overflow_error               ; Cycles: 1-3, Overflow check
     jmp display_result              ; Cycles: 3-4
     
@@ -165,6 +639,271 @@ do_division:
     
     ; Check for division by zero - critical error prevention
     test ebx, ebx                   ; Cycles: 1, Test if divisor is zero
+
+## 📚 Comprehensive Instruction Reference: TEST
+
+> **🚩 Efficient Zero Testing**: TEST provides the most efficient way to check for zero values and bit patterns without modifying operands.
+
+### Historical Context and Evolution 📜
+
+The TEST instruction was introduced to optimize the common pattern of checking whether a value is zero or testing specific bit patterns. Before TEST, programmers had to use CMP or perform actual arithmetic operations that modified registers.
+
+**Design Innovation:**
+TEST performs a logical AND operation but discards the result, keeping only the flags. This allows for efficient testing without modifying data.
+
+### Complete Instruction Theory and Specification
+
+**TEST** performs a bitwise AND operation between two operands but discards the result, updating only the processor flags based on the outcome.
+
+**Fundamental Operation:**
+```
+Temporary ← Operand1 AND Operand2
+Flags ← Updated based on temporary result
+(Temporary result is discarded, operands unchanged)
+```
+
+**Flag Updates:**
+- **ZF**: Set if result is zero (all bits ANDed to 0)
+- **SF**: Set if result's most significant bit is 1
+- **PF**: Set if result has even parity in low byte
+- **CF**: Always cleared (0)
+- **OF**: Always cleared (0)
+
+### Complete Syntax Reference and Usage Patterns
+
+**Most Common Pattern - Zero Testing:**
+```assembly
+test eax, eax           ; Test if EAX is zero
+jz is_zero              ; Jump if EAX = 0
+jnz is_not_zero         ; Jump if EAX ≠ 0
+
+; Why TEST instead of CMP?
+test eax, eax           ; 2 bytes: 85 C0
+cmp eax, 0              ; 3 bytes: 83 F8 00
+; TEST is more compact and equally fast!
+```
+
+**Bit Pattern Testing:**
+```assembly
+; Test specific bits
+test eax, 1             ; Test bit 0 (odd/even check)
+jnz is_odd              ; Jump if bit 0 is set
+
+test eax, 0x80000000    ; Test bit 31 (sign bit)
+jnz is_negative         ; Jump if negative
+
+test eax, 0xFF          ; Test low byte
+jnz low_byte_not_zero   ; Jump if low byte contains data
+```
+
+**All Supported Operand Combinations:**
+```assembly
+; Register with register (most common for zero testing)
+test eax, eax           ; 85 C0 - Self-test for zero
+test eax, ebx           ; 85 D8 - Test bits common to both
+
+; Register with immediate
+test eax, 1             ; F7 C0 01 00 00 00 - Test specific bits
+test al, 0x80           ; A8 80 - Test bit 7 of AL
+
+; Memory with register
+test [variable], eax    ; 85 05 + address - Test memory location
+test [esi], ebx         ; 85 1E - Test memory via pointer
+
+; Memory with immediate
+test byte [esi], 0x80   ; F6 06 80 - Test bit in memory byte
+test dword [esi], 1     ; F7 06 01 00 00 00 - Test bit in memory dword
+```
+
+### Advanced Bit Testing Techniques
+
+**Single Bit Testing:**
+```assembly
+; Test if bit N is set
+test eax, (1 shl N)     ; Test bit N
+jnz bit_N_set           ; Jump if bit N is set
+
+; Example: Test if bit 3 is set
+test eax, 8             ; 8 = 1 shl 3
+jnz bit_3_set
+```
+
+**Multiple Bit Testing:**
+```assembly
+; Test if any of several bits are set
+test eax, 0x0F          ; Test bits 0-3
+jnz some_low_bits_set   ; Jump if any of bits 0-3 are set
+
+; Test if all of several bits are set
+and eax, 0x0F           ; Mask to bits 0-3
+cmp eax, 0x0F           ; Compare with all bits set
+je all_low_bits_set     ; Jump if all bits 0-3 are set
+```
+
+**Flag State Testing:**
+```assembly
+; Get flags into register for testing
+pushfd                  ; Push flags onto stack
+pop eax                 ; Pop flags into EAX
+test eax, 0x40          ; Test Zero Flag (bit 6)
+jnz zero_flag_was_set   ; Jump if ZF was set
+```
+
+### Performance Characteristics and Optimization
+
+**Why TEST is Preferred for Zero Checking:**
+```assembly
+; Traditional approach:
+cmp eax, 0              ; 3 bytes, 1 cycle
+jz is_zero              ; 2 bytes, 1-3 cycles
+
+; Optimized approach:
+test eax, eax           ; 2 bytes, 1 cycle  
+jz is_zero              ; 2 bytes, 1-3 cycles
+; Result: Same speed, 1 byte smaller encoding
+```
+
+**Common Optimization Patterns:**
+```assembly
+; Instead of expensive division for even/odd:
+; SLOW:
+mov edx, 0
+div two                 ; Many cycles
+cmp edx, 0              ; Check remainder
+je is_even
+
+; FAST:
+test eax, 1             ; 1 cycle
+jz is_even              ; Even numbers have bit 0 = 0
+```
+
+---
+
+## 📚 Comprehensive Instruction Reference: SUB
+
+> **🚩 Arithmetic Foundation**: SUB is the complement to ADD, providing subtraction with comprehensive flag updates for all comparison and arithmetic operations.
+
+### Historical Context and Evolution 📜
+
+SUB represents one of the fundamental arithmetic operations, implementing two's complement subtraction that handles both signed and unsigned arithmetic through the same hardware logic.
+
+**Mathematical Foundation:**
+SUB implements: Result = Destination - Source using two's complement arithmetic, which effectively performs: Destination + (-Source) using the same addition circuitry.
+
+### Complete Instruction Theory and Specification
+
+**SUB** subtracts the source operand from the destination operand and stores the result in the destination, updating all arithmetic flags.
+
+**Fundamental Operation:**
+```
+Destination ← Destination - Source
+Flags ← Updated based on result
+```
+
+**Comprehensive Flag Updates:**
+- **CF**: Set if unsigned underflow (destination < source in unsigned arithmetic)
+- **ZF**: Set if result is zero (destination == source)
+- **SF**: Set if result is negative (most significant bit = 1)
+- **OF**: Set if signed overflow occurs
+- **PF**: Set if low byte has even number of 1 bits
+- **AF**: Set if borrow from bit 4 to bit 3 occurs
+
+### Complete Syntax Reference and API
+
+**All Supported Operand Combinations:**
+```assembly
+; Register - Immediate
+sub eax, 42             ; 83 E8 2A (short form) or 2D 2A 00 00 00 (long form)
+sub ebx, 1000           ; 81 EB E8 03 00 00 (large immediate)
+
+; Register - Register  
+sub eax, ebx            ; 29 D8 - Subtract EBX from EAX
+sub ecx, edx            ; 29 D1 - Subtract EDX from ECX
+
+; Register - Memory
+sub eax, [variable]     ; 2B 05 + address - Subtract memory from register
+sub ebx, [esi + 4]      ; 2B 5E 04 - Subtract memory via addressing
+
+; Memory - Register
+sub [variable], eax     ; 29 05 + address - Subtract register from memory
+sub [esi], ebx          ; 29 1E - Subtract via pointer
+
+; Memory - Immediate
+sub dword [esi], 10     ; 83 2E 0A - Subtract immediate from memory
+sub byte [esi], 5       ; 80 2E 05 - Byte subtraction
+```
+
+**Size Variants and Encoding Optimizations:**
+```assembly
+; 8-bit subtraction
+sub al, 5               ; 2C 05 - Subtract from AL
+sub bl, cl              ; 28 CB - Register to register, 8-bit
+
+; 16-bit subtraction  
+sub ax, 1000            ; 66 2D E8 03 - Requires 16-bit prefix
+sub bx, cx              ; 66 29 CB - 16-bit register operation
+
+; 32-bit subtraction (default in 32-bit mode)
+sub eax, 100000         ; 2D A0 86 01 00 - Large immediate
+sub ebx, ecx            ; 29 CB - Register to register
+
+; Optimized immediate forms
+sub eax, 1              ; 83 E8 01 - Short form for small values
+sub eax, 128            ; 83 E8 80 - Still short form (sign-extended)
+sub eax, 129            ; 2D 81 00 00 00 - Must use long form
+```
+
+### Arithmetic Applications and Flag Interpretation
+
+**Comparison via Subtraction:**
+SUB is the foundation of all comparison operations - CMP is literally SUB without storing the result:
+```assembly
+; These operations produce identical flags:
+sub eax, ebx            ; EAX = EAX - EBX, flags updated
+cmp eax, ebx            ; Flags updated as if EAX - EBX, but EAX unchanged
+
+; Flag interpretation after subtraction:
+sub eax, ebx
+jz equal                ; Jump if EAX was equal to EBX
+jc unsigned_underflow   ; Jump if EAX < EBX (unsigned)
+js negative_result      ; Jump if result is negative
+jo signed_overflow      ; Jump if signed overflow occurred
+```
+
+**Multi-Precision Subtraction:**
+```assembly
+; Subtracting 64-bit numbers using 32-bit operations
+; Number1 (EDX:EAX) - Number2 (EBX:ECX) = Result (EDI:ESI)
+sub eax, ecx            ; Subtract low 32 bits
+sbb edx, ebx            ; Subtract high 32 bits with borrow
+mov esi, eax            ; Store low result
+mov edi, edx            ; Store high result
+```
+
+### Performance Characteristics and Common Patterns
+
+**Decrement vs. SUB:**
+```assembly
+; For subtracting 1:
+sub eax, 1              ; 3 bytes: 83 E8 01
+dec eax                 ; 1 byte: 48 (but doesn't update CF!)
+
+; Choose based on whether you need CF:
+sub eax, 1              ; Use when you need carry flag
+dec eax                 ; Use when CF doesn't matter and size is critical
+```
+
+**Zero Generation:**
+```assembly
+; Creating zero efficiently:
+sub eax, eax            ; 2 bytes: 29 C0, clears EAX to 0
+xor eax, eax            ; 2 bytes: 31 C0, also clears EAX to 0
+mov eax, 0              ; 5 bytes: B8 00 00 00 00
+
+; Both SUB and XOR are equally efficient for zeroing
+```
+
+---
     jz division_by_zero             ; Cycles: 1-3, Handle division by zero
     
     ; Prepare for signed division

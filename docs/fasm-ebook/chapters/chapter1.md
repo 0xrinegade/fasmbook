@@ -89,6 +89,224 @@ start:
     
     ; ⚡ Optimization Opportunity: Could use "xor eax, eax" (2 bytes, 1 cycle) instead
     ; 🏠 Homework: Try both approaches and compare assembly output
+
+## 📚 Comprehensive Instruction Reference: MOV
+
+> **🚩 First Instruction Deep Dive**: This is your first encounter with the MOV instruction - the foundation of all data movement in assembly programming.
+
+### Historical Context and Evolution 📜
+
+The MOV instruction traces its origins to the Intel 8008 processor (1972), making it one of the oldest and most fundamental instructions in computing history. When Intel created the 8008, they needed a simple way to move data between the processor's limited registers and memory. The "MOV" mnemonic comes from "MOVE," though paradoxically, it doesn't actually move data—it copies it.
+
+**Key Historical Milestones:**
+- **1972**: First appeared in Intel 8008 with basic register-to-register transfers
+- **1978**: Enhanced in 8086 with segment:offset addressing and 16-bit operations  
+- **1985**: Extended to 32-bit operations in 80386
+- **2003**: Expanded to 64-bit operations in x86-64 architecture
+- **2008**: Modern optimizations with micro-op fusion in Intel Core architecture
+
+### Complete Instruction Theory and Specification
+
+**MOV** is a data transfer instruction that copies data from a source to a destination. Despite its name suggesting movement, the source data remains unchanged—only the destination is modified.
+
+**Fundamental Operation:**
+```
+Destination ← Source
+```
+
+**Processor Internal Behavior:**
+1. **Fetch**: Instruction bytes are read from memory into instruction cache
+2. **Decode**: Processor determines source and destination operand types  
+3. **Execute**: Data is read from source, then written to destination
+4. **Retire**: Instruction completion is confirmed and results are committed
+
+### Complete Syntax Reference and API
+
+**Basic Syntax Patterns:**
+```assembly
+mov destination, source
+```
+
+**All Supported Operand Combinations:**
+
+| Source → Destination | Syntax Example | Encoding | Cycles | Notes |
+|---------------------|----------------|----------|---------|-------|
+| Immediate → Register | `mov eax, 42` | B8 2A 00 00 00 | 1 | Fastest data loading |
+| Immediate → Memory | `mov [ebx], 42` | C7 03 2A 00 00 00 | 3-4 | Direct memory initialization |
+| Register → Register | `mov eax, ebx` | 89 D8 | 1 | Register aliasing, zero latency on modern CPUs |
+| Register → Memory | `mov [ebx], eax` | 89 03 | 3-4 | Store operation, cache-dependent timing |
+| Memory → Register | `mov eax, [ebx]` | 8B 03 | 3-4 | Load operation, cache-dependent timing |
+| Memory → Memory | **INVALID** | N/A | N/A | x86 doesn't support memory-to-memory moves |
+
+**Size Variants and Their Encodings:**
+```assembly
+; 8-bit operations (byte)
+mov al, 0x42        ; B0 42 (1-byte immediate to AL register)
+mov bl, al          ; 88 C3 (register to register, 8-bit)
+mov [esi], al       ; 88 06 (register to memory, 8-bit)
+
+; 16-bit operations (word) - requires 66h prefix in 32-bit mode
+mov ax, 0x1234      ; 66 B8 34 12 (word immediate to AX)
+mov bx, ax          ; 66 89 C3 (word register to register)
+mov [esi], ax       ; 66 89 06 (word register to memory)
+
+; 32-bit operations (doubleword) - default in 32-bit mode
+mov eax, 0x12345678 ; B8 78 56 34 12 (dword immediate to EAX)
+mov ebx, eax        ; 89 C3 (dword register to register)
+mov [esi], eax      ; 89 06 (dword register to memory)
+
+; 64-bit operations (quadword) - available in 64-bit mode only
+mov rax, 0x123456789ABCDEF0  ; 48 B8 F0 DE BC 9A 78 56 34 12
+mov rbx, rax                 ; 48 89 C3
+mov [rsi], rax              ; 48 89 06
+```
+
+**Advanced Addressing Modes:**
+```assembly
+; Direct addressing
+mov eax, [0x401000]         ; A1 00 10 40 00 (load from absolute address)
+
+; Register indirect
+mov eax, [ebx]              ; 8B 03 (load from address in EBX)
+
+; Register + displacement
+mov eax, [ebx + 4]          ; 8B 43 04 (load from EBX + 4)
+mov eax, [ebx + 1000]       ; 8B 83 E8 03 00 00 (load with 32-bit displacement)
+
+; Scaled index addressing (SIB - Scale, Index, Base)
+mov eax, [ebx + esi*2]      ; 8B 04 73 (EBX + ESI*2)
+mov eax, [ebx + esi*4 + 8]  ; 8B 44 B3 08 (EBX + ESI*4 + 8)
+
+; Segment overrides (rarely used in modern 32-bit programming)
+mov eax, es:[ebx]           ; 26 8B 03 (load from ES:EBX)
+```
+
+### Performance Characteristics and Optimization
+
+**Cycle Timing Analysis:**
+
+**Register Operations (Fastest):**
+- Register to register: **1 cycle latency, 0.25 cycles throughput** on modern CPUs
+- Immediate to register: **1 cycle latency, 0.25 cycles throughput**
+- Modern CPUs can execute 4 register MOV instructions simultaneously
+
+**Memory Operations (Cache-Dependent):**
+- **L1 Cache Hit**: 3-4 cycles latency
+- **L2 Cache Hit**: 10-12 cycles latency  
+- **L3 Cache Hit**: 25-40 cycles latency
+- **Main Memory**: 100-300 cycles latency
+- **Page Fault**: 1,000-10,000 cycles (operating system overhead)
+
+**Micro-architectural Optimizations:**
+```assembly
+; Modern CPUs optimize register-to-register moves through "register renaming"
+mov eax, ebx    ; This doesn't actually copy data!
+                ; CPU just makes EAX point to the same physical register as EBX
+                ; Result: Zero execution time on Intel Core and AMD Zen architectures
+
+; However, immediate-to-register moves cannot be optimized away
+mov eax, 42     ; This requires actual execution unit time
+                ; But modern CPUs can execute multiple of these per cycle
+```
+
+### Common Use Cases and Programming Patterns
+
+**1. Variable Initialization:**
+```assembly
+mov eax, 0              ; Initialize accumulator
+mov [counter], eax      ; Store initial value
+```
+
+**2. Function Parameter Passing:**
+```assembly
+mov eax, parameter1     ; Load first parameter
+mov ebx, parameter2     ; Load second parameter  
+call my_function        ; Call with parameters in registers
+```
+
+**3. Array Element Access:**
+```assembly
+mov eax, [array_base + esi*4]  ; Load array[esi] (4-byte elements)
+```
+
+**4. Structure Member Access:**
+```assembly
+mov eax, [struct_ptr + 8]      ; Access member at offset 8
+```
+
+**5. Register Backup and Restore:**
+```assembly
+mov [temp_storage], eax        ; Save EAX value
+; ... other operations ...
+mov eax, [temp_storage]        ; Restore EAX value
+```
+
+### Common Pitfalls and Best Practices
+
+**❌ Common Mistakes:**
+```assembly
+; MISTAKE: Trying to move memory to memory
+mov [destination], [source]    ; INVALID! Use register as intermediate
+
+; CORRECT: Use register for memory-to-memory transfer
+mov eax, [source]
+mov [destination], eax
+```
+
+**✅ Best Practices:**
+```assembly
+; Prefer register operations when possible
+mov eax, 42            ; Fast: immediate to register
+mov [var], eax         ; Then store to memory
+
+; Use appropriate data sizes
+mov al, 0              ; Use 8-bit when only 8 bits needed
+mov ax, 0              ; Use 16-bit when only 16 bits needed
+mov eax, 0             ; Use 32-bit for full register operations
+```
+
+**⚡ Performance Optimization Techniques:**
+```assembly
+; Instead of loading the same value multiple times:
+mov eax, expensive_calculation_result
+mov [var1], eax        ; Reuse the loaded value
+mov [var2], eax        ; Rather than recalculating
+mov [var3], eax
+
+; Prefer smaller immediate values when possible:
+mov eax, 0             ; 5 bytes: B8 00 00 00 00
+; vs.
+xor eax, eax           ; 2 bytes: 31 C0 (and often faster!)
+```
+
+### Integration with Modern CPU Features
+
+**Branch Prediction Impact:**
+MOV instructions don't affect branch prediction, making them ideal for critical paths where predictable performance is essential.
+
+**Cache Optimization:**
+```assembly
+; Cache-friendly sequential access
+mov eax, [esi]         ; Load first element
+mov ebx, [esi + 4]     ; Load second element (likely same cache line)
+mov ecx, [esi + 8]     ; Load third element (definitely same cache line)
+
+; Cache-unfriendly random access
+mov eax, [large_array + random_offset1]  ; Possible cache miss
+mov ebx, [large_array + random_offset2]  ; Another possible cache miss
+```
+
+**SIMD Integration:**
+Modern programs often use MOV to prepare data for SIMD operations:
+```assembly
+mov eax, [data1]       ; Load scalar data
+mov ebx, [data2]       ; Load more scalar data
+movd xmm0, eax         ; Transfer to SIMD register
+movd xmm1, ebx         ; Transfer to SIMD register
+; ... continue with SIMD operations
+```
+
+---
     
 display_loop:
     ; 📊 Function call overhead analysis
@@ -98,10 +316,1354 @@ display_loop:
     
     push message                ; 📊 Cycles: 2, Size: 5 bytes (68 + immediate)
                                ; 📊 Stack: ESP = ESP - 4, Memory[ESP] = address of message
+
+## 📚 Comprehensive Instruction Reference: PUSH
+
+> **🚩 Stack Operations Foundation**: The PUSH instruction is your gateway to understanding the processor's stack—one of the most critical concepts in systems programming.
+
+### Historical Context and Evolution 📜
+
+The PUSH instruction emerged with the Intel 8008 processor (1972) as part of the revolutionary concept of a hardware-managed stack. Before the stack, programmers had to manually manage memory for temporary storage and function calls, leading to complex and error-prone code.
+
+**Historical Significance:**
+- **1972**: First hardware stack implementation in Intel 8008
+- **1978**: Enhanced with 16-bit operations and segment:offset addressing in 8086
+- **1985**: Extended to 32-bit stack operations in 80386
+- **1995**: Optimized stack operations in Pentium with dedicated stack cache
+- **2003**: 64-bit stack operations with 8-byte alignment requirements in x86-64
+
+**Why the Stack Revolutionized Programming:**
+The stack solved three fundamental problems:
+1. **Automatic Memory Management**: No manual pointer arithmetic for temporary storage
+2. **Function Call Mechanism**: Standardized way to pass parameters and return addresses
+3. **Nested Operations**: Support for recursive function calls and nested interrupts
+
+### Complete Instruction Theory and Specification
+
+**PUSH** decrements the stack pointer (ESP/RSP) and stores data at the new stack location. The stack grows downward in memory (toward lower addresses), which is a convention established by Intel and followed by all x86 processors.
+
+**Fundamental Operation:**
+```
+ESP ← ESP - operand_size
+Memory[ESP] ← Source_operand
+```
+
+**Stack Pointer Behavior:**
+- **32-bit mode**: ESP decreases by 4 bytes (32 bits)
+- **16-bit mode**: SP decreases by 2 bytes (16 bits)  
+- **64-bit mode**: RSP decreases by 8 bytes (64 bits)
+
+**Processor Internal Behavior:**
+1. **Stack Pointer Update**: ESP is decremented by the operand size
+2. **Memory Write**: Source data is written to the new stack location
+3. **Atomicity**: Both operations complete atomically (cannot be interrupted mid-instruction)
+
+### Complete Syntax Reference and API
+
+**Basic Syntax:**
+```assembly
+push source_operand
+```
+
+**Supported Operand Types and Encodings:**
+
+| Operand Type | Syntax Example | Encoding | Size | Cycles | Notes |
+|-------------|----------------|----------|------|---------|-------|
+| 32-bit Register | `push eax` | 50+r | 1 byte | 1-2 | Most efficient form |
+| 16-bit Register | `push ax` | 66 50+r | 2 bytes | 1-2 | Requires 16-bit prefix |
+| 8-bit Register | **INVALID** | N/A | N/A | N/A | Cannot push 8-bit values |
+| 32-bit Immediate | `push 0x12345678` | 68 78 56 34 12 | 5 bytes | 1-2 | Large immediate |
+| 8-bit Immediate | `push 42` | 6A 2A | 2 bytes | 1-2 | Sign-extended to 32 bits |
+| Memory 32-bit | `push [eax]` | FF 30 | 2+ bytes | 3-5 | Memory read + stack write |
+| Memory 16-bit | `push word [eax]` | 66 FF 30 | 3 bytes | 3-5 | Requires size prefix |
+| Segment Register | `push ds` | 1E | 1 byte | 1-2 | Rarely used in modern code |
+
+**Advanced Forms and Special Cases:**
+```assembly
+; Register pushes (most common)
+push eax                ; 50 - Push EAX register
+push ebx                ; 53 - Push EBX register  
+push ecx                ; 51 - Push ECX register
+push edx                ; 52 - Push EDX register
+push esi                ; 56 - Push ESI register
+push edi                ; 57 - Push EDI register
+push ebp                ; 55 - Push EBP register
+push esp                ; 54 - Push ESP register (current stack pointer!)
+
+; Immediate value pushes
+push 0                  ; 6A 00 - Push small immediate (sign-extended)
+push 255                ; 6A FF - Push 8-bit immediate  
+push 256                ; 68 00 01 00 00 - Push 32-bit immediate
+push -1                 ; 6A FF - Push -1 (all bits set)
+
+; Memory operand pushes
+push [variable]         ; FF 35 + address - Push memory location
+push [eax]              ; FF 30 - Push value at address in EAX
+push [eax + 4]          ; FF 70 04 - Push value at EAX + 4
+push [eax + ebx*2]      ; FF 34 58 - Push value at EAX + EBX*2
+
+; 16-bit operations (less common)
+push ax                 ; 66 50 - Push 16-bit register
+push word [eax]         ; 66 FF 30 - Push 16-bit memory value
+
+; Segment register pushes (legacy)
+push ds                 ; 1E - Push data segment
+push es                 ; 06 - Push extra segment  
+push fs                 ; 0F A0 - Push FS segment
+push gs                 ; 0F A8 - Push GS segment
+```
+
+### Stack Frame Management and Calling Conventions
+
+**Standard Function Prologue Using PUSH:**
+```assembly
+; Standard function entry
+push ebp                ; Save caller's frame pointer
+mov ebp, esp            ; Establish new frame pointer
+push ebx                ; Save callee-saved registers
+push esi
+push edi
+sub esp, 16             ; Allocate local variable space
+
+; Function body here...
+
+; Standard function exit  
+add esp, 16             ; Deallocate local variables
+pop edi                 ; Restore callee-saved registers
+pop esi
+pop ebx
+pop ebp                 ; Restore caller's frame pointer
+ret                     ; Return to caller
+```
+
+**Parameter Passing Conventions:**
+```assembly
+; C calling convention (cdecl) - parameters pushed right to left
+push param3             ; Third parameter (rightmost)
+push param2             ; Second parameter  
+push param1             ; First parameter (leftmost)
+call function           ; Call with parameters on stack
+add esp, 12             ; Caller cleans up (3 * 4 bytes)
+
+; stdcall convention - callee cleans up
+push param3
+push param2
+push param1
+call function           ; Function will clean up stack automatically
+
+; fastcall convention - first parameters in registers
+mov ecx, param1         ; First parameter in ECX
+mov edx, param2         ; Second parameter in EDX
+push param3             ; Remaining parameters on stack
+call function
+```
+
+### Performance Characteristics and Optimization
+
+**Cycle Timing Analysis:**
+
+**Register PUSH Operations:**
+- **Modern CPUs**: 1 cycle latency, 0.5-1 cycles throughput
+- **Stack Engine**: Dedicated hardware optimizes consecutive pushes
+- **Micro-op Fusion**: Push operations can be combined with other operations
+
+**Memory PUSH Operations:**
+- **L1 Cache Hit**: 3-4 cycles total (memory read + stack write)
+- **Cache Miss**: Add 10-300 cycles depending on memory hierarchy
+- **Stack Cache**: Some CPUs maintain dedicated cache for stack operations
+
+**Performance Optimization Strategies:**
+```assembly
+; EFFICIENT: Batch register pushes
+push eax                ; 1 cycle
+push ebx                ; 1 cycle  
+push ecx                ; 1 cycle
+; Total: 3 cycles, hardware can pipeline these
+
+; LESS EFFICIENT: Interleaved operations
+push eax                ; 1 cycle
+mov ebx, [data]         ; 3-4 cycles (memory operation)
+push ebx                ; 1 cycle
+; Total: 5-6 cycles, cannot optimize as effectively
+```
+
+**Stack Alignment Considerations:**
+```assembly
+; Modern x86-64 requires 16-byte stack alignment
+; before function calls. PUSH operations can affect this:
+
+; Stack is 16-byte aligned
+push rax                ; Now 8-byte aligned (RSP & 0xF = 8)  
+push rbx                ; Now 16-byte aligned again (RSP & 0xF = 0)
+call function           ; Safe to call
+
+; Alternative: Use SUB for alignment-aware allocation
+sub rsp, 16             ; Allocate 16 bytes, maintain alignment
+mov [rsp], rax          ; Store first value
+mov [rsp + 8], rbx      ; Store second value
+```
+
+### Stack Overflow and Error Conditions
+
+**Stack Overflow Detection:**
+```assembly
+; Check available stack space before large allocations
+mov eax, esp            ; Get current stack pointer
+sub eax, large_size     ; Calculate new stack position
+cmp eax, [stack_limit]  ; Compare with stack boundary
+jb stack_overflow       ; Jump if would overflow
+
+; Safer approach for large allocations:
+push eax                ; Save registers
+push ecx
+call check_stack_space  ; Custom function to verify space
+test eax, eax
+jz stack_okay
+jmp handle_stack_error
+stack_okay:
+pop ecx                 ; Restore registers
+pop eax
+```
+
+**Stack Corruption Detection:**
+```assembly
+; Canary value technique for stack protection
+push 0xDEADBEEF         ; Push canary value
+; ... function operations ...
+pop eax                 ; Retrieve canary
+cmp eax, 0xDEADBEEF     ; Check if corrupted
+jne stack_corrupted     ; Handle corruption
+```
+
+### Integration with Modern Programming Patterns
+
+**Exception Handling Integration:**
+```assembly
+; Structured Exception Handling (SEH) uses stack frames
+push handler_address    ; Exception handler
+push fs:[0]             ; Previous exception handler
+mov fs:[0], esp         ; Install new handler
+; ... protected code ...
+pop fs:[0]              ; Restore previous handler
+add esp, 4              ; Remove handler address
+```
+
+**Debugging and Profiling Support:**
+```assembly
+; Stack frame walking for debuggers
+push ebp                ; Create standard frame
+mov ebp, esp            ; Frame pointer for debugger
+; Debugger can now walk: EBP -> [EBP] -> [EBP+4] etc.
+```
+
+**Multi-threading Considerations:**
+```assembly
+; Each thread has its own stack, PUSH is thread-safe
+; within a single thread, but shared data needs synchronization
+push eax                ; Thread-local operation, always safe
+push [shared_variable]  ; Pushes current value, but value may change
+```
+
+---
     call [printf]               ; 📊 Cycles: 15-20 (indirect call + system overhead)
                                ; 📊 Actions: Pushes return address, jumps to printf
+
+## 📚 Comprehensive Instruction Reference: CALL
+
+> **🚩 Function Call Foundation**: The CALL instruction is the cornerstone of structured programming, enabling modular code design and function-based architecture.
+
+### Historical Context and Evolution 📜
+
+The CALL instruction represents one of the most significant innovations in processor design. Before its introduction, programmers had to manually manage function calls using combinations of PUSH and JMP instructions, making code complex and error-prone.
+
+**Historical Development:**
+- **1972**: Basic call/return mechanism in Intel 8008 (simple stack-based)
+- **1978**: Enhanced CALL with segment:offset addressing in 8086
+- **1985**: Near and far call distinctions established in 80386
+- **1993**: Optimized call prediction and return stack buffer in Pentium
+- **2006**: Advanced call/return prediction in Core architecture
+- **2017**: Control Flow Integrity (CFI) features to prevent call-based attacks
+
+**Revolutionary Impact:**
+The CALL instruction enabled:
+1. **Structured Programming**: Reusable functions and procedures
+2. **Operating Systems**: System call interfaces and kernel services
+3. **High-Level Languages**: Compiler support for function calls
+4. **Software Libraries**: Modular code organization and sharing
+
+### Complete Instruction Theory and Specification
+
+**CALL** performs a subroutine call by pushing the return address onto the stack and transferring control to the target address. It combines the functionality of PUSH (save return address) and JMP (transfer control) into a single atomic operation.
+
+**Fundamental Operation:**
+```
+ESP ← ESP - 4 (or 8 in 64-bit mode)
+Memory[ESP] ← Current_EIP + Instruction_Length  
+EIP ← Target_Address
+```
+
+**Return Address Calculation:**
+The return address is the address of the instruction immediately following the CALL instruction. The processor automatically calculates this address during instruction execution.
+
+**Processor Internal Behavior:**
+1. **Address Calculation**: Target address is computed based on addressing mode
+2. **Return Address Push**: Current EIP + instruction length is pushed onto stack
+3. **Control Transfer**: EIP is loaded with target address
+4. **Pipeline Flush**: Instruction pipeline may be flushed for indirect calls
+5. **Branch Prediction**: Modern CPUs predict call targets for performance
+
+### Complete Syntax Reference and API
+
+**Basic Syntax Variants:**
+```assembly
+call target         ; Direct call
+call register       ; Indirect call through register
+call [memory]       ; Indirect call through memory
+```
+
+**Addressing Modes and Encodings:**
+
+| Call Type | Syntax | Encoding | Size | Cycles | Use Case |
+|-----------|--------|----------|------|---------|----------|
+| Direct Near | `call function` | E8 + rel32 | 5 bytes | 2-3 | Local functions |
+| Indirect Register | `call eax` | FF D0+r | 2 bytes | 2-4 | Function pointers |
+| Indirect Memory | `call [eax]` | FF 10+rm | 2+ bytes | 4-6 | Virtual functions |
+| Direct Far | `call far [address]` | 9A + addr | 7 bytes | 20+ | Segment changes (rare) |
+| Indirect Far | `call far [memory]` | FF 1D+rm | 3+ bytes | 25+ | Dynamic segments (rare) |
+
+**Detailed Encoding Examples:**
+```assembly
+; Direct calls - most common and fastest
+call function           ; E8 xx xx xx xx (relative offset)
+call $+5                ; E8 00 00 00 00 (call next instruction)
+call near_function      ; E8 xx xx xx xx (within ±2GB in 64-bit mode)
+
+; Indirect register calls - function pointers
+call eax                ; FF D0 - Call address in EAX
+call ebx                ; FF D3 - Call address in EBX
+call ecx                ; FF D1 - Call address in ECX
+call edx                ; FF D2 - Call address in EDX
+call esi                ; FF D6 - Call address in ESI
+call edi                ; FF D7 - Call address in EDI
+call ebp                ; FF D5 - Call address in EBP (unusual)
+call esp                ; FF D4 - Call address in ESP (dangerous!)
+
+; Indirect memory calls - vtables and function tables
+call [function_ptr]     ; FF 15 xx xx xx xx - Call through memory
+call [eax]              ; FF 10 - Call address stored at EAX
+call [eax + 4]          ; FF 50 04 - Call address at EAX + 4
+call [eax + ebx*4]      ; FF 14 98 - Call address at EAX + EBX*4
+call [vtable + method*4] ; FF 14 85 xx xx xx xx - Virtual method call
+
+; 16-bit calls (legacy mode)
+call word function      ; 66 E8 xx xx - 16-bit relative call
+call word [bx]          ; 66 FF 17 - 16-bit indirect call
+
+; Far calls (segmented memory, rarely used)
+call far [segment:offset] ; 9A offset segment - Direct far call
+call far [memory]       ; FF 1D xx xx xx xx - Indirect far call
+```
+
+### Calling Conventions and Parameter Passing
+
+**Standard Calling Conventions:**
+
+**1. C Calling Convention (cdecl):**
+```assembly
+; Caller's responsibility:
+push param3             ; Parameters pushed right to left
+push param2
+push param1
+call function           ; Make the call
+add esp, 12             ; Caller cleans up stack (3 * 4 bytes)
+
+; Function implementation:
+function:
+    push ebp            ; Save frame pointer
+    mov ebp, esp        ; Establish frame
+    ; Access parameters: [ebp+8]=param1, [ebp+12]=param2, [ebp+16]=param3
+    ; ... function body ...
+    pop ebp             ; Restore frame pointer
+    ret                 ; Return (stack cleanup by caller)
+
+## 📚 Comprehensive Instruction Reference: RET
+
+> **🚩 Function Return Foundation**: The RET instruction is the perfect complement to CALL, providing the mechanism for functions to return control to their callers.
+
+### Historical Context and Evolution 📜
+
+The RET (Return) instruction was created as the natural counterpart to CALL, completing the function call mechanism that revolutionized programming. Together, CALL and RET enabled the development of structured programming, operating systems, and modern software architecture.
+
+**Historical Development:**
+- **1972**: Basic return mechanism in Intel 8008
+- **1978**: Enhanced with far returns and stack management in 8086
+- **1985**: 32-bit return addresses and advanced stack cleanup in 80386
+- **1993**: Return Stack Buffer (RSB) for return address prediction in Pentium
+- **2008**: Enhanced return prediction with loop stack in modern CPUs
+
+**Architectural Significance:**
+RET completes the function call abstraction by:
+1. **Restoring Control Flow**: Returns execution to the point after the original CALL
+2. **Stack Management**: Automatically pops the return address from the stack
+3. **Parameter Cleanup**: Can optionally clean up function parameters
+4. **Performance Optimization**: Works with CPU return prediction mechanisms
+
+### Complete Instruction Theory and Specification
+
+**RET** pops the return address from the stack and transfers control to that address. It's the exact inverse of the CALL instruction's address-pushing behavior.
+
+**Fundamental Operation:**
+```
+EIP ← Memory[ESP]
+ESP ← ESP + 4 (or 8 in 64-bit mode)
+[Optional: ESP ← ESP + immediate_value]
+```
+
+**Two Main Forms:**
+1. **Near Return**: `ret` - Returns within the same code segment
+2. **Near Return with Stack Cleanup**: `ret imm16` - Returns and cleans stack parameters
+3. **Far Return**: `retf` - Returns to different code segment (rarely used)
+4. **Far Return with Stack Cleanup**: `retf imm16` - Far return with stack cleanup
+
+### Complete Syntax Reference and API
+
+**Basic Return Forms:**
+```assembly
+; Simple return - most common form
+ret                     ; C3 - Pop return address and jump to it
+
+; Return with stack cleanup - used by callee in some conventions
+ret 8                   ; C2 08 00 - Pop return address, then add 8 to ESP
+ret 12                  ; C2 0C 00 - Pop return address, then add 12 to ESP
+ret 16                  ; C2 10 00 - Pop return address, then add 16 to ESP
+
+; Far returns (segmented memory - rarely used in modern programming)
+retf                    ; CB - Pop return address and segment
+retf 8                  ; CA 08 00 - Far return with stack cleanup
+```
+
+**Encoding Details:**
+```assembly
+; Near return encodings:
+ret                     ; C3 (1 byte) - Most compact
+ret 0                   ; C2 00 00 (3 bytes) - Functionally identical to ret
+ret 4                   ; C2 04 00 (3 bytes) - Clean 4 bytes (1 parameter)
+ret 8                   ; C2 08 00 (3 bytes) - Clean 8 bytes (2 parameters)
+ret 12                  ; C2 0C 00 (3 bytes) - Clean 12 bytes (3 parameters)
+
+; Far return encodings (legacy):
+retf                    ; CB (1 byte) - Far return
+retf 8                  ; CA 08 00 (3 bytes) - Far return with cleanup
+```
+
+### Stack Cleanup and Calling Convention Integration
+
+**Understanding Stack Cleanup:**
+The optional immediate operand in RET specifies how many bytes to remove from the stack after popping the return address. This is used to clean up function parameters.
+
+```assembly
+; Function called with 3 parameters (12 bytes total):
+push param3             ; 4 bytes
+push param2             ; 4 bytes  
+push param1             ; 4 bytes
+call function           ; Pushes 4-byte return address
+; Stack now contains: [return_addr][param1][param2][param3]
+
+; Inside function - two cleanup approaches:
+
+; Approach 1: Caller cleans up (cdecl convention)
+function:
+    ; ... function body ...
+    ret                 ; Simple return, caller handles cleanup
+
+; After return, caller must clean up:
+add esp, 12             ; Remove 12 bytes of parameters
+
+; Approach 2: Callee cleans up (stdcall convention)  
+function:
+    ; ... function body ...
+    ret 12              ; Return and clean 12 bytes automatically
+; No additional cleanup needed by caller
+```
+
+**Calling Convention Examples:**
+
+**1. C Calling Convention (cdecl) - Caller Cleanup:**
+```assembly
+; Caller code:
+push param3
+push param2
+push param1
+call my_function
+add esp, 12             ; Caller cleans up parameters
+
+; Function implementation:
+my_function:
+    push ebp
+    mov ebp, esp
+    ; Function body accesses parameters via [ebp+8], [ebp+12], [ebp+16]
+    pop ebp
+    ret                 ; Simple return, no cleanup
+```
+
+**2. Standard Call (stdcall) - Callee Cleanup:**
+```assembly
+; Caller code:
+push param3
+push param2
+push param1
+call my_function        ; No cleanup needed after return
+
+; Function implementation:
+my_function:
+    push ebp
+    mov ebp, esp
+    ; Function body accesses parameters via [ebp+8], [ebp+12], [ebp+16]
+    pop ebp
+    ret 12              ; Return and clean 12 bytes of parameters
+```
+
+### Performance Characteristics and Optimization
+
+**Return Stack Buffer (RSB) Impact:**
+Modern CPUs use a Return Stack Buffer to predict return addresses:
+
+```assembly
+; Good RSB usage - balanced calls and returns:
+call function1          ; Push return address to RSB
+    call function2      ; Push another return address to RSB
+    ; ... function2 body ...
+    ret                 ; Pop from RSB - prediction succeeds
+; ... function1 body ...
+ret                     ; Pop from RSB - prediction succeeds
+
+; Poor RSB usage - unbalanced calls/returns:
+call function
+jmp exit                ; Return address left on RSB
+; Later returns may mispredict due to RSB corruption
+```
+
+**Performance Timing:**
+```assembly
+; Simple RET performance:
+ret                     ; 2-3 cycles when RSB predicts correctly
+                       ; 15-20 cycles when RSB mispredicts
+
+; RET with immediate performance:
+ret 12                  ; 3-4 cycles (additional ESP adjustment)
+                       ; Still benefits from RSB prediction
+```
+
+**Optimization Strategies:**
+```assembly
+; Tail call optimization - avoid unnecessary call/return pairs:
+; Instead of:
+call helper_function
+ret
+
+; Use:
+jmp helper_function     ; Direct jump, no return address manipulation
+
+; Leaf function optimization - functions that don't call others:
+leaf_function:
+    ; No need to set up frame pointer for simple functions
+    mov eax, [esp + 4]  ; Direct parameter access
+    add eax, 42         ; Simple computation
+    ret 4               ; Return with parameter cleanup
+```
+
+### Advanced Return Patterns
+
+**Multiple Return Points:**
+```assembly
+; Function with multiple return points
+validate_input:
+    push ebp
+    mov ebp, esp
+    
+    mov eax, [ebp + 8]      ; Get input parameter
+    test eax, eax           ; Check if null
+    jz invalid_input        ; Early return for invalid input
+    
+    cmp eax, MAX_VALUE      ; Check range
+    jg invalid_input        ; Early return for out of range
+    
+    ; Valid input processing
+    mov eax, 1              ; Return success
+    pop ebp
+    ret 4                   ; Normal return
+    
+invalid_input:
+    mov eax, 0              ; Return failure
+    pop ebp  
+    ret 4                   ; Error return
+```
+
+**Exception-Safe Returns:**
+```assembly
+; Function with exception handling
+safe_function:
+    push ebp
+    mov ebp, esp
+    push exception_handler  ; Set up exception handler
+    
+    ; Risky operations here
+    
+    ; Normal cleanup and return
+    add esp, 4              ; Remove exception handler
+    pop ebp
+    ret
+    
+exception_handler:
+    ; Exception cleanup code
+    add esp, 4              ; Remove exception handler  
+    pop ebp
+    ret                     ; Return from exception
+```
+
+**Return Value Conventions:**
+```assembly
+; Integer return values in EAX:
+calculate_sum:
+    mov eax, [ebp + 8]      ; First parameter
+    add eax, [ebp + 12]     ; Add second parameter
+    ; Result is in EAX for caller
+    ret 8
+
+; Large structure returns via hidden parameter:
+create_large_object:
+    mov eax, [ebp + 8]      ; Hidden pointer to return space
+    ; Fill structure at [eax]
+    ; Return pointer in EAX
+    ret 4
+
+; Floating-point returns via FPU stack or XMM registers:
+calculate_sqrt:
+    fld qword [ebp + 8]     ; Load parameter to FPU
+    fsqrt                   ; Calculate square root
+    ; Result remains on FPU stack for caller
+    ret 8
+```
+
+### Security and Error Handling Considerations
+
+**Stack Smashing Protection:**
+```assembly
+; Protected function with stack canary:
+protected_function:
+    push ebp
+    mov ebp, esp
+    mov eax, [__security_cookie]    ; Load stack canary
+    push eax                        ; Store on stack
+    
+    ; Function body with local variables
+    
+    ; Check canary before return
+    pop eax                         ; Retrieve canary
+    cmp eax, [__security_cookie]    ; Verify integrity
+    jne __security_check_failure    ; Jump if corrupted
+    
+    pop ebp
+    ret                             ; Safe return
+```
+
+**Return Address Verification:**
+```assembly
+; Verify return address points to valid code:
+verify_return:
+    push ebp
+    mov ebp, esp
+    
+    mov eax, [ebp + 4]      ; Get return address
+    ; Verify return address is in valid code section
+    cmp eax, [code_section_start]
+    jb invalid_return       ; Below valid range
+    cmp eax, [code_section_end]  
+    ja invalid_return       ; Above valid range
+    
+    ; Normal function execution
+    pop ebp
+    ret
+    
+invalid_return:
+    ; Handle security violation
+    call abort_program
+```
+
+### Integration with Modern Programming
+
+**Debugger Integration:**
+```assembly
+; Debug-friendly function structure:
+debug_function:
+    push ebp                ; Standard frame for debugger
+    mov ebp, esp            ; Frame pointer enables stack walking
+    ; Debugger can trace call chain via frame pointers
+    
+    ; Function body
+    
+    pop ebp                 ; Restore frame  
+    ret                     ; Return address visible to debugger
+```
+
+**Profile-Guided Optimization:**
+```assembly
+; Hot function (called frequently):
+hot_function:
+    ; Minimal overhead return
+    mov eax, [esp + 4]      ; Direct parameter access
+    shl eax, 1              ; Quick operation
+    ret 4                   ; Fast return
+
+; Cold function (called rarely):
+cold_function:
+    ; Can afford more overhead for better error checking
+    push ebp
+    mov ebp, esp
+    ; Full parameter validation
+    ; Comprehensive error handling
+    pop ebp
+    ret 8
+```
+
+---
+```
+
+**2. Standard Call Convention (stdcall):**
+```assembly
+; Caller's responsibility:
+push param3             ; Parameters pushed right to left
+push param2
+push param1
+call function           ; Make the call
+; No stack cleanup needed - callee does it
+
+; Function implementation:
+function:
+    push ebp            ; Save frame pointer
+    mov ebp, esp        ; Establish frame
+    ; ... function body ...
+    pop ebp             ; Restore frame pointer
+    ret 12              ; Return and clean 12 bytes (3 * 4)
+```
+
+**3. Fast Call Convention (fastcall):**
+```assembly
+; Caller's responsibility:
+mov ecx, param1         ; First parameter in ECX
+mov edx, param2         ; Second parameter in EDX
+push param4             ; Remaining parameters on stack
+push param3
+call function           ; Make the call
+add esp, 8              ; Clean remaining stack parameters
+
+; Function implementation:
+function:
+    push ebp            ; Save frame pointer
+    mov ebp, esp        ; Establish frame
+    ; ECX=param1, EDX=param2, [ebp+8]=param3, [ebp+12]=param4
+    ; ... function body ...
+    pop ebp             ; Restore frame pointer
+    ret 8               ; Clean remaining stack parameters
+```
+
+**4. x64 Calling Convention (Microsoft x64 ABI):**
+```assembly
+; First 4 parameters in registers: RCX, RDX, R8, R9
+; Additional parameters on stack
+; 32 bytes of "shadow space" allocated by caller
+
+; Caller:
+mov rcx, param1         ; First parameter
+mov rdx, param2         ; Second parameter
+mov r8, param3          ; Third parameter
+mov r9, param4          ; Fourth parameter
+push param6             ; Additional parameters on stack
+push param5
+sub rsp, 32             ; Allocate shadow space
+call function
+add rsp, 48             ; Clean up (32 shadow + 16 parameters)
+```
+
+### Performance Characteristics and Optimization
+
+**Call Performance Analysis:**
+
+**Direct Calls (Fastest):**
+```assembly
+call known_function     ; 2-3 cycles on modern CPUs
+                       ; Branch prediction is highly effective
+                       ; Instruction cache friendly
+```
+
+**Indirect Register Calls:**
+```assembly
+call eax               ; 2-4 cycles on modern CPUs
+                      ; Branch prediction less effective
+                      ; May cause pipeline stalls
+```
+
+**Indirect Memory Calls (Slowest):**
+```assembly
+call [function_ptr]    ; 4-6 cycles + memory access time
+                      ; Additional cache access required
+                      ; Branch prediction very difficult
+```
+
+**Branch Prediction Impact:**
+```assembly
+; Predictable call pattern (good for performance)
+for (int i = 0; i < 1000; i++) {
+    call same_function  ; CPU learns this pattern quickly
+}
+
+; Unpredictable call pattern (poor performance)
+call [vtable + random_method]  ; CPU cannot predict target
+                              ; Causes frequent pipeline flushes
+```
+
+**Return Stack Buffer (RSB) Optimization:**
+Modern CPUs maintain a return stack buffer that predicts return addresses:
+```assembly
+; Good RSB usage - calls and returns are balanced
+call function1          ; Push return address to RSB
+    call function2      ; Push another return address
+    ret                 ; Pop from RSB (predicted correctly)
+ret                     ; Pop from RSB (predicted correctly)
+
+; Poor RSB usage - unbalanced calls/returns
+call function
+jmp somewhere_else      ; Return address left on RSB, causes misprediction
+```
+
+### Advanced Call Patterns and Optimizations
+
+**Tail Call Optimization:**
+```assembly
+; Instead of call + ret sequence:
+call helper_function
+ret
+
+; Use jump for tail calls:
+jmp helper_function     ; No return address pushed, direct transfer
+                       ; Saves stack space and improves performance
+```
+
+**Call Table Optimization:**
+```assembly
+; Instead of multiple conditional calls:
+cmp eax, 1
+je function1
+cmp eax, 2
+je function2
+cmp eax, 3
+je function3
+
+; Use function table:
+call [function_table + eax*4]   ; Direct indexed call
+
+function_table:
+    dd function0, function1, function2, function3
+```
+
+**Thunk Pattern for API Calls:**
+```assembly
+; Instead of indirect calls throughout code:
+call [GetFileSize]      ; Multiple instances cause cache misses
+
+; Use thunk functions:
+call GetFileSizeThunk   ; Direct call to thunk
+
+GetFileSizeThunk:
+    jmp [GetFileSize]   ; Single location for indirect call
+```
+
+### Error Handling and Security Considerations
+
+**Call Stack Corruption Protection:**
+```assembly
+; Stack canary pattern
+function:
+    push ebp
+    mov ebp, esp
+    push 0xDEADBEEF     ; Stack canary
+    ; ... function body ...
+    pop eax             ; Check canary
+    cmp eax, 0xDEADBEEF
+    jne stack_corrupted
+    pop ebp
+    ret
+```
+
+**Control Flow Integrity (CFI):**
+```assembly
+; Modern CPUs support CFI to prevent ROP/JOP attacks
+; CALL instructions can only target valid function entry points
+call valid_function     ; Allowed
+call [data_buffer]      ; May be blocked by CFI
+```
+
+**Stack Overflow Protection:**
+```assembly
+; Check stack space before deep recursion
+function:
+    push ebp
+    mov ebp, esp
+    cmp esp, [stack_limit]  ; Check available stack
+    jb stack_overflow       ; Handle overflow
+    ; ... normal function body ...
+    pop ebp
+    ret
+```
+
+### Integration with Modern Development
+
+**Debugging Integration:**
+```assembly
+; Debug builds often insert call frame information
+function:
+    push ebp            ; Standard frame setup for debugger
+    mov ebp, esp        ; Frame pointer for stack walking
+    ; Debugger can trace: [ebp] -> previous frame
+    ; [ebp+4] -> return address
+```
+
+**Profiling Integration:**
+```assembly
+; Profile-guided optimization can optimize call sites
+call hot_function       ; Frequently called - keep in cache
+call cold_function      ; Rarely called - can be moved to separate page
+```
+
+**Exception Handling Integration:**
+```assembly
+; C++ exception handling uses call/return for unwinding
+function:
+    push ebp
+    mov ebp, esp
+    ; Exception handlers know how to unwind through this frame
+    call may_throw_exception
+    ; Cleanup code here
+    pop ebp
+    ret
+```
+
+---
     add esp, 4                  ; 📊 Cycles: 1, Size: 3 bytes (83 C4 04)
                                ; 📊 Cleanup: restore stack pointer
+
+## 📚 Comprehensive Instruction Reference: ADD
+
+> **🚩 Arithmetic Foundation**: The ADD instruction is your introduction to the processor's arithmetic and logic unit (ALU), where all mathematical operations occur.
+
+### Historical Context and Evolution 📜
+
+The ADD instruction has been the cornerstone of arithmetic computation since the earliest processors. Its design reflects fundamental decisions about how computers perform mathematics and handle overflow conditions.
+
+**Historical Development:**
+- **1971**: Basic 4-bit addition in Intel 4004 with simple carry flag
+- **1972**: 8-bit ADD with comprehensive flag set in Intel 8008
+- **1978**: 16-bit ADD with segment address calculations in 8086
+- **1985**: 32-bit ADD with advanced addressing modes in 80386
+- **1993**: Parallel execution units allowing multiple ADD operations in Pentium
+- **2006**: Micro-op fusion combining ADD with memory operations in Core
+
+**Mathematical Foundation:**
+ADD implements binary addition using two's complement arithmetic, handling both unsigned and signed integers seamlessly through the same circuitry—a brilliant design that unified integer arithmetic.
+
+### Complete Instruction Theory and Specification
+
+**ADD** performs binary addition of two operands and stores the result in the destination operand. It updates all arithmetic flags to reflect the result's properties.
+
+**Fundamental Operation:**
+```
+Destination ← Destination + Source
+Flags ← Updated based on result
+```
+
+**Flag Updates (Critical for Decision Making):**
+- **CF (Carry Flag)**: Set if unsigned overflow occurs
+- **ZF (Zero Flag)**: Set if result is zero
+- **SF (Sign Flag)**: Set if result is negative (bit 31/63 = 1)
+- **OF (Overflow Flag)**: Set if signed overflow occurs
+- **PF (Parity Flag)**: Set if low byte has even number of 1 bits
+- **AF (Auxiliary Flag)**: Set if carry from bit 3 to bit 4 (BCD arithmetic)
+
+### Complete Syntax Reference and API
+
+**Supported Operand Combinations:**
+
+| Destination | Source | Syntax | Encoding | Cycles | Flags | Notes |
+|------------|--------|--------|----------|---------|--------|-------|
+| Register | Immediate | `add eax, 42` | 83 C0 2A | 1 | All | Most common form |
+| Register | Register | `add eax, ebx` | 01 D8 | 1 | All | Register-to-register |
+| Register | Memory | `add eax, [ebx]` | 03 03 | 3-4 | All | Load and add |
+| Memory | Register | `add [ebx], eax` | 01 03 | 3-4 | All | Read-modify-write |
+| Memory | Immediate | `add [ebx], 42` | 83 03 2A | 3-4 | All | Direct memory arithmetic |
+
+**Size Variants and Optimizations:**
+```assembly
+; 8-bit addition
+add al, 5               ; 04 05 - Add immediate to AL
+add bl, cl              ; 00 CB - Add CL to BL
+add [esi], dl           ; 00 16 - Add DL to memory byte
+
+; 16-bit addition (requires 66h prefix in 32-bit mode)
+add ax, 1000            ; 66 05 E8 03 - Add 1000 to AX
+add bx, cx              ; 66 01 CB - Add CX to BX
+add [esi], dx           ; 66 01 16 - Add DX to memory word
+
+; 32-bit addition (default in 32-bit mode)
+add eax, 100000         ; 05 A0 86 01 00 - Add large immediate
+add ebx, ecx            ; 01 CB - Add ECX to EBX
+add [esi], edx          ; 01 16 - Add EDX to memory dword
+
+; Optimized immediate forms
+add eax, 1              ; 83 C0 01 - Short form for small immediates
+add eax, 128            ; 83 C0 80 - Still uses short form (sign-extended)
+add eax, 129            ; 05 81 00 00 00 - Must use long form
+
+; Memory addressing modes
+add eax, [ebx]          ; 03 03 - Simple indirect
+add eax, [ebx + 4]      ; 03 43 04 - Base + displacement
+add eax, [ebx + esi*2]  ; 03 04 73 - Base + scaled index
+add eax, [ebx + esi*4 + 8] ; 03 44 B3 08 - Full SIB addressing
+```
+
+### Arithmetic Flags and Condition Detection
+
+**Understanding Flag Interactions:**
+```assembly
+; Example: Adding two numbers and checking results
+mov eax, 0x7FFFFFFF     ; Largest positive 32-bit signed integer
+add eax, 1              ; Add 1
+; Result: EAX = 0x80000000
+; Flags: SF=1 (negative), OF=1 (signed overflow), CF=0 (no unsigned overflow)
+
+mov eax, 0xFFFFFFFF     ; Largest unsigned 32-bit integer (-1 signed)
+add eax, 1              ; Add 1
+; Result: EAX = 0x00000000
+; Flags: ZF=1 (zero), CF=1 (unsigned overflow), OF=0 (no signed overflow)
+```
+
+**Flag-Based Decision Making:**
+```assembly
+; Unsigned arithmetic overflow detection
+add eax, ebx            ; Perform addition
+jc unsigned_overflow    ; Jump if carry flag set
+
+; Signed arithmetic overflow detection  
+add eax, ebx            ; Perform addition
+jo signed_overflow      ; Jump if overflow flag set
+
+; Zero result detection
+add eax, ebx            ; Perform addition
+jz result_is_zero       ; Jump if zero flag set
+
+; Negative result detection
+add eax, ebx            ; Perform addition
+js result_is_negative   ; Jump if sign flag set
+```
+
+### Performance Characteristics and Optimization
+
+**Execution Unit Analysis:**
+```assembly
+; Modern CPUs have multiple arithmetic units
+add eax, 1              ; Can execute on any ALU port
+add ebx, 2              ; Can execute simultaneously with above
+add ecx, edx            ; Can also execute simultaneously
+; Result: All three ADD operations complete in 1 cycle total
+```
+
+**Memory Operation Performance:**
+```assembly
+; Cache-friendly memory additions
+add [array + 0], eax    ; First cache line
+add [array + 4], ebx    ; Same cache line - fast
+add [array + 8], ecx    ; Same cache line - fast
+add [array + 12], edx   ; Same cache line - fast
+
+; Cache-unfriendly memory additions
+add [array1], eax       ; First cache line
+add [array2], ebx       ; Different cache line - possible cache miss
+add [array3], ecx       ; Another cache line - possible cache miss
+```
+
+**Optimization Techniques:**
+```assembly
+; Use LEA for simple address calculations instead of ADD
+; SLOWER:
+mov eax, esi            ; 1 cycle
+add eax, 4              ; 1 cycle, depends on previous instruction
+; Total: 2 cycles with dependency
+
+; FASTER:
+lea eax, [esi + 4]      ; 1 cycle, no dependency
+; Total: 1 cycle, can execute in parallel
+
+; Use INC for adding 1 (but beware of partial flag updates)
+add eax, 1              ; Updates all flags including CF
+inc eax                 ; Doesn't update CF, may cause stalls in some code
+```
+
+### Common Programming Patterns
+
+**Array Indexing and Pointer Arithmetic:**
+```assembly
+; Traditional array access pattern
+mov eax, [array_base]           ; Load base address
+mov ebx, index                  ; Load index
+add eax, ebx                    ; Calculate element address (byte array)
+mov cl, [eax]                   ; Load element
+
+; Optimized for 4-byte elements
+mov eax, index                  ; Load index
+add eax, eax                    ; Multiply by 2
+add eax, eax                    ; Multiply by 4 (total: index * 4)
+add eax, array_base             ; Add base address
+mov ebx, [eax]                  ; Load element
+
+; Most optimized using LEA
+mov eax, index
+lea eax, [array_base + eax*4]   ; Calculate address in one instruction
+mov ebx, [eax]                  ; Load element
+```
+
+**Multi-precision Arithmetic:**
+```assembly
+; Adding two 64-bit numbers using two 32-bit ADD operations
+; Number1 = EDX:EAX, Number2 = EBX:ECX, Result = EDI:ESI
+
+add eax, ecx                    ; Add low 32 bits
+adc edx, ebx                    ; Add high 32 bits + carry from low addition
+mov esi, eax                    ; Store low result
+mov edi, edx                    ; Store high result
+
+; Adding arrays of large numbers
+mov esi, array1                 ; Source array 1
+mov edi, array2                 ; Source array 2  
+mov edx, result_array           ; Destination array
+mov ecx, element_count          ; Number of elements
+clc                             ; Clear carry flag
+
+add_loop:
+    mov eax, [esi]              ; Load from array1
+    adc eax, [edi]              ; Add from array2 with carry
+    mov [edx], eax              ; Store result
+    add esi, 4                  ; Advance source1 pointer
+    add edi, 4                  ; Advance source2 pointer
+    add edx, 4                  ; Advance destination pointer
+    loop add_loop               ; Continue for all elements
+```
+
+**Checksum and Hash Calculations:**
+```assembly
+; Simple checksum using ADD
+mov esi, data_buffer            ; Source data
+mov ecx, data_length            ; Number of bytes
+xor eax, eax                    ; Clear accumulator
+
+checksum_loop:
+    add al, [esi]               ; Add byte to low byte of accumulator
+    adc ah, 0                   ; Add carry to high byte
+    inc esi                     ; Next byte
+    loop checksum_loop          ; Continue
+; Result: 16-bit checksum in AX
+```
+
+---
+
+## 📚 Comprehensive Instruction Reference: CMP
+
+> **🚩 Decision Making Foundation**: The CMP instruction is the cornerstone of program logic, enabling all conditional operations and decision-making processes.
+
+### Historical Context and Evolution 📜
+
+The CMP (Compare) instruction revolutionized program control flow by providing a standardized way to compare values and set processor flags accordingly. Before CMP, programmers had to use arithmetic instructions and manually check for specific conditions.
+
+**Historical Significance:**
+- **1972**: Basic compare functionality in Intel 8008
+- **1978**: Enhanced with all addressing modes in 8086
+- **1985**: 32-bit comparisons in 80386
+- **1993**: Optimized compare-and-branch pairing in Pentium
+- **2006**: Macro-op fusion combining CMP with conditional jumps in Core
+
+### Complete Instruction Theory and Specification
+
+**CMP** performs subtraction of the source operand from the destination operand but discards the result, keeping only the flags. It's functionally equivalent to SUB but without storing the result.
+
+**Fundamental Operation:**
+```
+Temporary ← Destination - Source
+Flags ← Updated based on temporary result
+(Temporary result is discarded, operands unchanged)
+```
+
+**Critical Flag Meanings for Comparisons:**
+- **ZF=1**: Operands are equal (Destination == Source)
+- **CF=1**: Unsigned destination < unsigned source
+- **SF≠OF**: Signed destination < signed source
+- **ZF=0 AND CF=0**: Unsigned destination > unsigned source
+- **ZF=0 AND SF=OF**: Signed destination > signed source
+
+### Complete Syntax Reference and API
+
+**All Supported Comparison Forms:**
+```assembly
+; Basic comparison patterns
+cmp eax, 42             ; Compare register with immediate
+cmp eax, ebx            ; Compare register with register
+cmp eax, [memory]       ; Compare register with memory
+cmp [memory], eax       ; Compare memory with register
+cmp [memory], 42        ; Compare memory with immediate
+
+; Size-specific comparisons
+cmp al, 255             ; 8-bit comparison
+cmp ax, 65535           ; 16-bit comparison  
+cmp eax, 0x7FFFFFFF     ; 32-bit comparison
+cmp qword [rax], 42     ; 64-bit comparison (x64 mode)
+```
+
+**Addressing Mode Examples:**
+```assembly
+; Memory addressing patterns
+cmp [variable], 0       ; Compare memory variable with zero
+cmp [eax], ebx          ; Compare value at EAX with EBX
+cmp [eax + 4], 100      ; Compare value at EAX+4 with 100
+cmp [eax + ebx*2], ecx  ; Compare value at EAX+EBX*2 with ECX
+cmp [table + esi*4], edx ; Array element comparison
+```
+
+### Flag Interpretation and Conditional Logic
+
+**Understanding Comparison Results:**
+```assembly
+; Example comparisons and their flag effects
+mov eax, 10
+mov ebx, 20
+
+cmp eax, ebx            ; Compare 10 with 20
+; Result flags: ZF=0 (not equal), CF=1 (10 < 20 unsigned), SF=1, OF=0
+; Interpretation: EAX < EBX (both signed and unsigned)
+
+cmp ebx, eax            ; Compare 20 with 10  
+; Result flags: ZF=0 (not equal), CF=0 (20 >= 10 unsigned), SF=0, OF=0
+; Interpretation: EBX > EAX (both signed and unsigned)
+
+cmp eax, eax            ; Compare register with itself
+; Result flags: ZF=1 (equal), CF=0, SF=0, OF=0
+; Interpretation: EAX == EAX (always true)
+```
+
+**Signed vs. Unsigned Comparisons:**
+```assembly
+; Demonstration of signed vs unsigned interpretation
+mov eax, 0xFFFFFFFF     ; -1 in signed, 4294967295 in unsigned
+mov ebx, 1              ; 1 in both signed and unsigned
+
+cmp eax, ebx            ; Compare -1 with 1 (signed) or 4294967295 with 1 (unsigned)
+; Flags: ZF=0, CF=0, SF=1, OF=0
+
+; Signed interpretation (SF ≠ OF means less than):
+jl eax_less_signed      ; Will jump: -1 < 1 in signed arithmetic
+
+; Unsigned interpretation (CF=1 means less than):
+jb eax_less_unsigned    ; Will NOT jump: 4294967295 > 1 in unsigned arithmetic
+```
+
+### Conditional Jump Integration
+
+**Complete Conditional Jump Reference:**
+```assembly
+; After CMP instruction, these jumps are available:
+
+; Equality conditions
+je label                ; Jump if Equal (ZF=1)
+jz label                ; Jump if Zero (same as JE)
+jne label               ; Jump if Not Equal (ZF=0)
+jnz label               ; Jump if Not Zero (same as JNE)
+
+; Unsigned comparisons
+jb label                ; Jump if Below (CF=1)
+jc label                ; Jump if Carry (same as JB)
+jnb label               ; Jump if Not Below (CF=0)
+jnc label               ; Jump if No Carry (same as JNB)
+ja label                ; Jump if Above (CF=0 AND ZF=0)
+jna label               ; Jump if Not Above (CF=1 OR ZF=1)
+jae label               ; Jump if Above or Equal (CF=0)
+jbe label               ; Jump if Below or Equal (CF=1 OR ZF=1)
+
+; Signed comparisons
+jl label                ; Jump if Less (SF≠OF)
+jnge label              ; Jump if Not Greater or Equal (same as JL)
+jnl label               ; Jump if Not Less (SF=OF)
+jge label               ; Jump if Greater or Equal (same as JNL)
+jg label                ; Jump if Greater (ZF=0 AND SF=OF)
+jnle label              ; Jump if Not Less or Equal (same as JG)
+jng label               ; Jump if Not Greater (ZF=1 OR SF≠OF)
+jle label               ; Jump if Less or Equal (same as JNG)
+
+; Sign and overflow specific
+js label                ; Jump if Sign (SF=1)
+jns label               ; Jump if No Sign (SF=0)
+jo label                ; Jump if Overflow (OF=1)
+jno label               ; Jump if No Overflow (OF=0)
+jp label                ; Jump if Parity even (PF=1)
+jpe label               ; Jump if Parity Even (same as JP)
+jnp label               ; Jump if Parity odd (PF=0)
+jpo label               ; Jump if Parity Odd (same as JNP)
+```
+
+### Performance Characteristics and Optimization
+
+**Branch Prediction Impact:**
+```assembly
+; Predictable comparison pattern (good performance)
+cmp eax, 0              ; Regular pattern
+je zero_case            ; Branch taken 90% of the time
+; CPU learns this pattern and predicts correctly
+
+; Unpredictable comparison pattern (poor performance)
+cmp eax, [random_value] ; Unpredictable values
+je random_case          ; Branch taken randomly
+; CPU cannot predict, causing pipeline stalls
+```
+
+**Compare-and-Branch Fusion:**
+Modern CPUs can fuse CMP with conditional jumps into a single micro-operation:
+```assembly
+; This sequence gets fused into one micro-op:
+cmp eax, ebx            
+je equal_case           ; Fused with CMP - executes as single operation
+
+; This prevents fusion (instruction between CMP and jump):
+cmp eax, ebx
+nop                     ; Breaks fusion
+je equal_case           ; Cannot be fused with CMP
+```
+
+**Optimization Strategies:**
+```assembly
+; Use TEST instead of CMP for zero/non-zero checks:
+cmp eax, 0              ; 3 bytes (83 F8 00)
+jz zero_case
+
+; BETTER:
+test eax, eax           ; 2 bytes (85 C0), same result
+jz zero_case
+
+; Use SUB instead of CMP when you need the result anyway:
+cmp eax, ebx            ; Compare first
+jl less_case            ; Branch
+sub eax, ebx            ; Subtract anyway
+
+; BETTER (if you need the subtraction result):
+sub eax, ebx            ; Subtract and set flags
+jl less_case            ; Use flags from SUB
+```
+
+---
     
     ; 🤔 Design Decision: Loop control - critical performance section
     ; ✅ Why increment before compare? Cache efficiency and predictable patterns!
@@ -109,6 +1671,434 @@ display_loop:
                                ; 📊 Operation: Read-modify-write on memory
                                ; 💚 Pros: Direct memory operation, atomic
                                ; 🔴 Cons: Slower than register operations
+
+## 📚 Comprehensive Instruction Reference: INC
+
+> **🚩 Increment Operations**: The INC instruction provides optimized single-increment functionality with special flag behavior that differs from ADD.
+
+### Historical Context and Evolution 📜
+
+The INC (Increment) instruction was designed as an optimization for the most common arithmetic operation: adding 1. Its special encoding and flag behavior reflect decades of processor optimization for this fundamental operation.
+
+**Design Philosophy:**
+- **Compact Encoding**: Single-byte encoding for register increments
+- **Optimized Microcode**: Specialized execution paths for increment operations
+- **Partial Flag Updates**: Preserves carry flag for multi-precision arithmetic
+
+**Historical Development:**
+- **1972**: Basic increment in Intel 8008
+- **1978**: Single-byte register encoding optimization in 8086
+- **1985**: Memory increment with full addressing modes in 80386
+- **1995**: Partial flag update behavior standardized in Pentium
+
+### Complete Instruction Theory and Specification
+
+**INC** adds 1 to the specified operand and updates most flags, but uniquely preserves the carry flag (CF). This design choice supports multi-precision arithmetic operations.
+
+**Fundamental Operation:**
+```
+Destination ← Destination + 1
+Flags ← Updated (except CF remains unchanged)
+```
+
+**Flag Update Behavior (Critical Difference from ADD):**
+- **CF**: **UNCHANGED** (unlike ADD, which would clear it)
+- **ZF**: Set if result becomes zero
+- **SF**: Set if result becomes negative  
+- **OF**: Set if signed overflow occurs
+- **PF**: Set if low byte has even parity
+- **AF**: Set if auxiliary carry occurs
+
+### Complete Syntax Reference and API
+
+**Supported Operand Types:**
+```assembly
+; Register increments (single-byte encoding)
+inc al                  ; FE C0 - Increment 8-bit register
+inc ax                  ; 66 40 - Increment 16-bit register (with prefix)
+inc eax                 ; 40 - Increment 32-bit register (single byte!)
+inc rax                 ; 48 FF C0 - Increment 64-bit register (REX prefix)
+
+; All 32-bit register single-byte forms:
+inc eax                 ; 40 - Most common form
+inc ecx                 ; 41
+inc edx                 ; 42  
+inc ebx                 ; 43
+inc esp                 ; 44 (dangerous - modifies stack pointer!)
+inc ebp                 ; 45 (dangerous - modifies frame pointer!)
+inc esi                 ; 46
+inc edi                 ; 47
+
+; Memory increments (multi-byte encoding)
+inc byte [esi]          ; FE 06 - Increment byte at ESI
+inc word [esi]          ; 66 FF 06 - Increment word at ESI
+inc dword [esi]         ; FF 06 - Increment dword at ESI
+inc qword [rsi]         ; 48 FF 06 - Increment qword at RSI (x64)
+
+; Complex memory addressing
+inc dword [counter]     ; FF 05 + address - Direct memory variable
+inc dword [eax + 4]     ; FF 40 04 - Base + displacement
+inc dword [array + esi*4] ; FF 04 B5 + address - Array element
+```
+
+**Encoding Optimizations:**
+```assembly
+; The famous single-byte register increments (32-bit mode only):
+; These are so common that x86 dedicates special opcodes
+40: inc eax             ; Single byte - extremely compact
+41: inc ecx             ; Single byte
+42: inc edx             ; Single byte
+43: inc ebx             ; Single byte
+44: inc esp             ; Single byte (use with caution!)
+45: inc ebp             ; Single byte (use with caution!)
+46: inc esi             ; Single byte  
+47: inc edi             ; Single byte
+
+; Note: In 64-bit mode, these opcodes are repurposed for REX prefixes
+; So 64-bit mode uses the longer FF C0 encoding for register increments
+```
+
+### Carry Flag Preservation and Multi-Precision Arithmetic
+
+**Why INC Preserves Carry Flag:**
+The carry flag preservation allows INC to be used in multi-precision arithmetic without disrupting carry propagation:
+
+```assembly
+; Multi-precision increment of 128-bit number (four 32-bit parts)
+; Number stored as: [num+12][num+8][num+4][num]  (most significant to least)
+
+inc dword [num]         ; Increment least significant part
+                       ; CF remains unchanged from previous operation
+jnc skip_propagate      ; If no overflow, we're done
+
+inc dword [num + 4]     ; Overflow occurred, increment next part
+jnc skip_propagate      ; If no overflow, we're done
+
+inc dword [num + 8]     ; Continue propagating carry
+jnc skip_propagate
+
+inc dword [num + 12]    ; Increment most significant part
+
+skip_propagate:
+; 128-bit number successfully incremented
+```
+
+**Comparison with ADD for Multi-Precision:**
+```assembly
+; Using ADD (destroys carry flag):
+add dword [num], 1      ; Increment least significant part
+jnc skip_propagate      ; Check for overflow
+adc dword [num + 4], 0  ; Add with carry (must use ADC)
+adc dword [num + 8], 0  ; Continue with ADC
+adc dword [num + 12], 0 ; Final ADC
+
+; Using INC (preserves carry flag):
+stc                     ; Set carry if needed by previous operation
+inc dword [num]         ; Increment, carry flag preserved
+jnc skip_propagate      ; Carry flag still valid from STC
+inc dword [num + 4]     ; Can continue using INC
+jnc skip_propagate
+inc dword [num + 8]
+jnc skip_propagate  
+inc dword [num + 12]
+```
+
+### Performance Characteristics and Optimization
+
+**Execution Speed Analysis:**
+```assembly
+; Register increment performance
+inc eax                 ; 1 cycle, single-byte encoding (32-bit mode)
+add eax, 1              ; 1 cycle, but 3-byte encoding
+
+; Memory increment performance  
+inc dword [counter]     ; 4-5 cycles (read-modify-write)
+add dword [counter], 1  ; 4-5 cycles (same performance as INC)
+
+; Modern CPU optimization: Both INC and ADD have similar performance
+; The main advantage of INC is code size, not speed
+```
+
+**Code Size Optimization:**
+```assembly
+; Loop counter optimization
+mov ecx, 1000           ; Initialize counter
+
+loop_start:
+    ; ... loop body ...
+    inc ecx             ; 1 byte (47)
+    cmp ecx, 2000       ; 6 bytes (81 F9 D0 07 00 00)
+    jl loop_start       ; 2 bytes (7C xx)
+; Total loop control: 9 bytes
+
+; Alternative with ADD:
+loop_start:
+    ; ... loop body ...
+    add ecx, 1          ; 3 bytes (83 C1 01)
+    cmp ecx, 2000       ; 6 bytes
+    jl loop_start       ; 2 bytes
+; Total loop control: 11 bytes
+```
+
+### Common Programming Patterns and Use Cases
+
+**Array Index Advancement:**
+```assembly
+; Sequential array processing
+mov esi, 0              ; Array index
+
+process_loop:
+    mov eax, [array + esi*4]  ; Load array element
+    ; ... process element ...
+    inc esi             ; Advance to next element (compact)
+    cmp esi, array_size ; Check bounds
+    jl process_loop     ; Continue if more elements
+```
+
+**Counter and State Management:**
+```assembly
+; Reference counting pattern
+inc dword [object_refcount]   ; Atomic increment on many CPUs
+; ... use object ...
+dec dword [object_refcount]   ; Corresponding decrement
+jnz object_still_used         ; Object still has references
+call destroy_object           ; No more references, clean up
+```
+
+**Loop Control Optimization:**
+```assembly
+; Forward counting loop (efficient)
+mov ecx, 0              ; Start at 0
+inc_loop:
+    ; ... loop body ...
+    inc ecx             ; Increment counter
+    cmp ecx, max_count  ; Check limit
+    jl inc_loop         ; Continue while less than limit
+
+; Backward counting loop (often more efficient)
+mov ecx, max_count      ; Start at maximum
+dec_loop:
+    dec ecx             ; Decrement counter
+    ; ... loop body ...
+    jnz dec_loop        ; Continue while not zero (no CMP needed!)
+```
+
+---
+
+## 📚 Comprehensive Instruction Reference: Conditional Jumps (JL)
+
+> **🚩 Program Flow Control**: Conditional jumps are the fundamental building blocks of program logic, enabling decisions, loops, and complex control flow.
+
+### Historical Context and Evolution 📜
+
+Conditional jumps represent one of the most important innovations in computing history—the ability to make decisions based on calculated results. This capability transformed computers from simple calculators into general-purpose thinking machines.
+
+**Revolutionary Impact:**
+- **1945**: Conditional branching concept in von Neumann architecture
+- **1972**: Hardware flag-based conditional jumps in Intel 8008
+- **1985**: Enhanced with 32-bit relative addressing in 80386
+- **1993**: Branch prediction introduction in Pentium
+- **2006**: Advanced branch prediction and speculative execution in Core
+
+### Complete Instruction Theory and Specification
+
+**JL (Jump if Less)** performs a conditional jump based on signed comparison results. It examines the Sign Flag (SF) and Overflow Flag (OF) to determine if the previous comparison indicated a "less than" condition in signed arithmetic.
+
+**Fundamental Operation:**
+```
+if (SF ≠ OF) then
+    EIP ← EIP + signed_displacement
+else
+    Continue to next instruction
+```
+
+**Flag Logic for Signed Comparison:**
+- **SF = 0, OF = 0**: Result was positive, no overflow → Not Less
+- **SF = 1, OF = 0**: Result was negative, no overflow → Less
+- **SF = 0, OF = 1**: Result was positive, but overflow occurred → Less (!)
+- **SF = 1, OF = 1**: Result was negative, but overflow occurred → Not Less (!)
+
+### Complete Conditional Jump Family Reference
+
+**Signed Comparison Jumps:**
+```assembly
+; After CMP instruction for signed comparisons:
+jl label                ; Jump if Less (SF ≠ OF)
+jnge label              ; Jump if Not Greater or Equal (same as JL)
+jle label               ; Jump if Less or Equal (ZF=1 OR SF≠OF)  
+jng label               ; Jump if Not Greater (same as JLE)
+jg label                ; Jump if Greater (ZF=0 AND SF=OF)
+jnle label              ; Jump if Not Less or Equal (same as JG)
+jge label               ; Jump if Greater or Equal (SF = OF)
+jnl label               ; Jump if Not Less (same as JGE)
+```
+
+**Unsigned Comparison Jumps:**
+```assembly
+; After CMP instruction for unsigned comparisons:
+jb label                ; Jump if Below (CF = 1)
+jc label                ; Jump if Carry (same as JB)
+jnae label              ; Jump if Not Above or Equal (same as JB)
+jbe label               ; Jump if Below or Equal (CF=1 OR ZF=1)
+jna label               ; Jump if Not Above (same as JBE)
+ja label                ; Jump if Above (CF=0 AND ZF=0)
+jnbe label              ; Jump if Not Below or Equal (same as JA)
+jae label               ; Jump if Above or Equal (CF = 0)
+jnb label               ; Jump if Not Below (same as JAE)
+jnc label               ; Jump if No Carry (same as JAE)
+```
+
+**Equality and Special Condition Jumps:**
+```assembly
+; Equality tests:
+je label                ; Jump if Equal (ZF = 1)
+jz label                ; Jump if Zero (same as JE)
+jne label               ; Jump if Not Equal (ZF = 0)
+jnz label               ; Jump if Not Zero (same as JNE)
+
+; Sign and overflow tests:
+js label                ; Jump if Sign set (SF = 1)
+jns label               ; Jump if Sign clear (SF = 0)
+jo label                ; Jump if Overflow (OF = 1)
+jno label               ; Jump if No Overflow (OF = 0)
+
+; Parity tests (rarely used):
+jp label                ; Jump if Parity even (PF = 1)
+jpe label               ; Jump if Parity Even (same as JP)
+jnp label               ; Jump if Parity odd (PF = 0)
+jpo label               ; Jump if Parity Odd (same as JNP)
+```
+
+### Encoding and Performance Characteristics
+
+**Jump Encoding Forms:**
+```assembly
+; Short jumps (2 bytes, -128 to +127 displacement)
+jl short_target         ; 7C xx - Most common and fastest
+
+; Near jumps (6 bytes, ±2GB displacement in 32-bit mode)
+jl near_target          ; 0F 8C xx xx xx xx - For distant targets
+
+; FASM automatically chooses optimal encoding:
+jl close_label          ; Assembler uses short form if possible
+jl distant_label        ; Assembler uses near form if necessary
+```
+
+**Branch Prediction Impact:**
+```assembly
+; Predictable branch pattern (high performance):
+mov ecx, 1000
+loop_start:
+    ; ... loop body ...
+    dec ecx
+    jnz loop_start      ; Taken 999 times, not taken once
+                       ; CPU predicts this pattern perfectly
+
+; Unpredictable branch pattern (poor performance):
+cmp eax, [random_value]
+jl random_case          ; Unpredictable - causes pipeline stalls
+                       ; CPU cannot learn useful patterns
+```
+
+### Advanced Programming Patterns
+
+**Conditional Move vs. Conditional Jump:**
+```assembly
+; Traditional conditional jump approach:
+cmp eax, ebx
+jl eax_smaller
+mov ecx, ebx            ; EBX is larger
+jmp done
+eax_smaller:
+mov ecx, eax            ; EAX is smaller
+done:
+; Result: ECX contains the smaller value
+
+; Modern conditional move approach (branchless):
+cmp eax, ebx
+mov ecx, ebx            ; Assume EBX is smaller
+cmovl ecx, eax          ; If EAX < EBX, move EAX to ECX
+; Result: Same outcome, but no branch prediction issues
+```
+
+**Loop Optimization Patterns:**
+```assembly
+; Traditional counted loop:
+mov ecx, array_size
+process_loop:
+    ; ... process element ...
+    dec ecx
+    jnz process_loop    ; Jump while count > 0
+
+; Index-based loop:
+mov esi, 0              ; Index starts at 0
+index_loop:
+    ; ... process array[esi] ...
+    inc esi
+    cmp esi, array_size
+    jl index_loop       ; Jump while index < size
+
+; Pointer-based loop (often fastest):
+mov esi, array_start    ; Start pointer
+mov edi, array_end      ; End pointer
+pointer_loop:
+    ; ... process [esi] ...
+    add esi, element_size
+    cmp esi, edi        
+    jl pointer_loop     ; Jump while pointer < end
+```
+
+**Range Checking Optimization:**
+```assembly
+; Inefficient: Multiple comparisons
+cmp eax, 0
+jl out_of_range         ; Check lower bound
+cmp eax, 100
+jg out_of_range         ; Check upper bound
+; ... value is in range ...
+
+; Efficient: Single unsigned comparison
+cmp eax, 100
+ja out_of_range         ; Unsigned compare catches both < 0 and > 100
+; ... value is in range ...
+; This works because negative numbers become very large unsigned values
+```
+
+### Integration with Modern CPU Features
+
+**Branch Prediction Optimization:**
+```assembly
+; Help branch predictor with consistent patterns:
+cmp eax, threshold
+jl less_case            ; If this is usually taken, put common case first
+
+less_case:
+    ; ... common case code ...
+    jmp continue
+
+greater_case:
+    ; ... uncommon case code ...
+
+continue:
+    ; ... rest of program ...
+```
+
+**Speculative Execution Considerations:**
+```assembly
+; Modern CPUs speculatively execute both paths:
+cmp [user_input], valid_range
+jg invalid_input
+mov eax, [secret_array + user_input*4]  ; Speculatively executed even if input invalid!
+; This can lead to side-channel attacks (Spectre-type vulnerabilities)
+
+; Safer approach with bounds checking:
+mov eax, [user_input]
+cmp eax, valid_range
+jg invalid_input
+mov eax, [secret_array + eax*4]  ; Only executed after bounds check
+```
+
+---
                                
     cmp dword [counter], 3      ; 📊 Cycles: 3-4, Size: 7 bytes (83 3D + address + 03)
                                ; 📊 Flags: Sets ZF, CF, SF, OF in FLAGS register
