@@ -698,6 +698,27 @@ class FASMeBook {
             document.getElementById('navigation-panel')?.classList.add('hidden');
             document.getElementById('main-content')?.classList.add('expanded');
         }
+        
+        // Reposition AI window and settings panel if they're open
+        this.repositionUIElements();
+    }
+    
+    repositionUIElements() {
+        // Reposition AI window if open
+        const aiWindow = document.getElementById('ai-window');
+        if (aiWindow && aiWindow.classList.contains('visible')) {
+            if (window.fasmAI && window.fasmAI.adjustWindowPosition) {
+                window.fasmAI.adjustWindowPosition(aiWindow);
+            }
+        }
+        
+        // Reposition settings panel if open
+        const settingsContent = document.querySelector('.settings-content');
+        if (settingsContent && settingsContent.classList.contains('visible')) {
+            if (window.fasmSettings && window.fasmSettings.adjustPanelPosition) {
+                window.fasmSettings.adjustPanelPosition(settingsContent);
+            }
+        }
     }
     
     initSettings() {

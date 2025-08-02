@@ -399,6 +399,8 @@ Smaller instructions are better because:
     openWindow() {
         const aiWindow = document.getElementById('ai-window');
         if (aiWindow) {
+            // Add viewport boundary detection
+            this.adjustWindowPosition(aiWindow);
             aiWindow.classList.add('visible');
             this.isOpen = true;
             
@@ -412,6 +414,31 @@ Smaller instructions are better because:
             if (this.conversationHistory.length === 0) {
                 this.addWelcomeMessage();
             }
+        }
+    }
+    
+    adjustWindowPosition(window) {
+        // Reset position classes
+        window.classList.remove('adjust-left', 'adjust-up');
+        
+        // Get viewport dimensions
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Get window dimensions (use computed or fallback values)
+        const windowWidth = 400; // min(400px, calc(100vw - 2rem))
+        const windowHeight = 500; // min(500px, calc(100vh - 10rem))
+        
+        // Check if window would go outside right edge (considering right: 1rem positioning)
+        const availableWidth = viewportWidth - 32; // Account for margins
+        if (windowWidth > availableWidth * 0.8) {
+            window.classList.add('adjust-left');
+        }
+        
+        // Check if window would go outside bottom edge (considering bottom: 6rem positioning)
+        const availableHeight = viewportHeight - 160; // Account for button and margins
+        if (windowHeight > availableHeight) {
+            window.classList.add('adjust-up');
         }
     }
     

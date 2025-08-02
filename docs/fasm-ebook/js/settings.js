@@ -230,8 +230,35 @@ class FASMeBookSettings {
     open() {
         const settingsContent = document.querySelector('.settings-content');
         if (settingsContent) {
+            // Add viewport boundary detection
+            this.adjustPanelPosition(settingsContent);
             settingsContent.classList.add('visible');
             this.isOpen = true;
+        }
+    }
+    
+    adjustPanelPosition(panel) {
+        // Reset position classes
+        panel.classList.remove('adjust-left', 'adjust-down');
+        
+        // Get viewport dimensions
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Get panel dimensions (use computed or fallback values)
+        const panelWidth = 300; // min(300px, calc(100vw - 2rem))
+        const panelHeight = 400; // estimated height
+        
+        // Check if panel would go outside right edge (considering right: 1rem positioning)
+        const availableWidth = viewportWidth - 32; // Account for margins
+        if (panelWidth > availableWidth * 0.8) {
+            panel.classList.add('adjust-left');
+        }
+        
+        // Check if panel would go outside bottom edge (considering top: 5rem positioning)
+        const availableHeight = viewportHeight - 160; // Account for top position and margins
+        if (panelHeight > availableHeight) {
+            panel.classList.add('adjust-down');
         }
     }
     

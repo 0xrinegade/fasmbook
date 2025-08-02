@@ -113,12 +113,32 @@ body {
 }
 
 .nav-toggle {
-    background: none;
-    border: 1px solid var(--border-color);
-    padding: 0.5rem;
+    background: var(--bg-color);
+    border: 2px solid var(--accent-color);
+    padding: 0.75rem;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 8px;
     font-size: 1.2rem;
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-toggle:hover {
+    background-color: var(--highlight-color);
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-toggle:active {
+    transform: scale(0.95);
+    background-color: var(--accent-color);
+    color: var(--bg-color);
 }
 
 .nav-content {
@@ -146,20 +166,37 @@ body {
     text-decoration: none;
     color: var(--text-color);
     display: block;
-    padding: 0.5rem;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
+    padding: 0.75rem;
+    margin: 0.25rem 0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
     font-size: 0.9rem;
     line-height: 1.4;
+    border: 1px solid transparent;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .toc-list a:hover, .bookmarks-list a:hover, .history-list a:hover, .glossary-list a:hover {
     background-color: var(--highlight-color);
+    border-color: var(--border-color);
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .toc-list a.current {
     background-color: var(--accent-color);
     color: var(--bg-color);
+    border-color: var(--accent-color);
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toc-list a:active, .bookmarks-list a:active, .history-list a:active {
+    transform: scale(0.98);
 }
 
 /* Glossary Section */
@@ -403,6 +440,8 @@ body {
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transition: all 0.3s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .ai-toggle:hover {
@@ -410,22 +449,41 @@ body {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
+.ai-toggle:active {
+    transform: scale(0.95);
+}
+
 .ai-window {
-    position: absolute;
-    bottom: 80px;
-    right: 0;
-    width: 400px;
-    height: 500px;
+    position: fixed;
+    bottom: 6rem;
+    right: 1rem;
+    width: min(400px, calc(100vw - 2rem));
+    height: min(500px, calc(100vh - 10rem));
+    max-width: 95vw;
+    max-height: 80vh;
     background-color: var(--bg-color);
     border: 2px solid var(--accent-color);
     border-radius: 8px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     display: none;
     flex-direction: column;
+    /* Ensure window never goes outside viewport */
+    transform: translateX(0);
 }
 
 .ai-window.visible {
     display: flex;
+}
+
+/* Adjust AI window position if it would go outside viewport */
+.ai-window.adjust-left {
+    right: auto;
+    left: 1rem;
+}
+
+.ai-window.adjust-up {
+    bottom: auto;
+    top: 1rem;
 }
 
 .ai-header {
@@ -515,23 +573,51 @@ body {
     font-size: 1.5rem;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.settings-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.settings-toggle:active {
+    transform: scale(0.95);
 }
 
 .settings-content {
-    position: absolute;
-    top: 60px;
-    right: 0;
-    width: 300px;
+    position: fixed;
+    top: 5rem;
+    right: 1rem;
+    width: min(300px, calc(100vw - 2rem));
+    max-width: 95vw;
+    max-height: calc(100vh - 8rem);
     background-color: var(--bg-color);
     border: 2px solid var(--accent-color);
     border-radius: 8px;
     padding: 1.5rem;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     display: none;
+    overflow-y: auto;
+    /* Ensure settings never go outside viewport */
+    transform: translateX(0);
 }
 
 .settings-content.visible {
     display: block;
+}
+
+/* Adjust settings panel position if it would go outside viewport */
+.settings-content.adjust-left {
+    right: auto;
+    left: 1rem;
+}
+
+.settings-content.adjust-down {
+    top: auto;
+    bottom: 1rem;
 }
 
 .settings-content h3 {
@@ -562,7 +648,30 @@ body {
     margin-right: 0.5rem;
 }
 
-/* Responsive Design */
+/* Enhanced Responsive Design */
+/* Tablet and smaller */
+@media (max-width: 1024px) {
+    .ai-helper {
+        bottom: 1rem;
+        right: 1rem;
+    }
+    
+    .settings-panel {
+        top: 1rem;
+        right: 1rem;
+    }
+    
+    .ai-window {
+        width: min(380px, calc(100vw - 2rem));
+        height: min(480px, calc(100vh - 8rem));
+    }
+    
+    .settings-content {
+        width: min(280px, calc(100vw - 2rem));
+    }
+}
+
+/* Mobile and smaller tablets */
 @media (max-width: 768px) {
     :root {
         --nav-width: 280px;
@@ -591,18 +700,125 @@ body {
         gap: 1rem;
     }
     
+    .ai-helper {
+        bottom: 0.5rem;
+        right: 0.5rem;
+    }
+    
+    .settings-panel {
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+    
+    .ai-toggle {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .settings-toggle {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+    
     .ai-window {
-        width: 90vw;
-        height: 70vh;
+        width: calc(100vw - 1rem);
+        height: calc(100vh - 6rem);
+        right: 0.5rem;
+        bottom: 4rem;
     }
     
     .settings-content {
-        width: 90vw;
-        max-width: 300px;
+        width: calc(100vw - 1rem);
+        right: 0.5rem;
+        top: 3rem;
+        max-height: calc(100vh - 5rem);
     }
 }
 
-/* Print Styles */
+/* Small mobile phones */
+@media (max-width: 480px) {
+    :root {
+        --nav-width: 100vw;
+        --font-size: 13px;
+    }
+    
+    .ai-window {
+        width: 100vw;
+        height: calc(100vh - 4rem);
+        right: 0;
+        bottom: 0;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .settings-content {
+        width: 100vw;
+        right: 0;
+        top: 0;
+        max-height: 100vh;
+        border-radius: 0;
+        padding: 1rem;
+    }
+    
+    .nav-panel {
+        width: 100vw;
+    }
+}
+
+/* Additional UI improvements */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.1);
+    z-index: 1200;
+    display: none;
+}
+
+.modal-backdrop.visible {
+    display: block;
+}
+
+/* Better touch targets and spacing */
+button, .clickable {
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Improved focus indicators */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Safe area support for devices with notches */
+@supports (padding: max(0px)) {
+    .ai-helper {
+        bottom: max(2rem, env(safe-area-inset-bottom, 2rem));
+        right: max(2rem, env(safe-area-inset-right, 2rem));
+    }
+    
+    .settings-panel {
+        top: max(2rem, env(safe-area-inset-top, 2rem));
+        right: max(2rem, env(safe-area-inset-right, 2rem));
+    }
+    
+    .nav-panel {
+        padding-top: max(1rem, env(safe-area-inset-top, 1rem));
+        padding-left: max(0px, env(safe-area-inset-left, 0px));
+    }
+}
+
+/* Enhanced print styles */
 @media print {
     .nav-panel,
     .ai-helper,
