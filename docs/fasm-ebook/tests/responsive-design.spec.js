@@ -132,7 +132,7 @@ test.describe('FASM eBook - Responsive Design', () => {
     await expect(page.locator('#main-content')).toBeVisible();
 
     // Content should fit in reduced height
-    const contentArea = page.locator('#content-area');
+    const contentArea = page.locator('#chapter-content');
     if (await contentArea.count() > 0) {
       const contentBox = await contentArea.boundingBox();
       expect(contentBox.height).toBeLessThanOrEqual(375);
@@ -174,7 +174,7 @@ test.describe('FASM eBook - Responsive Design', () => {
         await page.waitForTimeout(2000);
       }
 
-      const contentArea = page.locator('#content-area');
+      const contentArea = page.locator('#chapter-content');
       if (await contentArea.count() > 0) {
         const contentBox = await contentArea.boundingBox();
         
@@ -237,7 +237,7 @@ test.describe('FASM eBook - Responsive Design', () => {
     await page.waitForTimeout(2000);
 
     // Content should not be stretched too wide
-    const contentArea = page.locator('#content-area');
+    const contentArea = page.locator('#chapter-content');
     if (await contentArea.count() > 0) {
       const contentBox = await contentArea.boundingBox();
       

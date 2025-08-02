@@ -162,7 +162,7 @@ test.describe('FASM eBook - Content Features', () => {
           await page.waitForTimeout(2000);
           
           // Should navigate to bookmarked content
-          await expect(page.locator('#content-area')).toBeVisible();
+          await expect(page.locator('#chapter-content')).toBeVisible();
         }
       }
     }
@@ -194,7 +194,7 @@ test.describe('FASM eBook - Content Features', () => {
           await page.waitForTimeout(2000);
           
           // Should navigate to history item
-          await expect(page.locator('#content-area')).toBeVisible();
+          await expect(page.locator('#chapter-content')).toBeVisible();
         }
       }
     }
@@ -236,7 +236,7 @@ test.describe('FASM eBook - Content Features', () => {
       await expect(page.locator('body')).toHaveClass(/eink/);
       
       // Colors should be grayscale
-      const contentArea = page.locator('#content-area');
+      const contentArea = page.locator('#chapter-content');
       const backgroundColor = await contentArea.evaluate(el => getComputedStyle(el).backgroundColor);
       
       // Should be white, black, or gray
@@ -250,7 +250,7 @@ test.describe('FASM eBook - Content Features', () => {
     await page.waitForTimeout(3000);
     
     // Should show error message or fallback content
-    const contentArea = page.locator('#content-area');
+    const contentArea = page.locator('#chapter-content');
     if (await contentArea.count() > 0) {
       const contentText = await contentArea.textContent();
       
@@ -290,7 +290,7 @@ test.describe('FASM eBook - Content Features', () => {
         await searchResults.first().click();
         await page.waitForTimeout(2000);
         
-        const contentArea = page.locator('#content-area');
+        const contentArea = page.locator('#chapter-content');
         const content = await contentArea.textContent();
         expect(content.toLowerCase()).toContain('assembly');
       }

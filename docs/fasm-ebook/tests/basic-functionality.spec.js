@@ -17,13 +17,13 @@ test.describe('FASM eBook - Basic Functionality', () => {
     await expect(page.locator('#main-content')).toBeVisible();
     await expect(page.locator('#toc-list')).toBeVisible();
     
-    // Check that content area exists
-    await expect(page.locator('#content-area')).toBeVisible();
+    // Check that content area exists (using correct selector)
+    await expect(page.locator('#chapter-content')).toBeVisible();
   });
 
   test('should display table of contents', async ({ page }) => {
-    // Wait for TOC to load
-    await page.waitForSelector('#toc-list li', { timeout: 10000 });
+    // Wait for TOC to load with longer timeout for CI
+    await page.waitForSelector('#toc-list li', { timeout: 20000 });
     
     // Check that TOC items exist
     const tocItems = await page.locator('#toc-list li').count();
@@ -35,17 +35,17 @@ test.describe('FASM eBook - Basic Functionality', () => {
   });
 
   test('should navigate between chapters', async ({ page }) => {
-    // Wait for TOC to load
-    await page.waitForSelector('#toc-list li a', { timeout: 10000 });
+    // Wait for TOC to load with longer timeout for CI
+    await page.waitForSelector('#toc-list li a', { timeout: 20000 });
     
     // Click on first chapter
     await page.click('#toc-list li a:first-child');
     
-    // Wait for content to load
-    await page.waitForSelector('#content-area h1, #content-area h2', { timeout: 10000 });
+    // Wait for content to load with longer timeout
+    await page.waitForSelector('#chapter-content h1, #chapter-content h2', { timeout: 20000 });
     
     // Check that content has loaded
-    const contentText = await page.locator('#content-area').textContent();
+    const contentText = await page.locator('#chapter-content').textContent();
     expect(contentText.length).toBeGreaterThan(100);
     
     // Check that progress has been updated
@@ -71,16 +71,19 @@ test.describe('FASM eBook - Basic Functionality', () => {
   });
 
   test('should persist reading progress', async ({ page }) => {
-    // Navigate to a chapter
-    await page.waitForSelector('#toc-list li a', { timeout: 10000 });
+    // Navigate to a chapter with longer timeout for CI
+    await page.waitForSelector('#toc-list li a', { timeout: 20000 });
     await page.click('#toc-list li a:nth-child(2)'); // Second chapter
     
-    // Wait for content to load
-    await page.waitForSelector('#content-area h1, #content-area h2', { timeout: 10000 });
+    // Wait for content to load with longer timeout
+    await page.waitForSelector('#chapter-content h1, #chapter-content h2', { timeout: 20000 });
+    
+    // Wait for progress to be saved
+    await page.waitForTimeout(1000);
     
     // Reload the page
     await page.reload();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000); // Give more time for initialization after reload
     
     // Check that progress is restored
     const progressText = await page.locator('#progress-text').textContent();

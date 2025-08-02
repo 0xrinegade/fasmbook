@@ -111,7 +111,7 @@ test.describe('FASM eBook - PWA Features', () => {
       await page.waitForTimeout(3000);
       
       // Content should be available from cache
-      const contentArea = page.locator('#content-area');
+      const contentArea = page.locator('#chapter-content');
       const hasContent = await contentArea.evaluate(el => el.textContent.trim().length > 50);
       
       // If content is cached, it should be available
@@ -200,7 +200,7 @@ test.describe('FASM eBook - PWA Features', () => {
       await page.waitForTimeout(2000);
       
       // Should navigate back to chapter
-      await expect(page.locator('#content-area')).toBeVisible();
+      await expect(page.locator('#chapter-content')).toBeVisible();
     }
   });
 
@@ -282,7 +282,7 @@ test.describe('FASM eBook - PWA Features', () => {
       await tocLink.click();
       await page.waitForTimeout(2000);
       
-      await expect(page.locator('#content-area')).toBeVisible();
+      await expect(page.locator('#chapter-content')).toBeVisible();
     }
   });
 

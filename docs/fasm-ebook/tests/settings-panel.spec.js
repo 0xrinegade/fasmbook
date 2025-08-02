@@ -73,7 +73,7 @@ test.describe('FASM eBook - Settings Panel', () => {
     const fontSizeSlider = settingsPanel.locator('input[type="range"][name*="font"], #font-size-slider, .font-size-control');
     if (await fontSizeSlider.count() > 0) {
       // Get current font size
-      const contentArea = page.locator('#content-area, .content');
+      const contentArea = page.locator('#chapter-content, .content');
       const initialFontSize = await contentArea.evaluate(el => getComputedStyle(el).fontSize);
       
       // Increase font size
@@ -102,7 +102,7 @@ test.describe('FASM eBook - Settings Panel', () => {
       await page.waitForTimeout(500);
       
       // Check that line height changed in content
-      const contentArea = page.locator('#content-area, .content');
+      const contentArea = page.locator('#chapter-content, .content');
       const lineHeight = await contentArea.evaluate(el => getComputedStyle(el).lineHeight);
       expect(parseFloat(lineHeight)).toBeGreaterThan(1.5);
     }

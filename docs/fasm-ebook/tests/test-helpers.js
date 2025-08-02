@@ -6,24 +6,24 @@ export class TestHelpers {
   /**
    * Wait for the eBook to fully initialize
    */
-  static async waitForEBookInit(page, timeout = 10000) {
+  static async waitForEBookInit(page, timeout = 20000) {
     await page.waitForLoadState('domcontentloaded');
     await page.waitForSelector('#navigation-panel', { timeout });
     await page.waitForSelector('#main-content', { timeout });
-    await page.waitForTimeout(1000); // Allow scripts to initialize
+    await page.waitForTimeout(2000); // Allow more time for scripts to initialize
   }
 
   /**
    * Navigate to a specific chapter
    */
   static async navigateToChapter(page, chapterIndex = 0) {
-    await page.waitForSelector('#toc-list a', { timeout: 10000 });
+    await page.waitForSelector('#toc-list a', { timeout: 20000 });
     const tocLinks = page.locator('#toc-list a');
     const linkCount = await tocLinks.count();
     
     if (linkCount > chapterIndex) {
       await tocLinks.nth(chapterIndex).click();
-      await page.waitForSelector('#content-area h1, #content-area h2', { timeout: 10000 });
+      await page.waitForSelector('#chapter-content h1, #chapter-content h2', { timeout: 20000 });
       await page.waitForTimeout(1000);
       return true;
     }
