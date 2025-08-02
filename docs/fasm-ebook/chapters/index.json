@@ -106,5 +106,11 @@
     "title": "Chapter 17: In-Memory Key-Value Storage with FASM Plugin System",
     "file": "chapter17.md",
     "pages": 69
+  },
+  {
+    "id": "chapter18",
+    "title": "Chapter 18: Advanced Concurrent Programming and GPU Computing",
+    "file": "chapter18.md",
+    "pages": 89
   }
 ]
