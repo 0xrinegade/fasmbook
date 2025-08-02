@@ -33,6 +33,532 @@ max_loop:
 not_greater:
     add esi, 4                     ; Move to next element
     loop max_loop                  ; Continue until ECX = 0
+
+## 📚 Comprehensive Instruction Reference: LOOP
+
+> **🚩 Iteration Control**: LOOP provides compact loop control by combining decrement and conditional jump in a single instruction.
+
+### Historical Context and Evolution 📜
+
+The LOOP instruction was designed to simplify the common pattern of counted loops, combining ECX decrement with a conditional jump. It represents early processor designers' attempt to provide high-level programming constructs in hardware.
+
+**Design Philosophy:**
+LOOP encapsulates the pattern: `dec ecx; jnz target` into a single instruction, making loop code more compact and readable.
+
+**Historical Development:**
+- **1978**: Introduced in 8086 with 16-bit CX register
+- **1985**: Extended to 32-bit ECX register in 80386
+- **Modern Era**: Performance characteristics changed with advanced pipelines
+
+### Complete Instruction Theory and Specification
+
+**LOOP** decrements ECX (or CX in 16-bit mode) and jumps to the target address if the result is not zero.
+
+**Fundamental Operation:**
+```
+ECX ← ECX - 1
+if (ECX ≠ 0) then
+    EIP ← EIP + signed_displacement
+else
+    Continue to next instruction
+```
+
+**Equivalent Code Sequence:**
+```assembly
+; LOOP target is equivalent to:
+dec ecx
+jnz target
+```
+
+### Complete Syntax Reference and Variants
+
+**Basic LOOP Instructions:**
+```assembly
+loop target             ; E2 xx - Loop while ECX ≠ 0
+loopz target            ; E1 xx - Loop while ECX ≠ 0 AND ZF = 1  
+loope target            ; E1 xx - Same as LOOPZ (alternative mnemonic)
+loopnz target           ; E0 xx - Loop while ECX ≠ 0 AND ZF = 0
+loopne target           ; E0 xx - Same as LOOPNZ (alternative mnemonic)
+```
+
+**Addressing Mode Variants:**
+```assembly
+; 16-bit mode (uses CX register):
+loop target             ; Decrements CX instead of ECX
+
+; 32-bit mode (default):
+loop target             ; Decrements ECX
+
+; 64-bit mode:
+loop target             ; Decrements ECX (not RCX!) - historical compatibility
+```
+
+**Extended LOOP Instructions:**
+```assembly
+; LOOPZ/LOOPE - Loop while zero flag is set
+loopz equal_loop        ; Continue while ECX ≠ 0 AND last operation resulted in zero
+loope equal_loop        ; Identical to LOOPZ - alternative spelling
+
+; LOOPNZ/LOOPNE - Loop while zero flag is clear  
+loopnz not_equal_loop   ; Continue while ECX ≠ 0 AND last operation was non-zero
+loopne not_equal_loop   ; Identical to LOOPNZ - alternative spelling
+```
+
+### Performance Characteristics and Modern Considerations
+
+**Performance Trade-offs:**
+```assembly
+; Traditional LOOP instruction:
+mov ecx, 1000
+loop_start:
+    ; ... loop body ...
+    loop loop_start     ; 2 bytes, but may be slower on modern CPUs
+
+; Modern equivalent (often faster):
+mov ecx, 1000
+loop_start:
+    ; ... loop body ...
+    dec ecx             ; 1 byte (or 2 if memory)
+    jnz loop_start      ; 2 bytes
+; Total: 3 bytes vs 2 bytes, but better performance on many modern CPUs
+```
+
+**Why Modern CPUs May Prefer DEC/JNZ:**
+1. **Micro-op Fusion**: Many CPUs can fuse DEC+JNZ into single micro-operation
+2. **Branch Prediction**: JNZ has better branch prediction than LOOP on some CPUs
+3. **Pipeline Optimization**: Separate instructions may fit better in pipeline
+
+### Advanced LOOP Patterns and Use Cases
+
+**Basic Counted Loop:**
+```assembly
+; Process array with LOOP
+mov esi, array_start
+mov ecx, array_length
+
+process_loop:
+    mov eax, [esi]      ; Load element
+    ; ... process element ...
+    add esi, 4          ; Next element
+    loop process_loop   ; Continue for all elements
+```
+
+**Search Loop with Early Exit (LOOPNZ):**
+```assembly
+; Search for zero value in array
+mov esi, array_start
+mov ecx, array_length
+
+search_loop:
+    cmp dword [esi], 0  ; Check for zero
+    ; ZF is set if [esi] == 0, clear if [esi] ≠ 0
+    lea esi, [esi + 4]  ; Next element (doesn't affect flags)
+    loopnz search_loop  ; Continue while ECX ≠ 0 AND ZF = 0 (not found)
+    
+; Exit conditions:
+; ECX = 0: Reached end without finding zero
+; ZF = 1: Found zero value
+jz found_zero           ; Jump if zero was found
+; Otherwise fell through - zero not found
+```
+
+**String Comparison with LOOPZ:**
+```assembly
+; Compare two strings character by character
+mov esi, string1
+mov edi, string2
+mov ecx, max_length
+
+compare_loop:
+    mov al, [esi]       ; Load char from string1
+    cmp al, [edi]       ; Compare with string2
+    jne strings_differ  ; Exit immediately if different
+    test al, al         ; Check for null terminator
+    jz strings_equal    ; Both strings ended with same content
+    inc esi             ; Next char in string1
+    inc edi             ; Next char in string2
+    loopz compare_loop  ; Continue while ECX ≠ 0 AND ZF = 1 (equal)
+    
+; ECX reached 0 but characters still equal
+strings_equal:
+    ; Strings are equal
+    ret
+    
+strings_differ:
+    ; Strings differ
+    ret
+```
+
+### Optimization Considerations and Best Practices
+
+**When to Use LOOP:**
+```assembly
+; Good use case - simple counting where code size matters:
+mov ecx, delay_count
+delay_loop:
+    nop                 ; Simple delay
+    loop delay_loop     ; Compact representation
+
+; Good use case - legacy code compatibility:
+; LOOP maintains exact semantics across all x86 processors
+```
+
+**When to Avoid LOOP:**
+```assembly
+; Avoid for performance-critical loops:
+; Modern alternative:
+mov ecx, 1000
+fast_loop:
+    ; ... loop body ...
+    dec ecx
+    jnz fast_loop       ; Often faster than LOOP
+
+; Avoid when you need the counter value after loop:
+mov ecx, 1000
+loop_start:
+    ; ... loop body ...
+    loop loop_start
+; ECX is now 0 - original count is lost
+
+; Better:
+mov ecx, 1000
+mov edx, ecx            ; Preserve original count
+loop_start:
+    ; ... loop body ...
+    dec ecx
+    jnz loop_start
+; EDX still contains original count
+```
+
+### Advanced Loop Patterns
+
+**Nested Loops with Multiple Counters:**
+```assembly
+; Process 2D array using nested loops
+mov ebx, rows           ; Outer loop counter
+outer_loop:
+    push ebx            ; Save outer counter
+    mov ecx, columns    ; Inner loop counter
+    inner_loop:
+        ; ... process array[row][column] ...
+        loop inner_loop ; Inner loop
+    pop ebx             ; Restore outer counter
+    dec ebx
+    jnz outer_loop      ; Outer loop
+```
+
+**Loop Unrolling with LOOP:**
+```assembly
+; Unrolled loop for better performance
+mov ecx, array_length
+shr ecx, 2              ; Divide by 4 (process 4 elements per iteration)
+
+## 📚 Comprehensive Instruction Reference: SHR
+
+> **🚩 Bit Shifting Master**: SHR (Shift Right) performs logical right shifts, effectively dividing by powers of 2 and manipulating bit patterns.
+
+### Historical Context and Evolution 📜
+
+Shift operations are among the most fundamental bit manipulations in computing, directly reflecting the binary nature of digital systems. SHR implements logical right shift, where zeros are shifted in from the left.
+
+**Mathematical Foundation:**
+Logical right shift by N positions is equivalent to unsigned division by 2^N:
+- SHR by 1 = divide by 2
+- SHR by 2 = divide by 4  
+- SHR by 3 = divide by 8
+- SHR by N = divide by 2^N
+
+**Historical Development:**
+- **1972**: Basic shift operations in Intel 8008
+- **1978**: Enhanced with variable shift counts in 8086
+- **1985**: 32-bit shift operations in 80386
+- **1993**: Optimized shifters in Pentium
+- **Modern**: Shift operations execute in 1 cycle on most modern CPUs
+
+### Complete Instruction Theory and Specification
+
+**SHR** shifts all bits in the destination operand to the right by the specified count, filling vacant positions with zeros.
+
+**Fundamental Operation:**
+```
+For each bit position:
+Destination[i] ← Destination[i + shift_count]
+Vacant positions ← 0
+```
+
+**Bit Movement Visualization:**
+```
+Original: 1101 1010 (218 decimal)
+SHR 1:    0110 1101 (109 decimal)
+SHR 2:    0011 0110 (54 decimal)  
+SHR 3:    0001 1011 (27 decimal)
+```
+
+### Complete Syntax Reference and API
+
+**Immediate Shift Counts:**
+```assembly
+; Shift by immediate value (1-31 in 32-bit mode)
+shr eax, 1              ; D1 E8 - Shift EAX right by 1 bit
+shr ebx, 4              ; C1 EB 04 - Shift EBX right by 4 bits
+shr ecx, 16             ; C1 E9 10 - Shift ECX right by 16 bits
+
+; Memory operands with immediate counts
+shr dword [esi], 2      ; C1 2E 02 - Shift memory location right by 2
+shr byte [edi], 3       ; C0 2F 03 - Shift memory byte right by 3
+shr word [ebx], 8       ; 66 C1 2B 08 - Shift memory word right by 8
+```
+
+**Variable Shift Counts (using CL register):**
+```assembly
+; Shift count in CL register (0-31 meaningful values)
+mov cl, 5
+shr eax, cl             ; D3 E8 - Shift EAX right by CL bits
+
+mov cl, shift_amount
+shr ebx, cl             ; Shift EBX by variable amount
+shr dword [esi], cl     ; D3 2E - Shift memory by CL bits
+```
+
+**Size Variants:**
+```assembly
+; 8-bit shifts
+shr al, 3               ; C0 E8 03 - Shift AL right by 3 bits
+shr bl, cl              ; D2 EB - Shift BL right by CL bits
+
+; 16-bit shifts  
+shr ax, 8               ; 66 C1 E8 08 - Shift AX right by 8 bits
+shr dx, cl              ; 66 D3 EA - Shift DX right by CL bits
+
+; 32-bit shifts (default in 32-bit mode)
+shr eax, 12             ; C1 E8 0C - Shift EAX right by 12 bits
+shr edx, cl             ; D3 EA - Shift EDX right by CL bits
+
+; 64-bit shifts (x64 mode)
+shr rax, 20             ; 48 C1 E8 14 - Shift RAX right by 20 bits
+shr rdx, cl             ; 48 D3 EA - Shift RDX right by CL bits
+```
+
+### Flag Updates and Behavior
+
+**Flag Effects:**
+- **CF**: Receives the last bit shifted out
+- **ZF**: Set if result is zero
+- **SF**: Set if result's most significant bit is 1
+- **PF**: Set if result's low byte has even parity
+- **OF**: Set if shift count is 1 and MSB changed (single-bit shifts only)
+- **AF**: Undefined
+
+**Carry Flag Examples:**
+```assembly
+mov eax, 0x12345678     ; Binary: ...0001 0010 0011 0100 0101 0110 0111 1000
+shr eax, 1              ; Result: ...0000 1001 0001 1010 0010 1011 0011 1100
+                       ; CF = 0 (bit that was shifted out)
+
+mov eax, 0x12345679     ; Binary: ...0001 0010 0011 0100 0101 0110 0111 1001  
+shr eax, 1              ; Result: ...0000 1001 0001 1010 0010 1011 0011 1100
+                       ; CF = 1 (bit that was shifted out)
+```
+
+### Arithmetic Applications and Optimizations
+
+**Fast Division by Powers of 2:**
+```assembly
+; Traditional division (slow):
+mov eax, dividend
+mov ebx, 8
+xor edx, edx            ; Clear remainder
+div ebx                 ; 20-30 cycles
+
+; Optimized division using SHR (fast):
+mov eax, dividend
+shr eax, 3              ; 1 cycle (8 = 2³, so shift right 3 bits)
+```
+
+**Rounding Behavior Differences:**
+```assembly
+; Unsigned division with SHR always rounds down (truncates):
+mov eax, 7              ; 7 ÷ 2 = 3.5
+shr eax, 1              ; Result: 3 (rounds down)
+
+mov eax, 9              ; 9 ÷ 4 = 2.25  
+shr eax, 2              ; Result: 2 (rounds down)
+
+; This works correctly for unsigned numbers
+; For signed numbers, use SAR (Shift Arithmetic Right) instead
+```
+
+**Extract Bit Fields:**
+```assembly
+; Extract bits 8-15 from a 32-bit value
+mov eax, source_value
+shr eax, 8              ; Shift bits 8-15 to positions 0-7
+and eax, 0xFF           ; Mask to keep only low 8 bits
+
+; Extract upper 16 bits
+mov eax, source_value
+shr eax, 16             ; Shift upper 16 bits to lower positions
+
+; Extract specific bit ranges for packed data
+mov eax, rgb_color      ; Format: 0x00RRGGBB
+mov ebx, eax            ; Copy for red extraction
+shr ebx, 16             ; Extract red component (bits 16-23)
+and ebx, 0xFF           ; Mask to 8 bits
+
+mov ecx, eax            ; Copy for green extraction  
+shr ecx, 8              ; Extract green component (bits 8-15)
+and ecx, 0xFF           ; Mask to 8 bits
+
+and eax, 0xFF           ; Blue component (bits 0-7) - no shift needed
+```
+
+### Advanced Bit Manipulation Patterns
+
+**Creating Bit Masks:**
+```assembly
+; Create mask with N bits set
+mov eax, 0xFFFFFFFF
+mov cl, bit_count
+shr eax, cl             ; Shift out unwanted bits
+; EAX now contains mask with (32 - bit_count) bits set
+
+; Example: Create mask with 24 bits set
+mov eax, 0xFFFFFFFF     ; All 32 bits set
+shr eax, 8              ; Shift out 8 bits
+; Result: 0x00FFFFFF (24 bits set)
+```
+
+**Bit Reversal (using shifts):**
+```assembly
+; Reverse bits in a byte using shifts
+mov al, input_byte      ; Input: 1101 0011
+mov bl, 0               ; Output accumulator
+
+mov cl, 8               ; Bit counter
+reverse_loop:
+    shr al, 1           ; Shift input right, bit goes to CF
+    rcl bl, 1           ; Rotate output left, including CF
+    dec cl
+    jnz reverse_loop
+; BL now contains reversed bits: 1100 1011
+```
+
+**Efficient Multiplication/Division by 10:**
+```assembly
+; Multiply by 10 using shifts and addition
+; 10 = 8 + 2 = 2³ + 2¹
+mov eax, input_value
+mov ebx, eax            ; Save original
+shl eax, 3              ; Multiply by 8
+shl ebx, 1              ; Multiply by 2  
+add eax, ebx            ; 8x + 2x = 10x
+
+; Divide by 10 approximation using shifts
+; 1/10 ≈ 0.1 ≈ 26/256 = 26 * 2^(-8)
+mov eax, input_value
+imul eax, 26            ; Multiply by 26
+shr eax, 8              ; Divide by 256
+; Result is approximate division by 10 (with rounding error)
+```
+
+### Performance Characteristics and Optimization
+
+**Execution Speed:**
+```assembly
+shr eax, 1              ; 1 cycle latency, 0.5 cycles throughput
+shr eax, 5              ; 1 cycle latency, 0.5 cycles throughput
+; Shift count doesn't affect speed on modern CPUs
+
+; Variable shifts (slightly slower on some older CPUs):
+shr eax, cl             ; 1-2 cycles (depends on microarchitecture)
+```
+
+**Optimization Opportunities:**
+```assembly
+; Chain multiple operations efficiently:
+shr eax, 8              ; Extract upper bits
+and eax, 0xFF           ; Mask to byte
+; Can often be optimized to:
+mov al, ah              ; Move AH to AL (equivalent to SHR 8 + mask)
+xor ah, ah              ; Clear upper bits
+
+; Use LEA for complex address calculations involving shifts:
+; Instead of:
+mov eax, index
+shl eax, 2              ; Multiply by 4  
+add eax, base_address   ; Add base
+
+; Use:
+lea eax, [base_address + index*4]  ; Single instruction
+```
+
+### Integration with SIMD and Modern Instructions
+
+**Vector Shifts:**
+```assembly
+; SSE2 packed shifts (operate on multiple values simultaneously)
+psrld xmm0, 4           ; Shift 4 32-bit values right by 4 bits
+psrlq xmm1, 8           ; Shift 2 64-bit values right by 8 bits
+psrlw xmm2, 2           ; Shift 8 16-bit values right by 2 bits
+
+; AVX packed shifts (256-bit vectors)
+vpsrld ymm0, ymm1, 3    ; Shift 8 32-bit values right by 3 bits
+```
+
+**Funnel Shifts (newer CPUs):**
+```assembly
+; SHRD - Shift Right Double (shift between two registers)
+shrd eax, ebx, 4        ; Shift EAX right 4 bits, filling with bits from EBX
+; Useful for multi-precision arithmetic and bit field extraction
+```
+
+---
+jz handle_remainder     ; Handle case where length < 4
+
+unrolled_loop:
+    ; Process 4 elements per iteration
+    mov eax, [esi]      ; Element 0
+    add eax, [esi + 4]  ; Element 1
+    add eax, [esi + 8]  ; Element 2
+    add eax, [esi + 12] ; Element 3
+    add esi, 16         ; Advance by 4 elements
+    loop unrolled_loop
+
+handle_remainder:
+    ; Handle remaining 0-3 elements
+    mov ecx, array_length
+    and ecx, 3          ; Get remainder (length % 4)
+    jz done
+    
+remainder_loop:
+    add eax, [esi]
+    add esi, 4
+    loop remainder_loop
+    
+done:
+```
+
+### Integration with Modern Programming
+
+**Compiler Usage:**
+Modern compilers rarely generate LOOP instructions, preferring the DEC/JNZ pattern for better optimization opportunities.
+
+**Hand-Optimized Assembly:**
+```assembly
+; When writing assembly by hand, consider your priorities:
+
+; Minimize code size:
+loop target             ; Use LOOP
+
+; Maximize performance:
+dec ecx
+jnz target              ; Use separate instructions
+
+; Balance both:
+; Profile your specific use case on target hardware
+```
+
+---
     ret
 ```
 

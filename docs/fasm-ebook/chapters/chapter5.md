@@ -444,6 +444,348 @@ demo_flags_register:
     mov eax, 0xFFFFFFFF
     add eax, 1                     ; This will set CF (carry flag)
     pushfd                         ; Push flags to stack
+
+## 📚 Comprehensive Instruction Reference: PUSHFD
+
+> **🚩 Flags Register Access**: PUSHFD provides direct access to the processor's flags register, essential for low-level system programming and debugging.
+
+### Historical Context and Evolution 📜
+
+PUSHFD (Push Flags Doubleword) represents the evolution of flags access from the original 8086's PUSHF instruction. The ability to read and manipulate processor flags directly is crucial for system software, debuggers, and performance analysis.
+
+**Design Evolution:**
+- **1978**: PUSHF in 8086 (16-bit flags)
+- **1985**: PUSHFD in 80386 (32-bit extended flags)
+- **2003**: PUSHFQ in x86-64 (64-bit flags, though upper 32 bits are reserved)
+
+**System Programming Importance:**
+PUSHFD enables:
+1. **Flag State Preservation**: Save processor state during interrupts
+2. **Conditional Code Generation**: Runtime decisions based on flag states
+3. **Debugging Support**: Examine processor state for analysis
+4. **System Software**: Operating system and driver development
+
+### Complete Instruction Theory and Specification
+
+**PUSHFD** pushes the 32-bit EFLAGS register onto the stack, providing a snapshot of the processor's current condition state.
+
+**Fundamental Operation:**
+```
+ESP ← ESP - 4
+Memory[ESP] ← EFLAGS
+```
+
+**EFLAGS Register Layout (32-bit):**
+```
+Bit  Name  Description                    Type
+---  ----  -----------                    ----
+0    CF    Carry Flag                     Status
+1    1     Reserved (always 1)            Fixed
+2    PF    Parity Flag                    Status  
+3    0     Reserved (always 0)            Fixed
+4    AF    Auxiliary Carry Flag           Status
+5    0     Reserved (always 0)            Fixed
+6    ZF    Zero Flag                      Status
+7    SF    Sign Flag                      Status
+8    TF    Trap Flag                      System
+9    IF    Interrupt Enable Flag          System
+10   DF    Direction Flag                 Control
+11   OF    Overflow Flag                  Status
+12-13 IOPL I/O Privilege Level           System
+14   NT    Nested Task Flag               System
+15   0     Reserved (always 0)            Fixed
+16   RF    Resume Flag                    System
+17   VM    Virtual 8086 Mode              System
+18   AC    Alignment Check                System
+19   VIF   Virtual Interrupt Flag         System
+20   VIP   Virtual Interrupt Pending      System
+21   ID    CPUID Available                System
+22-31 0    Reserved (always 0)            Fixed
+```
+
+### Complete Syntax Reference and Variants
+
+**Flag Access Instructions:**
+```assembly
+; 32-bit flags operations
+pushfd                  ; 9C - Push 32-bit EFLAGS onto stack
+popfd                   ; 9D - Pop 32-bit EFLAGS from stack
+
+; 16-bit flags operations (legacy)
+pushf                   ; 66 9C - Push 16-bit FLAGS onto stack
+popf                    ; 66 9D - Pop 16-bit FLAGS from stack
+
+; 64-bit flags operations (x64 mode)
+pushfq                  ; 9C - Push 64-bit RFLAGS onto stack
+popfq                   ; 9D - Pop 64-bit RFLAGS from stack
+```
+
+**Alternative Flag Access Methods:**
+```assembly
+; Load flags into AH register (8086 compatible)
+lahf                    ; 9F - Load AH with flags (SF, ZF, AF, PF, CF)
+sahf                    ; 9E - Store AH into flags
+
+; Move flags via general-purpose registers (newer method)
+pushfd                  ; Push flags
+pop eax                 ; Get flags in EAX
+; ... modify flags in EAX ...
+push eax                ; Push modified flags
+popfd                   ; Restore flags
+```
+
+### Flag Manipulation and Testing Patterns
+
+**Reading Specific Flags:**
+```assembly
+; Test individual flags after PUSHFD
+pushfd                  ; Push flags to stack
+pop eax                 ; Get flags in EAX
+
+; Test carry flag
+test eax, 0x00000001    ; CF is bit 0
+jnz carry_set           ; Jump if CF = 1
+
+; Test zero flag  
+test eax, 0x00000040    ; ZF is bit 6
+jnz zero_set            ; Jump if ZF = 1
+
+; Test sign flag
+test eax, 0x00000080    ; SF is bit 7
+jnz sign_set            ; Jump if SF = 1
+
+; Test overflow flag
+test eax, 0x00000800    ; OF is bit 11
+jnz overflow_set        ; Jump if OF = 1
+```
+
+**Conditional Flag Setting:**
+```assembly
+; Set specific flags programmatically
+pushfd                  ; Save current flags
+pop eax                 ; Get flags in EAX
+
+; Set carry flag
+or eax, 0x00000001      ; Set CF bit
+push eax                ; Push modified flags
+popfd                   ; Restore flags with CF set
+
+; Clear carry flag
+and eax, 0xFFFFFFFE     ; Clear CF bit
+push eax                ; Push modified flags  
+popfd                   ; Restore flags with CF clear
+
+; Toggle zero flag
+xor eax, 0x00000040     ; Toggle ZF bit
+push eax                ; Push modified flags
+popfd                   ; Restore flags with ZF toggled
+```
+
+### System Programming Applications
+
+**Interrupt Handler Flag Preservation:**
+```assembly
+interrupt_handler:
+    pushfd              ; Save flags state
+    pushad              ; Save all general registers
+    
+    ; Handle interrupt
+    ; ... interrupt processing code ...
+    
+    popad               ; Restore all general registers
+    popfd               ; Restore flags state
+    iret                ; Return from interrupt
+```
+
+**Context Switching (Operating System):**
+```assembly
+save_task_context:
+    ; Save complete processor state
+    pushfd              ; Save flags
+    pushad              ; Save general registers
+    
+    ; Save additional state
+    mov [task_context.flags], eax  ; Store flags separately if needed
+    str [task_context.tr]          ; Save task register
+    sgdt [task_context.gdt]        ; Save GDT
+    sidt [task_context.idt]        ; Save IDT
+    
+    ret
+
+restore_task_context:
+    ; Restore complete processor state
+    lgdt [task_context.gdt]        ; Restore GDT
+    lidt [task_context.idt]        ; Restore IDT
+    ltr [task_context.tr]          ; Restore task register
+    
+    popad               ; Restore general registers
+    popfd               ; Restore flags
+    ret
+```
+
+**Debugging and Analysis:**
+```assembly
+debug_checkpoint:
+    pushfd              ; Capture flags state
+    pop eax             ; Get flags in EAX
+    
+    ; Log flag states for debugging
+    mov [debug_log.flags], eax
+    mov [debug_log.eax], eax      ; Save other registers too
+    mov [debug_log.ebx], ebx
+    mov [debug_log.ecx], ecx
+    
+    ; Analyze specific conditions
+    test eax, 0x00000001    ; Check CF
+    jnz log_carry_set
+    test eax, 0x00000040    ; Check ZF  
+    jnz log_zero_set
+    test eax, 0x00000080    ; Check SF
+    jnz log_sign_set
+    
+    ret
+```
+
+### Performance Measurement and Timing
+
+**Precise Timing with Flag State:**
+```assembly
+timing_benchmark:
+    ; Disable interrupts for precise timing
+    pushfd              ; Save current interrupt state
+    cli                 ; Clear interrupt flag
+    
+    ; Get start time
+    rdtsc               ; Read time stamp counter
+    mov [start_time], eax
+    mov [start_time+4], edx
+    
+    ; Execute code to benchmark
+    call function_to_time
+    
+    ; Get end time
+    rdtsc               ; Read time stamp counter again
+    mov [end_time], eax
+    mov [end_time+4], edx
+    
+    ; Restore interrupt state
+    popfd               ; Restore original interrupt flag state
+    
+    ; Calculate elapsed time
+    mov eax, [end_time]
+    sub eax, [start_time]      ; Low 32 bits of difference
+    
+    ret
+```
+
+### Flag-Based Optimizations
+
+**Branchless Programming Using Flags:**
+```assembly
+; Conditional move based on flags
+pushfd              ; Save flags
+pop eax             ; Get flags in register
+
+; Create mask based on zero flag (bit 6)
+shr eax, 6          ; Shift ZF to bit 0
+and eax, 1          ; Isolate ZF bit (0 or 1)
+neg eax             ; Convert to 0x00000000 or 0xFFFFFFFF
+
+; Use mask for conditional assignment
+mov ebx, value_if_zero
+mov ecx, value_if_not_zero
+and ebx, eax        ; EBX = value_if_zero if ZF=1, 0 if ZF=0
+not eax             ; Invert mask
+and ecx, eax        ; ECX = value_if_not_zero if ZF=0, 0 if ZF=1
+or ebx, ecx         ; Combine results
+; EBX now contains correct value without branches
+```
+
+**Error Code Generation:**
+```assembly
+; Generate error codes based on flag states
+operation_result:
+    pushfd              ; Capture operation result flags
+    pop eax             ; Get flags
+    
+    xor ebx, ebx        ; Clear error code accumulator
+    
+    ; Check for overflow
+    test eax, 0x00000800    ; Test OF bit
+    jz no_overflow
+    or ebx, ERROR_OVERFLOW  ; Set overflow error bit
+    
+no_overflow:
+    ; Check for carry (unsigned overflow)
+    test eax, 0x00000001    ; Test CF bit  
+    jz no_carry
+    or ebx, ERROR_CARRY     ; Set carry error bit
+    
+no_carry:
+    ; Check for zero result
+    test eax, 0x00000040    ; Test ZF bit
+    jz non_zero
+    or ebx, ERROR_ZERO      ; Set zero result bit
+    
+non_zero:
+    mov [operation_errors], ebx  ; Store composite error code
+    ret
+```
+
+### Modern Usage and Compatibility
+
+**Modern CPU Considerations:**
+```assembly
+; Check for CPU features using flags
+check_cpu_features:
+    ; Try to modify ID flag (bit 21)
+    pushfd              ; Get original flags
+    pop eax
+    mov ebx, eax        ; Save original
+    xor eax, 0x00200000 ; Toggle ID flag
+    push eax
+    popfd               ; Try to set modified flags
+    pushfd              ; Read flags back
+    pop eax
+    
+    cmp eax, ebx        ; Did ID flag change?
+    je no_cpuid         ; If same, CPUID not supported
+    
+    ; CPUID is supported, restore original flags
+    push ebx
+    popfd
+    mov eax, 1          ; CPUID supported
+    ret
+    
+no_cpuid:
+    push ebx            ; Restore original flags
+    popfd
+    xor eax, eax        ; CPUID not supported
+    ret
+```
+
+**Exception Handling Integration:**
+```assembly
+; Exception handler with flag preservation
+exception_handler:
+    pushfd              ; Preserve flags (critical!)
+    pushad              ; Preserve registers
+    
+    ; Determine exception type based on flags
+    mov eax, [esp + 32] ; Get saved flags from stack
+    test eax, 0x00000001    ; Check if CF was set
+    jnz handle_carry_exception
+    test eax, 0x00000800    ; Check if OF was set
+    jnz handle_overflow_exception
+    
+    ; Handle other exception types...
+    
+    popad               ; Restore registers
+    popfd               ; Restore flags
+    iret                ; Return from exception
+```
+
+---
     pop ebx                        ; Get flags in EBX
     test ebx, EFLAGS_CF
     jz no_carry
