@@ -52,5 +52,59 @@
     "title": "Chapter 8: Optimization and Performance Engineering",
     "file": "chapter8.md",
     "pages": 59
+  },
+  {
+    "id": "chapter9",
+    "title": "Chapter 9: Building High-Performance Web Servers",
+    "file": "chapter9.md",
+    "pages": 78
+  },
+  {
+    "id": "chapter10",
+    "title": "Chapter 10: Redis Integration and High-Performance Caching",
+    "file": "chapter10.md",
+    "pages": 95
+  },
+  {
+    "id": "chapter11",
+    "title": "Chapter 11: BPF Programming - Kernel-Level Network and System Monitoring",
+    "file": "chapter11.md",
+    "pages": 82
+  },
+  {
+    "id": "chapter12",
+    "title": "Chapter 12: Virtual Machine Implementation Based on KolibriOS",
+    "file": "chapter12.md",
+    "pages": 71
+  },
+  {
+    "id": "chapter13",
+    "title": "Chapter 13: Container Implementation for KolibriOS",
+    "file": "chapter13.md",
+    "pages": 68
+  },
+  {
+    "id": "chapter14",
+    "title": "Chapter 14: Implementing 2D Video Game TRON",
+    "file": "chapter14.md",
+    "pages": 64
+  },
+  {
+    "id": "chapter15",
+    "title": "Chapter 15: Framework and Library Development",
+    "file": "chapter15.md",
+    "pages": 58
+  },
+  {
+    "id": "chapter16",
+    "title": "Chapter 16: Package Management System Design for FASM",
+    "file": "chapter16.md",
+    "pages": 61
+  },
+  {
+    "id": "chapter17",
+    "title": "Chapter 17: In-Memory Key-Value Storage with FASM Plugin System",
+    "file": "chapter17.md",
+    "pages": 69
   }
 ]
