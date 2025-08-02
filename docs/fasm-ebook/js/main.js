@@ -418,7 +418,8 @@ class FASMeBook {
                 <div class="error-message">
                     <h2>Error Loading Chapter</h2>
                     <p>${message}</p>
-                    <button onclick="location.reload()">Reload Page</button>
+                    <button onclick="window.fasmEbook.loadChapter('preface', 1)">Go to Preface</button>
+                    <button onclick="location.reload()" style="margin-left: 10px;">Reload Page</button>
                 </div>
             `;
         }
@@ -667,9 +668,19 @@ document.addEventListener('DOMContentLoaded', () => {
     window.fasmEbook = new FASMeBook();
 });
 
-// Handle service worker for offline reading (if needed)
+// Handle service worker for offline reading (if available)
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => console.log('SW registered'))
-        .catch(error => console.log('SW registration failed'));
+    // Only register service worker if it exists
+    fetch('/service-worker.js', { method: 'HEAD' })
+        .then(response => {
+            if (response.ok) {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            }
+        })
+        .catch(() => {
+            // Service worker file doesn't exist, skip registration
+            console.log('Service worker not available');
+        });
 }
