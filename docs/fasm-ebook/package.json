@@ -1,0 +1,62 @@
+{
+  "name": "fasm-ebook",
+  "version": "1.0.0",
+  "description": "The Complete FASM Programming Book - Interactive eBook",
+  "scripts": {
+    "test": "./run-tests.sh",
+    "test:quick": "./run-tests.sh quick",
+    "test:core": "./run-tests.sh core", 
+    "test:visual": "./run-tests.sh visual",
+    "test:quality": "./run-tests.sh quality",
+    "test:mobile": "./run-tests.sh mobile",
+    "test:cross-browser": "./run-tests.sh cross-browser",
+    "test:full": "./run-tests.sh full",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "test:chrome": "./run-tests.sh core chromium",
+    "test:firefox": "./run-tests.sh core firefox",
+    "test:safari": "./run-tests.sh core webkit",
+    "serve": "python serve.py",
+    "serve:test": "python serve.py --port 8081",
+    "install:browsers": "npx playwright install",
+    "install:deps": "npx playwright install-deps",
+    "ci:test": "npx playwright test --reporter=html,junit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  },
+  "keywords": [
+    "fasm",
+    "assembly",
+    "programming",
+    "ebook",
+    "education",
+    "interactive",
+    "pwa",
+    "e2e-testing",
+    "playwright"
+  ],
+  "author": "0xrinegade",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0xrinegade/kolibrios.git",
+    "directory": "docs/fasm-ebook"
+  },
+  "bugs": {
+    "url": "https://github.com/0xrinegade/kolibrios/issues"
+  },
+  "homepage": "https://0xrinegade.github.io/kolibrios/",
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}
