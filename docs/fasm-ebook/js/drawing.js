@@ -20,7 +20,7 @@ class FASMeBookDrawing {
         this.canvas = document.getElementById('drawing-canvas');
         if (!this.canvas) return;
         
-        this.ctx = this.canvas.getContext('2d');
+        this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
         this.setupCanvas();
         this.setupEventListeners();
         this.loadDrawings();

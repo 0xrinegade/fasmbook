@@ -975,20 +975,19 @@ document.addEventListener('DOMContentLoaded', () => {
 if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
     // Only register service worker on HTTPS and if it exists
     // Use relative path for GitHub Pages compatibility
-    fetch('service-worker.js', { method: 'HEAD' })
+    fetch('./service-worker.js', { method: 'HEAD' })
         .then(response => {
             if (response.ok) {
-                navigator.serviceWorker.register('service-worker.js')
+                navigator.serviceWorker.register('./service-worker.js')
                     .then(registration => {
                         console.log('Service worker registered successfully');
                     })
                     .catch(error => {
-                        console.log('Service worker registration failed (non-critical):', error);
+                        // Silently handle registration failures
                     });
             }
         })
         .catch(() => {
             // Service worker file doesn't exist, skip registration silently
-            console.log('Service worker not available (this is normal for GitHub Pages)');
         });
 }
