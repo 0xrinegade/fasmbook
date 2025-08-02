@@ -362,6 +362,11 @@ class FASMeBookSettings {
                 window.fasmDrawing.disable();
             }
         }
+        
+        // Dispatch custom event for drawing mode change
+        window.dispatchEvent(new CustomEvent('drawingModeChanged', {
+            detail: { enabled: enabled }
+        }));
     }
     
     applyTheme(theme) {

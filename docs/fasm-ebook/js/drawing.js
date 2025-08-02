@@ -24,6 +24,9 @@ class FASMeBookDrawing {
         this.setupCanvas();
         this.setupEventListeners();
         this.loadDrawings();
+        
+        // Initialize drawing management system
+        this.initDrawingManager();
     }
     
     setupCanvas() {
@@ -393,6 +396,7 @@ class FASMeBookDrawing {
                 <div class="tool-group">
                     <button id="clear-drawing" class="tool-btn">Clear Page</button>
                     <button id="undo-drawing" class="tool-btn">Undo</button>
+                    <button id="open-manager" class="tool-btn">📁 Library</button>
                 </div>
             </div>
         `;
@@ -405,6 +409,8 @@ class FASMeBookDrawing {
                 this.clear();
             } else if (e.target.id === 'undo-drawing') {
                 this.undo();
+            } else if (e.target.id === 'open-manager') {
+                this.toggleDrawingManager();
             } else if (e.target.classList.contains('color-btn')) {
                 // Update active color
                 toolsPanel.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
@@ -538,16 +544,39 @@ class FASMeBookDrawing {
     }
     
     setupSettingsIntegration() {
-        // Integrate with settings panel
-        const drawingModeCheckbox = document.getElementById('drawing-mode');
-        if (drawingModeCheckbox) {
-            drawingModeCheckbox.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    this.enable();
-                } else {
-                    this.disable();
+        // Use a more robust approach to integrate with settings
+        const checkForDrawingCheckbox = () => {
+            const drawingModeCheckbox = document.getElementById('drawing-mode');
+            if (drawingModeCheckbox) {
+                drawingModeCheckbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        this.enable();
+                    } else {
+                        this.disable();
+                    }
+                });
+                
+                // Also listen for programmatic changes
+                window.addEventListener('drawingModeChanged', (e) => {
+                    if (e.detail.enabled) {
+                        this.enable();
+                    } else {
+                        this.disable();
+                    }
+                });
+                
+                return true;
+            }
+            return false;
+        };
+
+        // Try immediate setup, then retry with delay if needed
+        if (!checkForDrawingCheckbox()) {
+            setTimeout(() => {
+                if (!checkForDrawingCheckbox()) {
+                    console.warn('Drawing mode checkbox not found after delay');
                 }
-            });
+            }, 1000);
         }
     }
     
@@ -576,6 +605,556 @@ class FASMeBookDrawing {
         }
         
         return stats;
+    }
+
+    // ==================== DRAWING MANAGEMENT SYSTEM ====================
+    
+    initDrawingManager() {
+        this.savedDrawings = [];
+        this.compositeDrawings = [];
+        this.stashedDrawings = [];
+        this.isEditMode = false;
+        this.selectedDrawing = null;
+        this.dragMode = false;
+        
+        this.loadSavedDrawings();
+        this.createDrawingManagerUI();
+        this.setupDrawingManagerEvents();
+    }
+    
+    createDrawingManagerUI() {
+        // Create the drawing manager panel
+        const managerPanel = document.createElement('div');
+        managerPanel.id = 'drawing-manager';
+        managerPanel.className = 'drawing-manager';
+        managerPanel.innerHTML = `
+            <div class="drawing-manager-header">
+                <h4>Drawing Library</h4>
+                <button id="toggle-manager" class="close-drawing">📁</button>
+            </div>
+            <div class="drawing-manager-content">
+                <div class="drawing-manager-tabs">
+                    <button class="tab-btn active" data-tab="library">Library</button>
+                    <button class="tab-btn" data-tab="composite">Compose</button>
+                    <button class="tab-btn" data-tab="settings">Settings</button>
+                </div>
+                
+                <div class="tab-content" id="library-tab">
+                    <div class="drawing-controls">
+                        <button id="save-current" class="tool-btn">💾 Save Current</button>
+                        <button id="clear-saved" class="tool-btn">🗑️ Clear All</button>
+                    </div>
+                    <div id="saved-drawings-list" class="saved-drawings-list">
+                        <!-- Saved drawings will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="composite-tab">
+                    <div class="composite-controls">
+                        <button id="start-compose" class="tool-btn">🎨 Start Composing</button>
+                        <button id="save-composition" class="tool-btn">💾 Save Composition</button>
+                        <button id="clear-composition" class="tool-btn">🗑️ Clear Canvas</button>
+                    </div>
+                    <div class="composition-info">
+                        <p>Drag saved drawings onto the canvas to compose them together.</p>
+                        <div id="active-drawings" class="active-drawings">
+                            <!-- Active drawings in composition -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="settings-tab">
+                    <div class="drawing-settings">
+                        <label>
+                            <input type="checkbox" id="edit-mode"> Edit Mode
+                            <small>Stash current drawings while editing</small>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="auto-save-drawings"> Auto-save drawings
+                        </label>
+                        <label>
+                            <input type="checkbox" id="show-drawing-thumbnails"> Show thumbnails
+                        </label>
+                        <button id="export-all-drawings" class="tool-btn">📤 Export All</button>
+                        <button id="import-drawings" class="tool-btn">📥 Import</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(managerPanel);
+    }
+    
+    setupDrawingManagerEvents() {
+        // Toggle drawing manager
+        document.getElementById('toggle-manager')?.addEventListener('click', () => {
+            this.toggleDrawingManager();
+        });
+        
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.switchTab(e.target.dataset.tab);
+            });
+        });
+        
+        // Library controls
+        document.getElementById('save-current')?.addEventListener('click', () => {
+            this.saveCurrentDrawing();
+        });
+        
+        document.getElementById('clear-saved')?.addEventListener('click', () => {
+            this.clearSavedDrawings();
+        });
+        
+        // Composition controls
+        document.getElementById('start-compose')?.addEventListener('click', () => {
+            this.startComposition();
+        });
+        
+        document.getElementById('save-composition')?.addEventListener('click', () => {
+            this.saveComposition();
+        });
+        
+        document.getElementById('clear-composition')?.addEventListener('click', () => {
+            this.clearComposition();
+        });
+        
+        // Settings
+        document.getElementById('edit-mode')?.addEventListener('change', (e) => {
+            this.toggleEditMode(e.target.checked);
+        });
+        
+        document.getElementById('auto-save-drawings')?.addEventListener('change', (e) => {
+            this.autoSaveEnabled = e.target.checked;
+            this.saveDrawingManagerSettings();
+        });
+        
+        document.getElementById('export-all-drawings')?.addEventListener('click', () => {
+            this.exportAllDrawings();
+        });
+        
+        document.getElementById('import-drawings')?.addEventListener('click', () => {
+            this.importDrawings();
+        });
+        
+        // Canvas events for drawing manipulation
+        this.setupDrawingManipulation();
+    }
+    
+    setupDrawingManipulation() {
+        let isDragging = false;
+        let isScaling = false;
+        let dragStart = { x: 0, y: 0 };
+        let originalDrawing = null;
+        
+        this.canvas.addEventListener('mousedown', (e) => {
+            if (!this.dragMode) return;
+            
+            const coords = this.getEventCoordinates(e);
+            const clickedDrawing = this.findDrawingAtPoint(coords.x, coords.y);
+            
+            if (clickedDrawing) {
+                this.selectedDrawing = clickedDrawing;
+                isDragging = true;
+                dragStart = coords;
+                originalDrawing = JSON.parse(JSON.stringify(clickedDrawing));
+                
+                // Prevent normal drawing
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+        
+        this.canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging || !this.selectedDrawing) return;
+            
+            const coords = this.getEventCoordinates(e);
+            const deltaX = coords.x - dragStart.x;
+            const deltaY = coords.y - dragStart.y;
+            
+            // Update drawing position
+            this.moveDrawing(this.selectedDrawing, deltaX, deltaY);
+            this.redrawCanvas();
+            
+            e.preventDefault();
+        });
+        
+        this.canvas.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                if (this.selectedDrawing && this.autoSaveEnabled) {
+                    this.saveDrawings();
+                }
+                this.selectedDrawing = null;
+            }
+        });
+        
+        // Scale with mouse wheel
+        this.canvas.addEventListener('wheel', (e) => {
+            if (!this.dragMode || !this.selectedDrawing) return;
+            
+            e.preventDefault();
+            const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1;
+            this.scaleDrawing(this.selectedDrawing, scaleFactor);
+            this.redrawCanvas();
+            
+            if (this.autoSaveEnabled) {
+                this.saveDrawings();
+            }
+        });
+    }
+    
+    toggleDrawingManager() {
+        const manager = document.getElementById('drawing-manager');
+        if (manager) {
+            manager.classList.toggle('visible');
+        }
+    }
+    
+    switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+    }
+    
+    saveCurrentDrawing() {
+        if (this.drawings.length === 0) {
+            alert('No drawings to save on current page.');
+            return;
+        }
+        
+        const name = prompt('Enter a name for this drawing:', `Drawing ${Date.now()}`);
+        if (!name) return;
+        
+        // Create thumbnail
+        const thumbnail = this.createThumbnail();
+        
+        const savedDrawing = {
+            id: this.generateDrawingId(),
+            name: name,
+            drawings: [...this.drawings],
+            thumbnail: thumbnail,
+            createdAt: new Date().toISOString(),
+            chapterId: this.currentChapter?.id,
+            page: this.currentPage
+        };
+        
+        this.savedDrawings.push(savedDrawing);
+        this.saveSavedDrawings();
+        this.refreshSavedDrawingsList();
+        
+        alert(`Drawing "${name}" saved to library!`);
+    }
+    
+    createThumbnail() {
+        // Create a smaller version of the current canvas for thumbnail
+        const thumbCanvas = document.createElement('canvas');
+        thumbCanvas.width = 150;
+        thumbCanvas.height = 100;
+        const thumbCtx = thumbCanvas.getContext('2d');
+        
+        // Draw scaled version
+        thumbCtx.drawImage(this.canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+        
+        return thumbCanvas.toDataURL();
+    }
+    
+    refreshSavedDrawingsList() {
+        const list = document.getElementById('saved-drawings-list');
+        if (!list) return;
+        
+        list.innerHTML = '';
+        
+        this.savedDrawings.forEach(drawing => {
+            const item = document.createElement('div');
+            item.className = 'saved-drawing-item';
+            item.innerHTML = `
+                <div class="drawing-thumbnail">
+                    <img src="${drawing.thumbnail}" alt="${drawing.name}">
+                </div>
+                <div class="drawing-info">
+                    <h5>${drawing.name}</h5>
+                    <small>${new Date(drawing.createdAt).toLocaleDateString()}</small>
+                    <div class="drawing-actions">
+                        <button onclick="window.fasmDrawing.loadSavedDrawing('${drawing.id}')" class="mini-btn">📁 Load</button>
+                        <button onclick="window.fasmDrawing.addToComposition('${drawing.id}')" class="mini-btn">➕ Add</button>
+                        <button onclick="window.fasmDrawing.deleteSavedDrawing('${drawing.id}')" class="mini-btn">🗑️</button>
+                    </div>
+                </div>
+            `;
+            
+            // Make it draggable
+            item.draggable = true;
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('drawing-id', drawing.id);
+            });
+            
+            list.appendChild(item);
+        });
+    }
+    
+    loadSavedDrawing(drawingId) {
+        const savedDrawing = this.savedDrawings.find(d => d.id === drawingId);
+        if (!savedDrawing) return;
+        
+        // Clear current drawings and load saved ones
+        this.drawings = [...savedDrawing.drawings];
+        this.redrawCanvas();
+        this.saveDrawings(); // Save to current page
+        
+        alert(`Drawing "${savedDrawing.name}" loaded!`);
+    }
+    
+    deleteSavedDrawing(drawingId) {
+        const drawing = this.savedDrawings.find(d => d.id === drawingId);
+        if (!drawing) return;
+        
+        if (confirm(`Delete drawing "${drawing.name}"?`)) {
+            this.savedDrawings = this.savedDrawings.filter(d => d.id !== drawingId);
+            this.saveSavedDrawings();
+            this.refreshSavedDrawingsList();
+        }
+    }
+    
+    addToComposition(drawingId) {
+        const savedDrawing = this.savedDrawings.find(d => d.id === drawingId);
+        if (!savedDrawing) return;
+        
+        // Add saved drawing to current canvas
+        savedDrawing.drawings.forEach(drawing => {
+            // Create a copy with new ID to avoid conflicts
+            const copiedDrawing = {
+                ...drawing,
+                id: this.generateDrawingId(),
+                isComposite: true,
+                originalId: drawing.id
+            };
+            this.drawings.push(copiedDrawing);
+        });
+        
+        this.redrawCanvas();
+        this.saveDrawings();
+        
+        alert(`Drawing "${savedDrawing.name}" added to composition!`);
+    }
+    
+    startComposition() {
+        this.dragMode = true;
+        this.canvas.style.cursor = 'move';
+        alert('Composition mode enabled! Drag drawings to reposition them, use mouse wheel to scale.');
+    }
+    
+    saveComposition() {
+        if (this.drawings.length === 0) {
+            alert('No drawings to save in composition.');
+            return;
+        }
+        
+        const name = prompt('Enter a name for this composition:', `Composition ${Date.now()}`);
+        if (!name) return;
+        
+        // Save current state as a new saved drawing
+        this.saveCurrentDrawing();
+        this.dragMode = false;
+        this.canvas.style.cursor = '';
+        
+        alert(`Composition "${name}" saved!`);
+    }
+    
+    clearComposition() {
+        if (confirm('Clear all drawings from composition?')) {
+            this.clear();
+            this.dragMode = false;
+            this.canvas.style.cursor = '';
+        }
+    }
+    
+    toggleEditMode(enabled) {
+        this.isEditMode = enabled;
+        
+        if (enabled) {
+            // Stash current drawings
+            this.stashedDrawings = [...this.drawings];
+            this.drawings = [];
+            this.redrawCanvas();
+            alert('Edit mode enabled. Current drawings stashed. Draw freely!');
+        } else {
+            // Restore stashed drawings
+            this.drawings = [...this.stashedDrawings];
+            this.stashedDrawings = [];
+            this.redrawCanvas();
+            alert('Edit mode disabled. Stashed drawings restored!');
+        }
+        
+        this.saveDrawings();
+    }
+    
+    findDrawingAtPoint(x, y) {
+        // Find which drawing contains the given point
+        for (let i = this.drawings.length - 1; i >= 0; i--) {
+            const drawing = this.drawings[i];
+            if (this.isPointInDrawing(x, y, drawing)) {
+                return drawing;
+            }
+        }
+        return null;
+    }
+    
+    isPointInDrawing(x, y, drawing) {
+        // Simple bounding box check for now
+        if (!drawing.path || drawing.path.length === 0) return false;
+        
+        const bounds = this.getDrawingBounds(drawing);
+        return x >= bounds.minX && x <= bounds.maxX && y >= bounds.minY && y <= bounds.maxY;
+    }
+    
+    getDrawingBounds(drawing) {
+        if (!drawing.path || drawing.path.length === 0) {
+            return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+        }
+        
+        let minX = drawing.path[0].x;
+        let maxX = drawing.path[0].x;
+        let minY = drawing.path[0].y;
+        let maxY = drawing.path[0].y;
+        
+        drawing.path.forEach(point => {
+            minX = Math.min(minX, point.x);
+            maxX = Math.max(maxX, point.x);
+            minY = Math.min(minY, point.y);
+            maxY = Math.max(maxY, point.y);
+        });
+        
+        return { minX, minY, maxX, maxY };
+    }
+    
+    moveDrawing(drawing, deltaX, deltaY) {
+        if (!drawing.path) return;
+        
+        drawing.path.forEach(point => {
+            point.x += deltaX;
+            point.y += deltaY;
+        });
+    }
+    
+    scaleDrawing(drawing, scaleFactor) {
+        if (!drawing.path || drawing.path.length === 0) return;
+        
+        const bounds = this.getDrawingBounds(drawing);
+        const centerX = (bounds.minX + bounds.maxX) / 2;
+        const centerY = (bounds.minY + bounds.maxY) / 2;
+        
+        drawing.path.forEach(point => {
+            // Scale around center point
+            point.x = centerX + (point.x - centerX) * scaleFactor;
+            point.y = centerY + (point.y - centerY) * scaleFactor;
+        });
+        
+        // Scale brush size too
+        drawing.brushSize *= scaleFactor;
+    }
+    
+    exportAllDrawings() {
+        const exportData = {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            savedDrawings: this.savedDrawings,
+            currentDrawings: this.drawings,
+            settings: {
+                autoSave: this.autoSaveEnabled,
+                editMode: this.isEditMode
+            }
+        };
+        
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fasm-drawings-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        
+        URL.revokeObjectURL(url);
+    }
+    
+    importDrawings() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    
+                    if (imported.savedDrawings) {
+                        this.savedDrawings = [...this.savedDrawings, ...imported.savedDrawings];
+                        this.saveSavedDrawings();
+                        this.refreshSavedDrawingsList();
+                    }
+                    
+                    alert('Drawings imported successfully!');
+                } catch (error) {
+                    alert('Failed to import drawings: Invalid file format');
+                    console.error('Import error:', error);
+                }
+            };
+            
+            reader.readAsText(file);
+        });
+        
+        input.click();
+    }
+    
+    clearSavedDrawings() {
+        if (confirm('Delete all saved drawings? This cannot be undone.')) {
+            this.savedDrawings = [];
+            this.saveSavedDrawings();
+            this.refreshSavedDrawingsList();
+            alert('All saved drawings deleted.');
+        }
+    }
+    
+    saveSavedDrawings() {
+        if (window.fasmStorage) {
+            window.fasmStorage.set('savedDrawings', this.savedDrawings);
+        }
+    }
+    
+    loadSavedDrawings() {
+        if (window.fasmStorage) {
+            this.savedDrawings = window.fasmStorage.get('savedDrawings', []);
+        }
+        
+        // Refresh UI after load
+        setTimeout(() => {
+            this.refreshSavedDrawingsList();
+        }, 100);
+    }
+    
+    saveDrawingManagerSettings() {
+        const settings = {
+            autoSave: this.autoSaveEnabled,
+            editMode: this.isEditMode,
+            showThumbnails: document.getElementById('show-drawing-thumbnails')?.checked || true
+        };
+        
+        if (window.fasmStorage) {
+            window.fasmStorage.set('drawingManagerSettings', settings);
+        }
     }
 }
 
@@ -669,6 +1248,206 @@ const drawingToolsCSS = `
     font-size: 0.8rem;
     color: var(--accent-color);
     margin-left: 0.5rem;
+}
+
+/* Drawing Manager Styles */
+.drawing-manager {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    background: var(--bg-color);
+    border: 2px solid var(--accent-color);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1700;
+    min-width: 280px;
+    max-width: 350px;
+    max-height: 70vh;
+    overflow-y: auto;
+    display: none;
+}
+
+.drawing-manager.visible {
+    display: block;
+}
+
+.drawing-manager-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.drawing-manager-header h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.drawing-manager-tabs {
+    display: flex;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-size: 0.85rem;
+}
+
+.tab-btn.active {
+    border-bottom-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.tab-content.hidden {
+    display: none;
+}
+
+.drawing-controls, .composite-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.saved-drawings-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.saved-drawing-item {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.saved-drawing-item:hover {
+    background: var(--highlight-color);
+}
+
+.drawing-thumbnail {
+    flex-shrink: 0;
+    width: 60px;
+    height: 40px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.drawing-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.drawing-info {
+    flex: 1;
+}
+
+.drawing-info h5 {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.85rem;
+}
+
+.drawing-info small {
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 0.7rem;
+}
+
+.drawing-actions {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.mini-btn {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    border: none;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.7rem;
+}
+
+.mini-btn:hover {
+    opacity: 0.8;
+}
+
+.composition-info {
+    background: var(--highlight-color);
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+}
+
+.composition-info p {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.85rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.active-drawings {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+}
+
+.drawing-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.drawing-settings label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.drawing-settings small {
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 0.75rem;
+}
+
+/* Mobile responsiveness for drawing manager */
+@media (max-width: 768px) {
+    .drawing-manager {
+        right: 10px;
+        left: 10px;
+        transform: translateY(-50%);
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .drawing-controls, .composite-controls {
+        flex-direction: column;
+    }
+    
+    .saved-drawing-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .drawing-thumbnail {
+        align-self: center;
+    }
 }
 `;
 
