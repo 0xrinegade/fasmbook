@@ -849,14 +849,20 @@ body {
 /* Enhanced Responsive Design */
 /* Tablet and smaller */
 @media (max-width: 1024px) {
-    .ai-helper {
+    /* Fix positioning to prevent overlap */
+    .ai-toggle {
         bottom: 1rem;
         right: 1rem;
     }
     
-    .settings-panel {
-        top: 1rem;
+    /* Position settings button in control-icons container with proper spacing */
+    .control-icons {
         right: 1rem;
+        top: auto;
+        bottom: 6rem; /* Position above AI button with spacing */
+        transform: none;
+        flex-direction: column;
+        gap: 8px;
     }
     
     .ai-window {
@@ -898,12 +904,22 @@ body {
         gap: 1rem;
     }
     
+    /* Ensure proper stacking on mobile */
     .control-icons {
         right: 4px;
+        bottom: 6rem; /* Position above AI button */
+        top: auto;
+        transform: none;
         gap: 8px;
     }
     
-    .ai-toggle,
+    .ai-toggle {
+        width: 44px;
+        height: 44px;
+        right: 4px;
+        bottom: 1rem;
+    }
+    
     .settings-toggle {
         width: 44px;
         height: 44px;
