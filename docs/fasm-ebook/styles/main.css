@@ -848,7 +848,7 @@ body {
 
 /* Enhanced Responsive Design */
 /* Tablet and smaller */
-@media (max-width: 1024px) {
+@media (max-width: 1024px) and (min-width: 769px) {
     /* Fix positioning to prevent overlap */
     .ai-toggle {
         bottom: 1rem;
@@ -904,13 +904,14 @@ body {
         gap: 1rem;
     }
     
-    /* Ensure proper stacking on mobile */
+    /* Ensure proper stacking on mobile/small tablet */
     .control-icons {
         right: 4px;
-        bottom: 6rem; /* Position above AI button */
+        bottom: 7rem; /* Position above AI button with more spacing */
         top: auto;
         transform: none;
-        gap: 8px;
+        gap: 12px; /* Increase gap between buttons */
+        flex-direction: column;
     }
     
     .ai-toggle {
