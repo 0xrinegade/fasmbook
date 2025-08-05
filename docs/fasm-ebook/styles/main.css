@@ -10,6 +10,12 @@
     --line-height: 1.2;
     --nav-width: 300px;
     --header-height: 60px;
+    
+    /* Animation variables */
+    --animation-duration: 0.3s;
+    --animation-easing: cubic-bezier(0.25, 0.8, 0.25, 1);
+    --micro-animation-duration: 0.15s;
+    --bounce-easing: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 * {
@@ -34,6 +40,95 @@ body {
     0% { width: 0%; }
     50% { width: 70%; }
     100% { width: 100%; }
+}
+
+/* Microanimations */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes modalSlideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes buttonPressAnimation {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes gentleFloat {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-2px);
+    }
+}
+
+@keyframes typingDots {
+    0%, 20% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.4;
+    }
 }
 
 .initial-loading {
@@ -119,7 +214,7 @@ body {
     cursor: pointer;
     border-radius: 8px;
     font-size: 1.2rem;
-    transition: all 0.3s ease;
+    transition: all var(--animation-duration) var(--animation-easing);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     min-width: 44px;
@@ -132,11 +227,11 @@ body {
 .nav-toggle:hover {
     background-color: var(--highlight-color);
     transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .nav-toggle:active {
-    transform: scale(0.95);
+    animation: buttonPressAnimation var(--micro-animation-duration) var(--animation-easing);
     background-color: var(--accent-color);
     color: var(--bg-color);
 }
@@ -169,7 +264,7 @@ body {
     padding: 0.5rem;
     margin: 0.125rem 0;
     border-radius: 8px;
-    transition: all 0.3s ease;
+    transition: all var(--animation-duration) var(--animation-easing);
     font-size: 0.9rem;
     line-height: 1.2;
     border: 1px solid transparent;
@@ -183,8 +278,8 @@ body {
 .toc-list a:hover, .bookmarks-list a:hover, .history-list a:hover, .glossary-list a:hover {
     background-color: var(--highlight-color);
     border-color: var(--border-color);
-    transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateX(6px) scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .toc-list a.current {
@@ -192,11 +287,12 @@ body {
     color: var(--bg-color);
     border-color: var(--accent-color);
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    animation: bounceIn var(--animation-duration) var(--bounce-easing);
 }
 
 .toc-list a:active, .bookmarks-list a:active, .history-list a:active {
-    transform: scale(0.98);
+    animation: buttonPressAnimation var(--micro-animation-duration) var(--animation-easing);
 }
 
 /* Glossary Section */
@@ -456,12 +552,12 @@ body {
     height: 48px;
     right: 1rem;
     bottom: 7rem;
-    border-radius: 8px;
-    border: 1px solid #333;
+    border-radius: 12px;
+    border: 2px solid #333;
     background-color: var(--bg-color);
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transition: all var(--animation-duration) var(--animation-easing);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     display: flex;
@@ -473,12 +569,13 @@ body {
 
 .ai-toggle:hover {
     background-color: #f5f5f5;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    transform: scale(1.08);
+    animation: gentleFloat 2s ease-in-out infinite;
 }
 
 .ai-toggle:active {
-    transform: scale(0.98);
+    animation: buttonPressAnimation var(--micro-animation-duration) var(--animation-easing);
 }
 
 .ai-toggle svg {
@@ -486,6 +583,11 @@ body {
     height: 20px;
     stroke: currentColor;
     pointer-events: none;
+    transition: transform var(--micro-animation-duration) var(--animation-easing);
+}
+
+.ai-toggle:hover svg {
+    transform: rotate(5deg) scale(1.1);
 }
 
 .ai-window {
@@ -497,19 +599,27 @@ body {
     max-width: 95vw;
     max-height: 80vh;
     background-color: var(--bg-color);
-    border: 1px solid #333;
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border: 2px solid #333;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
     display: none;
     flex-direction: column;
-    /* Ensure window never goes outside viewport */
     transform: translateY(-50%);
     top: 50%;
     z-index: 1600;
+    opacity: 0;
+    transition: all var(--animation-duration) var(--animation-easing);
+    backdrop-filter: blur(10px);
 }
 
 .ai-window.visible {
     display: flex;
+    opacity: 1;
+    animation: modalSlideIn var(--animation-duration) var(--animation-easing);
+}
+
+.ai-window.closing {
+    animation: modalSlideOut var(--animation-duration) var(--animation-easing);
 }
 
 /* Adjust AI window position if it would go outside viewport */
@@ -525,12 +635,21 @@ body {
 
 .ai-header {
     padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
     background-color: var(--highlight-color);
-    flex-shrink: 0; /* Prevent header from shrinking */
+    flex-shrink: 0;
+    border-radius: 10px 10px 0 0;
+    cursor: move;
+    user-select: none;
+}
+
+.ai-header:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    transition: all var(--micro-animation-duration) var(--animation-easing);
 }
 
 .ai-content {
@@ -733,7 +852,7 @@ body {
 .ai-message {
     margin-bottom: 1rem;
     padding: 0.75rem;
-    border-radius: 4px;
+    border-radius: 8px;
     background-color: var(--highlight-color);
     font-size: 0.9rem;
     line-height: 1.4;
@@ -741,9 +860,26 @@ body {
     overflow-wrap: break-word;
     max-width: 100%;
     box-sizing: border-box;
+    opacity: 0;
+    animation: fadeIn var(--animation-duration) var(--animation-easing) forwards;
 }
 
-/* Settings Panel */
+/* Typing indicator animation */
+.typing-indicator .typing-dots {
+    opacity: 0.8;
+    animation: typingDots 1.4s infinite;
+}
+
+.typing-indicator .typing-dots::before {
+    content: "●";
+    animation: typingDots 1.4s infinite;
+}
+
+.typing-indicator .typing-dots::after {
+    content: "●●";
+    animation: typingDots 1.4s infinite 0.2s;
+}
+
 /* Settings Panel */
 .settings-panel {
     position: relative;
@@ -752,12 +888,12 @@ body {
 .settings-toggle {
     width: 48px;
     height: 48px;
-    border-radius: 8px;
-    border: 1px solid #333;
+    border-radius: 12px;
+    border: 2px solid #333;
     background-color: var(--bg-color);
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transition: all var(--animation-duration) var(--animation-easing);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     display: flex;
@@ -768,12 +904,12 @@ body {
 
 .settings-toggle:hover {
     background-color: #f5f5f5;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    transform: scale(1.08);
 }
 
 .settings-toggle:active {
-    transform: scale(0.98);
+    animation: buttonPressAnimation var(--micro-animation-duration) var(--animation-easing);
 }
 
 .settings-toggle svg {
@@ -781,6 +917,11 @@ body {
     height: 20px;
     stroke: currentColor;
     pointer-events: none;
+    transition: transform var(--animation-duration) var(--animation-easing);
+}
+
+.settings-toggle:hover svg {
+    transform: rotate(45deg) scale(1.1);
 }
 
 .settings-content {
@@ -788,23 +929,80 @@ body {
     top: 50%;
     right: 6rem;
     transform: translateY(-50%);
-    width: min(300px, calc(100vw - 8rem));
+    width: min(320px, calc(100vw - 8rem));
     max-width: 95vw;
     max-height: calc(100vh - 4rem);
     background-color: var(--bg-color);
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 1.5rem;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 0;
     z-index: 1600;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
     display: none;
-    overflow-y: auto;
-    /* Ensure settings never go outside viewport */
-    transform: translateX(0);
+    overflow: hidden;
+    opacity: 0;
+    transition: all var(--animation-duration) var(--animation-easing);
+    backdrop-filter: blur(10px);
 }
 
 .settings-content.visible {
     display: block;
+    opacity: 1;
+    animation: modalSlideIn var(--animation-duration) var(--animation-easing);
+}
+
+.settings-content.closing {
+    animation: modalSlideOut var(--animation-duration) var(--animation-easing);
+}
+
+/* Settings header for dragging */
+.settings-header {
+    padding: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    background-color: var(--highlight-color);
+    cursor: move;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 10px 10px 0 0;
+}
+
+.settings-header:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    transition: all var(--micro-animation-duration) var(--animation-easing);
+}
+
+.settings-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.settings-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--micro-animation-duration) var(--animation-easing);
+}
+
+.settings-close:hover {
+    background-color: #ff4444;
+    color: white;
+}
+
+.settings-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 8rem);
 }
 
 /* Adjust settings panel position if it would go outside viewport */
@@ -840,10 +1038,24 @@ body {
     padding: 0.5rem;
     border: 1px solid var(--border-color);
     border-radius: 4px;
+    transition: all var(--micro-animation-duration) var(--animation-easing);
+}
+
+.setting-group select:focus,
+.setting-group input[type="range"]:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.1);
 }
 
 .setting-group input[type="checkbox"] {
     margin-right: 0.5rem;
+    transform: scale(1.2);
+    transition: transform var(--micro-animation-duration) var(--animation-easing);
+}
+
+.setting-group input[type="checkbox"]:hover {
+    transform: scale(1.3);
 }
 
 /* Enhanced Responsive Design */
@@ -1053,6 +1265,34 @@ button, .clickable {
     -webkit-tap-highlight-color: transparent;
 }
 
+/* Tool button styles */
+.tool-btn {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border: 2px solid var(--accent-color);
+    padding: 0.5rem 1rem;
+    margin: 0.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all var(--animation-duration) var(--animation-easing);
+    display: inline-block;
+    text-align: center;
+    min-width: auto;
+}
+
+.tool-btn:hover {
+    background-color: var(--bg-color);
+    color: var(--accent-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.tool-btn:active {
+    animation: buttonPressAnimation var(--micro-animation-duration) var(--animation-easing);
+}
+
 /* Improved focus indicators */
 button:focus-visible,
 input:focus-visible,
@@ -1248,4 +1488,43 @@ a:focus-visible {
 /* Hide PWA controls when not supported */
 .no-pwa-support .pwa-install-group {
     display: none;
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .ai-toggle:hover,
+    .settings-toggle:hover {
+        animation: none;
+        transform: scale(1.02);
+    }
+    
+    .toc-list a:hover,
+    .bookmarks-list a:hover,
+    .history-list a:hover {
+        transform: translateX(2px);
+    }
+}
+
+/* Enhanced modal backdrop */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.1);
+    z-index: 1200;
+    opacity: 0;
+    transition: opacity var(--animation-duration) var(--animation-easing);
+    backdrop-filter: blur(2px);
+}
+
+.modal-backdrop.visible {
+    opacity: 1;
 }

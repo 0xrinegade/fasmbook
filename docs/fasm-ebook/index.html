@@ -112,37 +112,41 @@
                 </svg>
             </button>
             <div class="settings-content">
-                <h3>Reading Settings</h3>
-                
-                <div class="setting-group">
-                    <label>Display Mode:</label>
-                    <select id="display-mode">
-                        <option value="eink">eInk Friendly</option>
-                        <option value="standard">Standard</option>
-                        <option value="dark">Dark Mode</option>
-                    </select>
+                <div class="settings-header">
+                    <h3>Reading Settings</h3>
+                    <button class="settings-close">×</button>
                 </div>
-                
-                <div class="setting-group">
-                    <label>Font Size:</label>
-                    <input type="range" id="font-size" min="12" max="24" value="16">
-                    <span id="font-size-value">16px</span>
-                </div>
-                
-                <div class="setting-group">
-                    <label>Line Height:</label>
-                    <input type="range" id="line-height" min="1.2" max="2.0" step="0.1" value="1.6">
-                    <span id="line-height-value">1.6</span>
-                </div>
-                
-                <div class="setting-group">
-                    <label>Drawing Mode:</label>
-                    <input type="checkbox" id="drawing-mode"> Enable Drawing
-                </div>
-                
-                <div class="setting-group">
-                    <label>Zen Mode:</label>
-                    <input type="checkbox" id="zen-mode"> Hide Controls
+                <div class="settings-body">
+                    <div class="setting-group">
+                        <label>Display Mode:</label>
+                        <select id="display-mode">
+                            <option value="eink">eInk Friendly</option>
+                            <option value="standard">Standard</option>
+                            <option value="dark">Dark Mode</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>Font Size:</label>
+                        <input type="range" id="font-size" min="12" max="24" value="16">
+                        <span id="font-size-value">16px</span>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>Line Height:</label>
+                        <input type="range" id="line-height" min="1.2" max="2.0" step="0.1" value="1.6">
+                        <span id="line-height-value">1.6</span>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>Drawing Mode:</label>
+                        <input type="checkbox" id="drawing-mode"> Enable Drawing
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>Zen Mode:</label>
+                        <input type="checkbox" id="zen-mode"> Hide Controls
+                    </div>
                 </div>
             </div>
         </div>

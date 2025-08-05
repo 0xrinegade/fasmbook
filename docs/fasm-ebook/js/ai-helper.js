@@ -1030,8 +1030,13 @@ Smaller instructions are better because:
     closeWindow() {
         const aiWindow = document.getElementById('ai-window');
         if (aiWindow) {
-            aiWindow.classList.remove('visible');
-            this.isOpen = false;
+            aiWindow.classList.add('closing');
+            
+            // Wait for animation to complete before hiding
+            setTimeout(() => {
+                aiWindow.classList.remove('visible', 'closing');
+                this.isOpen = false;
+            }, 300); // Match animation duration
         }
     }
     

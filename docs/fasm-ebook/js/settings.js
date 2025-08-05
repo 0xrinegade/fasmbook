@@ -58,9 +58,14 @@ class FASMeBookSettings {
     setupEventListeners() {
         const settingsToggle = document.getElementById('settings-toggle');
         const settingsContent = document.querySelector('.settings-content');
+        const settingsClose = document.querySelector('.settings-close');
         
         if (settingsToggle) {
             settingsToggle.addEventListener('click', () => this.toggle());
+        }
+        
+        if (settingsClose) {
+            settingsClose.addEventListener('click', () => this.close());
         }
         
         // Close settings when clicking outside
@@ -69,6 +74,19 @@ class FASMeBookSettings {
                 this.close();
             }
         });
+        
+        // ESC key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.close();
+            }
+        });
+        
+        // Make settings content draggable
+        if (settingsContent && !settingsContent.hasAttribute('data-draggable')) {
+            this.makeDraggable(settingsContent);
+            settingsContent.setAttribute('data-draggable', 'true');
+        }
         
         // Setting controls
         this.setupDisplayModeControl();
@@ -140,8 +158,8 @@ class FASMeBookSettings {
     
     setupThemeControl() {
         // Create theme selector if it doesn't exist
-        const settingsContent = document.querySelector('.settings-content');
-        if (settingsContent && !document.getElementById('theme-select')) {
+        const settingsBody = document.querySelector('.settings-body');
+        if (settingsBody && !document.getElementById('theme-select')) {
             const themeGroup = document.createElement('div');
             themeGroup.className = 'setting-group';
             themeGroup.innerHTML = `
@@ -153,7 +171,7 @@ class FASMeBookSettings {
                     <option value="sepia">Sepia</option>
                 </select>
             `;
-            settingsContent.appendChild(themeGroup);
+            settingsBody.appendChild(themeGroup);
             
             const themeSelect = document.getElementById('theme-select');
             themeSelect.value = this.settings.theme;
@@ -182,9 +200,111 @@ class FASMeBookSettings {
         this.createPWAInstallButton();
     }
     
+    makeDraggable(element) {
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        let hasMoved = false;
+        let startPosition = { x: 0, y: 0 };
+        
+        const header = element.querySelector('.settings-header');
+        if (!header) return;
+        
+        const onMouseDown = (e) => {
+            // Only allow dragging from header area
+            if (!e.target.closest('.settings-header')) return;
+            
+            // Don't drag if clicking close button
+            if (e.target.closest('.settings-close')) return;
+            
+            // Reset movement tracking
+            hasMoved = false;
+            startPosition = { x: e.clientX, y: e.clientY };
+            
+            isDragging = true;
+            
+            const rect = element.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            
+            header.style.cursor = 'grabbing';
+            e.preventDefault();
+        };
+        
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
+            
+            // Check if we've moved enough to consider this a drag operation
+            const moveDistance = Math.sqrt(
+                Math.pow(e.clientX - startPosition.x, 2) + 
+                Math.pow(e.clientY - startPosition.y, 2)
+            );
+            
+            // Only start dragging if we've moved more than 5 pixels
+            if (moveDistance > 5) {
+                hasMoved = true;
+                
+                const newLeft = e.clientX - dragOffset.x;
+                const newTop = e.clientY - dragOffset.y;
+                
+                // Constrain to viewport
+                const maxLeft = window.innerWidth - element.offsetWidth;
+                const maxTop = window.innerHeight - element.offsetHeight;
+                
+                const constrainedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                const constrainedTop = Math.max(0, Math.min(newTop, maxTop));
+                
+                // Clear transform and use absolute positioning
+                element.style.transform = 'none';
+                element.style.left = `${constrainedLeft}px`;
+                element.style.top = `${constrainedTop}px`;
+                element.style.right = 'auto';
+                element.style.bottom = 'auto';
+            }
+            
+            e.preventDefault();
+        };
+        
+        const onMouseUp = (e) => {
+            if (isDragging) {
+                isDragging = false;
+                header.style.cursor = 'move';
+            }
+        };
+        
+        element.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        
+        // Touch events for mobile
+        element.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            onMouseDown({ 
+                clientX: touch.clientX, 
+                clientY: touch.clientY, 
+                preventDefault: () => e.preventDefault(),
+                target: e.target 
+            });
+        });
+        
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                const touch = e.touches[0];
+                onMouseMove({ 
+                    clientX: touch.clientX, 
+                    clientY: touch.clientY, 
+                    preventDefault: () => e.preventDefault() 
+                });
+            }
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            onMouseUp(e);
+        });
+    }
+    
     createToggleControl(id, settingKey, label) {
-        const settingsContent = document.querySelector('.settings-content');
-        if (!settingsContent || document.getElementById(id)) return;
+        const settingsBody = document.querySelector('.settings-body');
+        if (!settingsBody || document.getElementById(id)) return;
         
         const group = document.createElement('div');
         group.className = 'setting-group';
@@ -195,7 +315,7 @@ class FASMeBookSettings {
             </label>
         `;
         
-        settingsContent.appendChild(group);
+        settingsBody.appendChild(group);
         
         const checkbox = document.getElementById(id);
         checkbox.addEventListener('change', (e) => {
@@ -205,8 +325,8 @@ class FASMeBookSettings {
     }
     
     createAdvancedSettingsButton() {
-        const settingsContent = document.querySelector('.settings-content');
-        if (!settingsContent || document.getElementById('advanced-settings-btn')) return;
+        const settingsBody = document.querySelector('.settings-body');
+        if (!settingsBody || document.getElementById('advanced-settings-btn')) return;
         
         const advancedGroup = document.createElement('div');
         advancedGroup.className = 'setting-group';
@@ -217,7 +337,7 @@ class FASMeBookSettings {
             <button id="reset-settings-btn" class="tool-btn">Reset to Default</button>
         `;
         
-        settingsContent.appendChild(advancedGroup);
+        settingsBody.appendChild(advancedGroup);
         
         // Event listeners
         document.getElementById('advanced-settings-btn')?.addEventListener('click', () => this.openAdvancedSettings());
@@ -245,8 +365,8 @@ class FASMeBookSettings {
     }
     
     createPWAInstallButton() {
-        const settingsContent = document.querySelector('.settings-content');
-        if (!settingsContent || document.getElementById('pwa-install-btn')) return;
+        const settingsBody = document.querySelector('.settings-body');
+        if (!settingsBody || document.getElementById('pwa-install-btn')) return;
         
         const installGroup = document.createElement('div');
         installGroup.className = 'setting-group pwa-install-group';
@@ -266,7 +386,7 @@ class FASMeBookSettings {
             <div id="pwa-install-status" class="pwa-status"></div>
         `;
         
-        settingsContent.appendChild(installGroup);
+        settingsBody.appendChild(installGroup);
         
         // Add click event for install button
         const installBtn = document.getElementById('pwa-install-btn');
@@ -383,6 +503,9 @@ class FASMeBookSettings {
             this.adjustPanelPosition(settingsContent);
             settingsContent.classList.add('visible');
             this.isOpen = true;
+            
+            // Add backdrop
+            this.showBackdrop();
         }
     }
     
@@ -395,7 +518,7 @@ class FASMeBookSettings {
         const viewportHeight = window.innerHeight;
         
         // Get panel dimensions (use computed or fallback values)
-        const panelWidth = 300; // min(300px, calc(100vw - 2rem))
+        const panelWidth = 320; // min(320px, calc(100vw - 2rem))
         const panelHeight = 400; // estimated height
         
         // Check if panel would go outside right edge (considering right: 1rem positioning)
@@ -414,8 +537,42 @@ class FASMeBookSettings {
     close() {
         const settingsContent = document.querySelector('.settings-content');
         if (settingsContent) {
-            settingsContent.classList.remove('visible');
-            this.isOpen = false;
+            settingsContent.classList.add('closing');
+            
+            // Wait for animation to complete before hiding
+            setTimeout(() => {
+                settingsContent.classList.remove('visible', 'closing');
+                this.isOpen = false;
+                this.hideBackdrop();
+            }, 300); // Match animation duration
+        }
+    }
+    
+    showBackdrop() {
+        let backdrop = document.querySelector('.settings-backdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop settings-backdrop';
+            backdrop.style.zIndex = '1590'; // Below settings panel
+            document.body.appendChild(backdrop);
+            
+            backdrop.addEventListener('click', () => this.close());
+        }
+        
+        // Force reflow to ensure animation works
+        backdrop.offsetHeight;
+        backdrop.classList.add('visible');
+    }
+    
+    hideBackdrop() {
+        const backdrop = document.querySelector('.settings-backdrop');
+        if (backdrop) {
+            backdrop.classList.remove('visible');
+            setTimeout(() => {
+                if (backdrop.parentNode) {
+                    backdrop.parentNode.removeChild(backdrop);
+                }
+            }, 300);
         }
     }
     
