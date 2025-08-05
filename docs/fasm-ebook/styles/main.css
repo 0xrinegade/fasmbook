@@ -609,7 +609,6 @@ body {
     z-index: 1600;
     opacity: 0;
     transition: all var(--animation-duration) var(--animation-easing);
-    backdrop-filter: blur(10px);
 }
 
 .ai-window.visible {
@@ -663,6 +662,28 @@ body {
 .ai-header h3 {
     font-size: 1rem;
     margin: 0;
+}
+
+/* Drag handle for AI window */
+.ai-drag-handle {
+    cursor: grab;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    user-select: none;
+    transition: all var(--micro-animation-duration) var(--animation-easing);
+    border-radius: 4px;
+}
+
+.ai-drag-handle:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.8);
+}
+
+.ai-drag-handle:active {
+    cursor: grabbing;
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
 .ai-close {
@@ -942,7 +963,6 @@ body {
     overflow: hidden;
     opacity: 0;
     transition: all var(--animation-duration) var(--animation-easing);
-    backdrop-filter: blur(10px);
 }
 
 .settings-content.visible {
@@ -972,6 +992,10 @@ body {
     background-color: var(--accent-color);
     color: var(--bg-color);
     transition: all var(--micro-animation-duration) var(--animation-easing);
+}
+
+.settings-header:active {
+    cursor: grabbing;
 }
 
 .settings-header h3 {
@@ -1848,4 +1872,9 @@ a:focus-visible {
 
 .modal-backdrop.visible {
     opacity: 1;
+}
+
+/* Settings specific backdrop with lower z-index */
+.modal-backdrop.settings-backdrop {
+    z-index: 1590;
 }

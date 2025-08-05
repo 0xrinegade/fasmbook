@@ -556,7 +556,12 @@ class FASMeBookSettings {
             backdrop.style.zIndex = '1590'; // Below settings panel
             document.body.appendChild(backdrop);
             
-            backdrop.addEventListener('click', () => this.close());
+            // Allow clicking backdrop to close
+            backdrop.addEventListener('click', (e) => {
+                if (e.target === backdrop) {
+                    this.close();
+                }
+            });
         }
         
         // Force reflow to ensure animation works
