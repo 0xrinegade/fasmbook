@@ -96,7 +96,7 @@ validate_browser() {
 
 validate_test_mode() {
     local mode="$1"
-    local valid_modes=("quick" "core" "visual" "quality" "mobile" "cross-browser" "full")
+    local valid_modes=("quick" "core" "visual" "quality" "mobile" "cross-browser" "full" "comprehensive")
     
     for valid in "${valid_modes[@]}"; do
         if [[ "$mode" == "$valid" ]]; then
@@ -272,8 +272,37 @@ main() {
             
         "mobile")
             echo -e "${BLUE}📱 Running Mobile-Specific Test Suite${NC}"
-            run_test_suite "Mobile Chrome" "tests/" "Mobile Chrome" || ((failed_tests++))
-            run_test_suite "Mobile Safari" "tests/" "Mobile Safari" || ((failed_tests++))
+            run_test_suite "Mobile Responsive" "tests/mobile-responsive.spec.js" "$target_browser" || ((failed_tests++))
+            run_test_suite "Responsive Design" "tests/responsive-design.spec.js" "$target_browser" || ((failed_tests++))
+            run_test_suite "Basic Functionality" "tests/basic-functionality.spec.js" "$target_browser" || ((failed_tests++))
+            run_test_suite "AI Assistant" "tests/ai-assistant.spec.js" "$target_browser" || ((failed_tests++))
+            run_test_suite "Settings Panel" "tests/settings-panel.spec.js" "$target_browser" || ((failed_tests++))
+            ;;
+            
+        "comprehensive")
+            echo -e "${BLUE}🎯 Running Comprehensive Test Suite${NC}"
+            echo -e "${YELLOW}ℹ️  This includes all tests with full book functionality testing${NC}"
+            
+            # Core functionality tests
+            run_test_suite "Basic Functionality" "tests/basic-functionality.spec.js" "$target_browser" || ((failed_tests++))
+            run_test_suite "AI Assistant" "tests/ai-assistant.spec.js" "$target_browser" || ((failed_tests++))
+            run_test_suite "Settings Panel" "tests/settings-panel.spec.js" "$target_browser" || ((failed_tests++))
+            
+            # Feature tests
+            run_test_suite "Drawing Tools" "tests/drawing-tools.spec.js" "$target_browser" || ((failed_tests++))
+            run_test_suite "Content Features" "tests/content-features.spec.js" "$target_browser" || ((failed_tests++))
+            
+            # Responsive and mobile tests
+            run_test_suite "Responsive Design" "tests/responsive-design.spec.js" "$target_browser" || ((failed_tests++))
+            run_test_suite "Mobile Responsive" "tests/mobile-responsive.spec.js" "$target_browser" || ((failed_tests++))
+            
+            # Quality tests
+            run_test_suite "Performance & Accessibility" "tests/performance-accessibility.spec.js" "$target_browser" || ((failed_tests++))
+            run_test_suite "PWA Features" "tests/pwa-features.spec.js" "$target_browser" || ((failed_tests++))
+            
+            # Comprehensive e2e tests
+            run_test_suite "Full Book Experience" "tests/full-book-experience.spec.js" "$target_browser" || ((failed_tests++))
+            run_test_suite "Button Overlap" "tests/button-overlap.spec.js" "$target_browser" || ((failed_tests++))
             ;;
             
         "cross-browser")
@@ -331,23 +360,25 @@ case "${1:-}" in
         echo "Usage: $0 [mode] [browser]"
         echo ""
         echo "Test Modes:"
-        echo "  quick       - Run basic functionality tests only"
-        echo "  core        - Run core feature tests (basic, AI, settings)"
-        echo "  visual      - Run visual and responsive tests"
-        echo "  quality     - Run performance and accessibility tests"
-        echo "  mobile      - Run mobile-specific tests"
+        echo "  quick         - Run basic functionality tests only"
+        echo "  core          - Run core feature tests (basic, AI, settings)"
+        echo "  visual        - Run visual and responsive tests"
+        echo "  quality       - Run performance and accessibility tests"
+        echo "  mobile        - Run mobile-specific tests"
+        echo "  comprehensive - Run all tests including full book experience"
         echo "  cross-browser - Run tests across all browsers"
-        echo "  full        - Run complete test suite (default)"
+        echo "  full          - Run complete test suite (default)"
         echo ""
         echo "Browsers:"
-        echo "  chromium    - Google Chrome/Chromium (default)"
-        echo "  firefox     - Mozilla Firefox"
-        echo "  webkit      - Safari WebKit"
+        echo "  chromium      - Google Chrome/Chromium (default)"
+        echo "  firefox       - Mozilla Firefox"
+        echo "  webkit        - Safari WebKit"
         echo ""
         echo "Examples:"
-        echo "  $0 quick chromium     # Quick tests on Chrome"
-        echo "  $0 mobile             # Mobile tests on default browser"
-        echo "  $0 full firefox       # Full suite on Firefox"
+        echo "  $0 quick chromium        # Quick tests on Chrome"
+        echo "  $0 mobile                # Mobile tests on default browser"
+        echo "  $0 comprehensive         # Full comprehensive testing"
+        echo "  $0 full firefox          # Full suite on Firefox"
         echo ""
         exit 0
         ;;

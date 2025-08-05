@@ -1096,6 +1096,8 @@ body {
     
     .nav-panel {
         transform: translateX(-100%);
+        width: 85vw; /* Prevent full-width on medium tablets */
+        max-width: 320px;
     }
     
     .nav-panel.visible {
@@ -1105,52 +1107,214 @@ body {
     .main-content {
         margin-left: 0;
         padding: 1rem;
+        min-height: calc(100vh - 2rem); /* Ensure proper height */
     }
     
     .chapter-content {
         max-width: 100%;
+        padding: 0.5rem 0; /* Better content spacing */
     }
     
     .chapter-nav, .page-nav {
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.75rem; /* Tighter gap for mobile */
+        margin: 1rem 0;
     }
     
-    /* Ensure proper stacking on mobile/small tablet */
+    .nav-btn, .page-btn {
+        min-height: 44px; /* Accessibility touch target */
+        padding: 0.75rem 1rem;
+        font-size: 14px;
+    }
+    
+    /* Improved control icons positioning */
     .control-icons {
-        right: 4px;
-        bottom: 7rem; /* Position above AI button with more spacing */
+        right: 8px;
+        bottom: 8rem; /* More space from bottom edge */
         top: auto;
         transform: none;
-        gap: 12px; /* Increase gap between buttons */
+        gap: 16px; /* Larger gap for easier tapping */
         flex-direction: column;
+        z-index: 1500;
     }
     
     .ai-toggle {
-        width: 44px;
-        height: 44px;
-        right: 4px;
-        bottom: 1rem;
+        width: 48px; /* Larger touch target */
+        height: 48px;
+        right: 8px;
+        bottom: 1.5rem;
+        z-index: 1600;
     }
     
     .settings-toggle {
-        width: 44px;
-        height: 44px;
+        width: 48px; /* Larger touch target */
+        height: 48px;
+        z-index: 1500;
     }
     
     .ai-toggle svg,
     .settings-toggle svg {
-        width: 18px;
-        height: 18px;
+        width: 20px; /* Slightly larger icons */
+        height: 20px;
     }
     
+    /* Full-screen modal for better mobile UX */
     .ai-window {
-        width: calc(100vw - 1rem);
-        height: calc(100vh - 6rem);
-        right: 0.5rem;
-        bottom: 2rem;
-        top: 2rem;
+        width: 100vw;
+        height: 100vh;
+        right: 0;
+        bottom: 0;
+        top: 0;
+        left: 0;
         transform: none;
+        border-radius: 0;
+        border: none;
+        z-index: 1700;
+    }
+    
+    .ai-nav-controls {
+        gap: 8px; /* Better spacing */
+    }
+    
+    .ai-nav-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px; /* Prevent shrinking */
+    }
+    
+    .ai-nav-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .ai-close {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+        min-width: 32px;
+    }
+    
+    .ai-drag-handle {
+        font-size: 16px;
+        padding: 0 8px;
+        min-width: 24px;
+    }
+    
+    .ai-header {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .ai-content {
+        padding: 1rem;
+        height: calc(100vh - 140px); /* Account for header and input */
+    }
+    
+    .ai-chat {
+        height: calc(100% - 60px); /* Account for input area */
+        max-height: none;
+    }
+    
+    .ai-input {
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-color);
+    }
+    
+    /* Full-screen settings modal */
+    .settings-content {
+        width: 100vw;
+        height: 100vh;
+        right: 0;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        transform: none;
+        max-height: none;
+        border-radius: 0;
+        border: none;
+        z-index: 1600;
+        overflow-y: auto;
+    }
+    
+    .settings-header {
+        position: sticky;
+        top: 0;
+        background: var(--bg-color);
+        z-index: 10;
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem;
+    }
+    
+    .settings-body {
+        padding: 1rem;
+        padding-bottom: 2rem; /* Extra bottom padding */
+    }
+}
+
+/* Small mobile phones */
+@media (max-width: 480px) {
+    :root {
+        --nav-width: 100vw;
+        --font-size: 13px;
+        --animation-duration: 0.2s; /* Faster animations on small screens */
+    }
+    
+    .main-content {
+        padding: 0.75rem;
+        font-size: 13px;
+    }
+    
+    .chapter-content {
+        padding: 0.25rem 0;
+    }
+    
+    .chapter-nav, .page-nav {
+        gap: 0.5rem;
+        margin: 0.75rem 0;
+    }
+    
+    .nav-btn, .page-btn {
+        min-height: 44px;
+        padding: 0.5rem 0.75rem;
+        font-size: 13px;
+    }
+    
+    /* Ensure full-screen modals */
+    .ai-window {
+        width: 100vw;
+        height: 100vh;
+        right: 0;
+        bottom: 0;
+        top: 0;
+        left: 0;
+        border-radius: 0;
+        border: none;
+    }
+    
+    .ai-header {
+        padding: 0.75rem;
+    }
+    
+    .ai-content {
+        padding: 0.75rem;
+        height: calc(100vh - 120px);
+    }
+    
+    .ai-chat {
+        height: calc(100% - 50px);
+    }
+    
+    .ai-input {
+        padding: 0.75rem;
+    }
+    
+    .ai-input input {
+        font-size: 16px; /* Prevent zoom on iOS */
     }
     
     .ai-nav-controls {
@@ -1160,6 +1324,7 @@ body {
     .ai-nav-btn {
         width: 28px;
         height: 28px;
+        min-width: 28px;
     }
     
     .ai-nav-btn svg {
@@ -1171,77 +1336,211 @@ body {
         width: 28px;
         height: 28px;
         font-size: 14px;
+        min-width: 28px;
     }
     
     .ai-drag-handle {
         font-size: 14px;
         padding: 0 4px;
-    }
-    
-    .settings-content {
-        width: calc(100vw - 1rem);
-        right: 0.5rem;
-        top: 2rem;
-        transform: none;
-        max-height: calc(100vh - 4rem);
-    }
-}
-
-/* Small mobile phones */
-@media (max-width: 480px) {
-    :root {
-        --nav-width: 100vw;
-        --font-size: 13px;
-    }
-    
-    .ai-window {
-        width: 100vw;
-        height: calc(100vh - 4rem);
-        right: 0;
-        bottom: 0;
-        border-radius: 8px 8px 0 0;
-    }
-    
-    .ai-nav-controls {
-        gap: 2px;
-    }
-    
-    .ai-nav-btn {
-        width: 24px;
-        height: 24px;
-    }
-    
-    .ai-nav-btn svg {
-        width: 12px;
-        height: 12px;
-    }
-    
-    .ai-close {
-        width: 24px;
-        height: 24px;
-        font-size: 12px;
-    }
-    
-    .ai-drag-handle {
-        font-size: 12px;
-        padding: 0 2px;
+        min-width: 20px;
     }
     
     .settings-content {
         width: 100vw;
+        height: 100vh;
         right: 0;
         top: 0;
-        max-height: 100vh;
+        left: 0;
+        bottom: 0;
+        max-height: none;
         border-radius: 0;
-        padding: 1rem;
+        border: none;
+        padding: 0;
+    }
+    
+    .settings-header {
+        padding: 0.75rem;
+    }
+    
+    .settings-body {
+        padding: 0.75rem;
+        padding-bottom: 2rem;
+    }
+    
+    .setting-group {
+        margin-bottom: 1.5rem; /* More space between settings */
+    }
+    
+    .setting-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .setting-group input,
+    .setting-group select {
+        font-size: 16px; /* Prevent zoom on iOS */
+        min-height: 44px; /* Accessibility */
     }
     
     .nav-panel {
         width: 100vw;
     }
+    
+    .nav-header {
+        padding: 0.75rem;
+    }
+    
+    .nav-content {
+        padding: 0.75rem;
+    }
+    
+    /* Control icons positioning for very small screens */
+    .control-icons {
+        right: 6px;
+        bottom: 6rem;
+        gap: 12px;
+    }
+    
+    .ai-toggle {
+        width: 44px;
+        height: 44px;
+        right: 6px;
+        bottom: 1rem;
+    }
+    
+    .settings-toggle {
+        width: 44px;
+        height: 44px;
+    }
 }
 
-/* Additional UI improvements */
+/* Additional responsive improvements */
+@media (max-width: 360px) {
+    /* Extra small phones */
+    :root {
+        --font-size: 12px;
+    }
+    
+    .main-content {
+        padding: 0.5rem;
+    }
+    
+    .chapter-nav, .page-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .nav-btn, .page-btn {
+        flex: 1;
+        min-width: 120px;
+        max-width: 200px;
+    }
+    
+    .control-icons {
+        right: 4px;
+        bottom: 5rem;
+    }
+    
+    .ai-toggle {
+        right: 4px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .settings-toggle {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 768px) and (orientation: landscape) {
+    .ai-window {
+        width: 70vw;
+        height: 90vh;
+        right: 2rem;
+        bottom: auto;
+        top: 50%;
+        left: auto;
+        transform: translateY(-50%);
+        border-radius: 12px;
+        border: 2px solid var(--border-color);
+    }
+    
+    .settings-content {
+        width: 60vw;
+        height: 80vh;
+        right: 2rem;
+        top: 50%;
+        left: auto;
+        bottom: auto;
+        transform: translateY(-50%);
+        border-radius: 12px;
+        border: 2px solid var(--border-color);
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .main-content {
+        padding: 0.75rem;
+    }
+    
+    .chapter-nav, .page-nav {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+}
+
+/* Tablet portrait */
+@media (min-width: 769px) and (max-width: 1024px) {
+    :root {
+        --nav-width: 300px;
+        --font-size: 15px;
+    }
+    
+    .control-icons {
+        right: 12px;
+        gap: 20px;
+    }
+    
+    .ai-toggle, .settings-toggle {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .ai-toggle svg, .settings-toggle svg {
+        width: 22px;
+        height: 22px;
+    }
+    
+    .ai-window {
+        width: min(450px, 90vw);
+        height: min(600px, 85vh);
+        right: 4rem;
+    }
+    
+    .settings-content {
+        width: min(400px, 85vw);
+        max-height: 80vh;
+        right: 4rem;
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .ai-toggle svg,
+    .settings-toggle svg,
+    .nav-btn,
+    .page-btn {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* Modal backdrop improvements */
 .modal-backdrop {
     position: fixed;
     top: 0;
@@ -1251,10 +1550,32 @@ body {
     background-color: rgba(0, 0, 0, 0.1);
     z-index: 1200;
     display: none;
+    backdrop-filter: blur(2px);
+    transition: opacity var(--animation-duration) ease;
 }
 
 .modal-backdrop.visible {
     display: block;
+    opacity: 1;
+    animation: fadeIn var(--animation-duration) ease;
+}
+
+/* Improved viewport handling */
+@supports (height: 100dvh) {
+    .ai-window,
+    .settings-content {
+        height: 100dvh; /* Use dynamic viewport height when supported */
+    }
+    
+    @media (max-width: 768px) {
+        .ai-window {
+            height: 100dvh;
+        }
+        
+        .settings-content {
+            height: 100dvh;
+        }
+    }
 }
 
 /* Better touch targets and spacing */

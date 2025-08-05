@@ -7,7 +7,60 @@
   "testing": {
     "defaultBrowser": "chromium",
     "timeout": 30000,
-    "retryCount": 2
+    "retryCount": 2,
+    "testSuites": {
+      "quick": [
+        "basic-functionality.spec.js"
+      ],
+      "core": [
+        "basic-functionality.spec.js",
+        "ai-assistant.spec.js",
+        "settings-panel.spec.js",
+        "button-overlap.spec.js"
+      ],
+      "full": [
+        "basic-functionality.spec.js",
+        "ai-assistant.spec.js",
+        "settings-panel.spec.js",
+        "drawing-tools.spec.js",
+        "content-features.spec.js",
+        "responsive-design.spec.js",
+        "performance-accessibility.spec.js",
+        "pwa-features.spec.js",
+        "button-overlap.spec.js",
+        "full-book-experience.spec.js"
+      ],
+      "mobile": [
+        "mobile-responsive.spec.js",
+        "responsive-design.spec.js",
+        "basic-functionality.spec.js",
+        "ai-assistant.spec.js",
+        "settings-panel.spec.js"
+      ],
+      "comprehensive": [
+        "basic-functionality.spec.js",
+        "ai-assistant.spec.js",
+        "settings-panel.spec.js",
+        "drawing-tools.spec.js",
+        "content-features.spec.js",
+        "responsive-design.spec.js",
+        "performance-accessibility.spec.js",
+        "pwa-features.spec.js",
+        "button-overlap.spec.js",
+        "full-book-experience.spec.js",
+        "mobile-responsive.spec.js"
+      ],
+      "visual": [
+        "responsive-design.spec.js",
+        "drawing-tools.spec.js",
+        "mobile-responsive.spec.js"
+      ],
+      "quality": [
+        "performance-accessibility.spec.js",
+        "pwa-features.spec.js",
+        "full-book-experience.spec.js"
+      ]
+    }
   },
   "artifacts": {
     "maxSizeMB": 100,
@@ -25,7 +78,28 @@
   "performance": {
     "maxLoadTime": 3000,
     "maxFirstContentfulPaint": 1500,
-    "maxLargestContentfulPaint": 2500
+    "maxLargestContentfulPaint": 2500,
+    "mobile": {
+      "maxLoadTime": 5000,
+      "maxFirstContentfulPaint": 2500,
+      "maxLargestContentfulPaint": 4000
+    }
+  },
+  "responsive": {
+    "breakpoints": {
+      "mobile": { "width": 375, "height": 667 },
+      "tablet": { "width": 768, "height": 1024 },
+      "desktop": { "width": 1280, "height": 720 },
+      "large": { "width": 1920, "height": 1080 },
+      "extraSmall": { "width": 320, "height": 568 }
+    },
+    "touchTargetMinSize": 44
+  },
+  "accessibility": {
+    "colorContrastRatio": 4.5,
+    "maxZoomLevel": 200,
+    "keyboardNavigationRequired": true,
+    "screenReaderCompatible": true
   },
   "environment": {
     "ci": {
