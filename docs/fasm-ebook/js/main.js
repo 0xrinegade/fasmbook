@@ -459,22 +459,74 @@ class FASMeBook {
         const codeBlocks = document.querySelectorAll('pre code');
         codeBlocks.forEach(block => {
             const pre = block.parentElement;
-            if (pre.querySelector('.code-copy')) return; // Already has copy button
+            if (pre.querySelector('.code-copy') || pre.closest('.interactive-code-block')) return; // Already has buttons or is enhanced
             
+            // Create header if it doesn't exist
+            let header = pre.parentElement.querySelector('.code-header');
+            if (!header) {
+                header = document.createElement('div');
+                header.className = 'code-header';
+                
+                const languageSpan = document.createElement('span');
+                languageSpan.className = 'code-language';
+                languageSpan.textContent = 'CODE';
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'code-actions';
+                
+                header.appendChild(languageSpan);
+                header.appendChild(actionsDiv);
+                
+                pre.parentElement.insertBefore(header, pre);
+            }
+            
+            const actionsDiv = header.querySelector('.code-actions') || header;
+            
+            // Add copy button
             const copyButton = document.createElement('button');
             copyButton.className = 'code-copy';
-            copyButton.textContent = 'Copy';
+            copyButton.innerHTML = '📋 Copy';
+            copyButton.title = 'Copy to clipboard';
             copyButton.addEventListener('click', () => {
                 navigator.clipboard.writeText(block.textContent).then(() => {
-                    copyButton.textContent = 'Copied!';
+                    copyButton.textContent = '✓ Copied';
                     setTimeout(() => {
-                        copyButton.textContent = 'Copy';
+                        copyButton.innerHTML = '📋 Copy';
                     }, 2000);
                 });
             });
             
+            // Add download button
+            const downloadButton = document.createElement('button');
+            downloadButton.className = 'code-download';
+            downloadButton.innerHTML = '💾 Download';
+            downloadButton.title = 'Download as file';
+            downloadButton.addEventListener('click', () => {
+                const text = block.textContent;
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+                const filename = `code-snippet-${timestamp}.txt`;
+                
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = filename;
+                downloadLink.style.display = 'none';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(url);
+                
+                downloadButton.textContent = '✓ Downloaded';
+                setTimeout(() => {
+                    downloadButton.innerHTML = '💾 Download';
+                }, 2000);
+            });
+            
+            actionsDiv.appendChild(copyButton);
+            actionsDiv.appendChild(downloadButton);
+            
             pre.style.position = 'relative';
-            pre.appendChild(copyButton);
         });
     }
     

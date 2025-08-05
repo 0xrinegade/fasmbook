@@ -103,7 +103,10 @@ class FASMMarkdownParser {
             return `<div class="code-block interactive-code-block">
                 <div class="code-header">
                     <span class="code-language">${lang.toUpperCase()}</span>
-                    <button class="code-copy" onclick="copyCodeToClipboard(this)" title="Copy to clipboard">📋</button>
+                    <div class="code-actions">
+                        <button class="code-copy" onclick="copyCodeToClipboard(this)" title="Copy to clipboard">📋 Copy</button>
+                        <button class="code-download" onclick="downloadCodeSnippet(this)" title="Download as file">💾 Download</button>
+                    </div>
                 </div>
                 <pre><code class="language-${lang}">${highlightedCode}</code></pre>
             </div>`;
@@ -664,6 +667,78 @@ function copyCodeToClipboard(button) {
                 button.textContent = '📋';
             }, 2000);
         });
+    }
+}
+
+function downloadCodeSnippet(button) {
+    const codeBlock = button.closest('.code-block').querySelector('code');
+    const languageElement = button.closest('.code-block').querySelector('.code-language');
+    
+    if (codeBlock) {
+        // Get plain text without HTML tags
+        const text = codeBlock.textContent || codeBlock.innerText;
+        const language = languageElement ? languageElement.textContent.toLowerCase() : 'assembly';
+        
+        // Determine file extension based on language
+        let extension = 'asm';
+        if (language.includes('assembly') || language.includes('asm') || language.includes('fasm')) {
+            extension = 'asm';
+        } else if (language.includes('javascript') || language.includes('js')) {
+            extension = 'js';
+        } else if (language.includes('html')) {
+            extension = 'html';
+        } else if (language.includes('css')) {
+            extension = 'css';
+        } else {
+            extension = 'txt';
+        }
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+        const filename = `code-snippet-${timestamp}.${extension}`;
+        
+        try {
+            // Create blob and download
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create temporary download link
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = filename;
+            downloadLink.style.display = 'none';
+            
+            // Trigger download
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            // Clean up
+            URL.revokeObjectURL(url);
+            
+            // Update button text temporarily
+            const originalText = button.textContent;
+            button.textContent = '✓ Downloaded';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Failed to download code:', error);
+            
+            // Fallback: show the text in a new window
+            const newWindow = window.open('', '_blank');
+            if (newWindow) {
+                newWindow.document.write(`<pre>${text}</pre>`);
+                newWindow.document.title = filename;
+            }
+            
+            const originalText = button.textContent;
+            button.textContent = '✓ Downloaded';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 2000);
+        }
     }
 }
 

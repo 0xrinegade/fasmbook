@@ -358,6 +358,12 @@
     gap: 0.5rem;
 }
 
+.code-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
 .code-language {
     color: var(--accent-color);
     font-family: 'Courier New', monospace;
@@ -366,7 +372,8 @@
     gap: 0.5rem;
 }
 
-.code-copy {
+.code-copy,
+.code-download {
     background: transparent;
     border: 1px solid var(--border-color);
     color: var(--accent-color);
@@ -382,15 +389,18 @@
     justify-content: center;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    gap: 0.25rem;
 }
 
-.code-copy:hover {
+.code-copy:hover,
+.code-download:hover {
     background: var(--accent-color);
     color: var(--bg-color);
     transform: scale(1.05);
 }
 
-.code-copy:active {
+.code-copy:active,
+.code-download:active {
     transform: scale(0.95);
 }
 
@@ -398,7 +408,8 @@
     margin: 0;
     border: none;
     border-radius: 0;
-    background: var(--highlight-color);
+    background: #2d3748; /* Dark gray background */
+    color: #e2e8f0; /* Light gray text */
     padding: 1.5rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -596,6 +607,74 @@
 .dark-mode .instruction-usages {
     background: #2a2a2a;
     border-left-color: #888888;
+}
+
+/* Assembly syntax highlighting for dark theme code blocks */
+.interactive-code-block .asm-instruction,
+.interactive-code-block .clickable-instruction {
+    color: #82c5ff; /* Light blue for instructions */
+    font-weight: 600;
+}
+
+.interactive-code-block .asm-register {
+    color: #ff9d7a; /* Light orange for registers */
+    font-weight: 500;
+}
+
+.interactive-code-block .asm-directive {
+    color: #b794f6; /* Light purple for directives */
+    font-weight: 600;
+}
+
+.interactive-code-block .asm-number {
+    color: #90e59a; /* Light green for numbers */
+}
+
+.interactive-code-block .asm-comment {
+    color: #a0aec0; /* Muted light gray for comments */
+    font-style: italic;
+}
+
+.interactive-code-block .asm-string {
+    color: #fed7aa; /* Light peach for strings */
+}
+
+/* Mobile responsive improvements for code blocks */
+@media (max-width: 768px) {
+    .code-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .code-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .code-copy,
+    .code-download {
+        flex: 1;
+        min-width: 120px;
+        max-width: 150px;
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .code-language {
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .code-copy,
+    .code-download {
+        min-width: 100px;
+        padding: 0.6rem 0.5rem;
+        font-size: 0.8rem;
+        gap: 0.2rem;
+    }
 }
 
 .dark-mode .usage-link {
