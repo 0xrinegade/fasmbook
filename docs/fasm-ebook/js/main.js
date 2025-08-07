@@ -431,7 +431,12 @@ class FASMeBook {
     addSyntaxHighlighting() {
         const codeBlocks = document.querySelectorAll('pre code');
         codeBlocks.forEach(block => {
-            // Simple FASM syntax highlighting
+            // Skip if already highlighted by markdown parser (contains asm-* classes)
+            if (block.innerHTML.includes('asm-')) {
+                return; // Already highlighted by markdown parser
+            }
+            
+            // Simple FASM syntax highlighting for non-markdown content
             let code = block.innerHTML;
             
             // Highlight FASM keywords

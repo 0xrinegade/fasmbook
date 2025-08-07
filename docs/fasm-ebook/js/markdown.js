@@ -353,28 +353,29 @@ class FASMMarkdownParser {
             return this.escapeHtml(code);
         }
         
-        const escapedCode = this.escapeHtml(code);
-        
+        // Don't escape HTML before highlighting - highlighting functions will handle safety
+        // Only escape for non-highlighted languages
         switch (language.toLowerCase()) {
             case 'assembly':
             case 'asm':
             case 'fasm':
-                return this.highlightAssembly(escapedCode, chapterInfo);
+                return this.highlightAssembly(code, chapterInfo);
             case 'javascript':
             case 'js':
-                return this.highlightJavaScript(escapedCode);
+                return this.highlightJavaScript(code);
             case 'html':
-                return this.highlightHTML(escapedCode);
+                return this.highlightHTML(code);
             case 'css':
-                return this.highlightCSS(escapedCode);
+                return this.highlightCSS(code);
             default:
-                return escapedCode;
+                return this.escapeHtml(code);
         }
     }
     
     highlightAssembly(code, chapterInfo = null) {
         // FASM/Assembly syntax highlighting with interactive features
-        let highlighted = code;
+        // First escape the raw code to prevent XSS
+        let highlighted = this.escapeHtml(code);
         
         // Extended instructions list including all glossary entries
         const instructions = [
@@ -437,12 +438,13 @@ class FASMMarkdownParser {
         highlighted = highlighted.replace(/\b\d+[hdbo]?\b/g, '<span class="asm-number">$&</span>');
         highlighted = highlighted.replace(/\b0x[0-9a-f]+\b/gi, '<span class="asm-number">$&</span>');
         
-        // Comments
+        // Comments - must come after other highlighting to avoid interfering
         highlighted = highlighted.replace(/;.*$/gm, '<span class="asm-comment">$&</span>');
         
-        // Strings
-        highlighted = highlighted.replace(/'([^']*?)'/g, '<span class="asm-string">\'$1\'</span>');
-        highlighted = highlighted.replace(/"([^"]*?)"/g, '<span class="asm-string">"$1"</span>');
+        // Strings - IMPORTANT: Use HTML entity form to match what was escaped
+        // Match &#039; (escaped single quote) instead of ' to avoid matching span class names
+        highlighted = highlighted.replace(/&#039;([^&]*?)&#039;/g, '<span class="asm-string">&#039;$1&#039;</span>');
+        highlighted = highlighted.replace(/&quot;([^&]*?)&quot;/g, '<span class="asm-string">&quot;$1&quot;</span>');
         
         return highlighted;
     }
