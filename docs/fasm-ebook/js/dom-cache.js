@@ -386,6 +386,9 @@ class DOMCacheManager {
             lastFocusable.setAttribute('data-last-focusable', 'true');
         }
 
+        // Store the element that triggered the modal for focus restoration
+        modal.previouslyFocusedElement = document.activeElement;
+
         // Keyboard navigation
         modal.addEventListener('keydown', (e) => {
             if (e.key === 'Tab') {
@@ -393,6 +396,14 @@ class DOMCacheManager {
             } else if (e.key === 'Escape') {
                 this.handleEscapeKey(modal);
             }
+        });
+
+        // Handle modal close focus restoration
+        const closeButtons = modal.querySelectorAll('.modal-close, #cancel-settings, .btn-secondary');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                this.restoreFocus(modal);
+            });
         });
 
         // ARIA live region for updates
@@ -436,6 +447,58 @@ class DOMCacheManager {
         if (closeButton) {
             closeButton.click();
         }
+        this.restoreFocus(modal);
+    }
+
+    /**
+     * Restore focus to the element that opened the modal
+     */
+    restoreFocus(modal) {
+        if (modal.previouslyFocusedElement && 
+            typeof modal.previouslyFocusedElement.focus === 'function' &&
+            document.contains(modal.previouslyFocusedElement)) {
+            
+            try {
+                modal.previouslyFocusedElement.focus();
+            } catch (error) {
+                console.warn('Could not restore focus to previous element:', error);
+                // Fallback to document body or first focusable element
+                const fallbackElement = document.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                if (fallbackElement) {
+                    fallbackElement.focus();
+                }
+            }
+        }
+    }
+
+    /**
+     * Show modal with proper focus management
+     */
+    showModal(modal) {
+        // Store current focus before showing modal
+        modal.previouslyFocusedElement = document.activeElement;
+        
+        // Show modal
+        modal.style.display = 'block';
+        modal.setAttribute('aria-hidden', 'false');
+        
+        // Focus first focusable element in modal
+        const firstFocusable = modal.querySelector('[data-first-focusable="true"], select, input, button');
+        if (firstFocusable) {
+            // Use setTimeout to ensure modal is visible before focusing
+            setTimeout(() => {
+                firstFocusable.focus();
+            }, 100);
+        }
+    }
+
+    /**
+     * Hide modal with proper focus restoration
+     */
+    hideModal(modal) {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        this.restoreFocus(modal);
     }
 
     /**
@@ -461,7 +524,7 @@ class DOMCacheManager {
         if (!element) return 0;
         
         // Rough estimation based on HTML content length and children count
-        const htmlLength = element.outerHTML ? element.ouHTML.length : 0;
+        const htmlLength = element.outerHTML ? element.outerHTML.length : 0;
         const childrenCount = element.querySelectorAll('*').length;
         
         return htmlLength + (childrenCount * 50); // Rough heuristic

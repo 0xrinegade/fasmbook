@@ -5,6 +5,7 @@ class MarkdownParser {
     constructor() {
         this.supportedLanguages = new Set(['assembly', 'asm', 'fasm']);
         this.codeBlockDelimiter = '```';
+        this.debug = false;
     }
 
     /**
@@ -23,6 +24,15 @@ class MarkdownParser {
         const lines = markdown.split('\n');
         let currentBlock = null;
         let lineNumber = 0;
+        
+        // Enhanced context tracking
+        const parseContext = {
+            ...context,
+            sourceFile: context.sourceFile || 'unknown',
+            chapterName: context.chapterName || 'unknown',
+            totalLines: lines.length,
+            startTime: new Date()
+        };
 
         try {
             for (let i = 0; i < lines.length; i++) {
@@ -32,8 +42,8 @@ class MarkdownParser {
 
                 if (this.isCodeBlockStart(trimmedLine)) {
                     if (currentBlock) {
-                        console.warn(`Unclosed code block at line ${currentBlock.startLine}, closing before new block at line ${lineNumber}`);
-                        this.finalizeCodeBlock(currentBlock, codeBlocks, i - 1);
+                        console.warn(`Unclosed code block at line ${currentBlock.startLine} in ${parseContext.sourceFile}, closing before new block at line ${lineNumber}`);
+                        this.finalizeCodeBlock(currentBlock, codeBlocks, i - 1, parseContext);
                     }
 
                     const language = this.extractLanguage(trimmedLine);
@@ -43,12 +53,19 @@ class MarkdownParser {
                             content: [],
                             startLine: lineNumber,
                             endLine: null,
-                            context: context.id || 'unknown'
+                            context: parseContext.chapterName || 'unknown',
+                            sourceFile: parseContext.sourceFile,
+                            lineContext: {
+                                startIndex: i,
+                                previousLine: i > 0 ? lines[i - 1].trim() : null,
+                                nextLine: i < lines.length - 1 ? lines[i + 1].trim() : null
+                            }
                         };
                     }
                 } else if (this.isCodeBlockEnd(trimmedLine) && currentBlock) {
                     currentBlock.endLine = lineNumber;
-                    this.finalizeCodeBlock(currentBlock, codeBlocks, i);
+                    currentBlock.lineContext.endIndex = i;
+                    this.finalizeCodeBlock(currentBlock, codeBlocks, i, parseContext);
                     currentBlock = null;
                 } else if (currentBlock) {
                     // Inside a code block, preserve original line content
@@ -58,13 +75,22 @@ class MarkdownParser {
 
             // Handle unclosed code block at end of file
             if (currentBlock) {
-                console.warn(`Unclosed code block at line ${currentBlock.startLine}, auto-closing at end of file`);
+                console.warn(`Unclosed code block at line ${currentBlock.startLine} in ${parseContext.sourceFile}, auto-closing at end of file`);
                 currentBlock.endLine = lineNumber;
-                this.finalizeCodeBlock(currentBlock, codeBlocks, lines.length - 1);
+                currentBlock.lineContext.endIndex = lines.length - 1;
+                this.finalizeCodeBlock(currentBlock, codeBlocks, lines.length - 1, parseContext);
+            }
+
+            // Add parsing summary to context
+            parseContext.parseTime = new Date() - parseContext.startTime;
+            parseContext.blocksFound = codeBlocks.length;
+            
+            if (this.debug) {
+                console.log(`Parsed ${codeBlocks.length} code blocks from ${parseContext.sourceFile} (${parseContext.parseTime}ms)`);
             }
 
         } catch (error) {
-            console.error(`Error parsing markdown at line ${lineNumber}:`, error);
+            console.error(`Error parsing markdown at line ${lineNumber} in ${parseContext.sourceFile}:`, error);
             // Return partial results if parsing fails
         }
 
@@ -119,11 +145,18 @@ class MarkdownParser {
      * @param {Object} codeBlock - Code block object
      * @param {Array} codeBlocks - Results array
      * @param {number} endIndex - End line index
+     * @param {Object} parseContext - Enhanced parsing context
      */
-    finalizeCodeBlock(codeBlock, codeBlocks, endIndex) {
+    finalizeCodeBlock(codeBlock, codeBlocks, endIndex, parseContext = {}) {
         if (codeBlock.content.length > 0) {
             codeBlock.rawContent = codeBlock.content.join('\n');
             codeBlock.lineCount = codeBlock.content.length;
+            codeBlock.parseTimestamp = new Date();
+            codeBlock.parseContext = {
+                sourceFile: parseContext.sourceFile,
+                chapterName: parseContext.chapterName,
+                endIndex
+            };
             codeBlocks.push(codeBlock);
         }
     }

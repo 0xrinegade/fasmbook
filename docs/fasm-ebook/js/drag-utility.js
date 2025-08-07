@@ -53,21 +53,37 @@ class DragUtility {
         handleElement.style.cursor = 'grab';
         handleElement.setAttribute('aria-label', `Draggable ${options.isToggle ? 'button' : 'modal'}. Use arrow keys or mouse to move.`);
 
+        // Store event handlers for cleanup
+        const handlers = {
+            mousedown: (e) => this.handleStart(e, dragData),
+            mousemove: (e) => this.handleMove(e, dragData),
+            mouseup: (e) => this.handleEnd(e, dragData),
+            touchstart: (e) => this.handleStart(e, dragData),
+            touchmove: (e) => this.handleMove(e, dragData),
+            touchend: (e) => this.handleEnd(e, dragData),
+            keydown: (e) => this.handleKeyboard(e, dragData),
+            click: (e) => this.handleClick(e, dragData)
+        };
+
+        // Store handlers for teardown
+        dragData.eventHandlers = handlers;
+        dragData.handleElement = handleElement;
+
         // Mouse events
-        handleElement.addEventListener('mousedown', (e) => this.handleStart(e, dragData));
-        document.addEventListener('mousemove', (e) => this.handleMove(e, dragData));
-        document.addEventListener('mouseup', (e) => this.handleEnd(e, dragData));
+        handleElement.addEventListener('mousedown', handlers.mousedown);
+        document.addEventListener('mousemove', handlers.mousemove);
+        document.addEventListener('mouseup', handlers.mouseup);
 
         // Touch events for mobile
-        handleElement.addEventListener('touchstart', (e) => this.handleStart(e, dragData), { passive: false });
-        document.addEventListener('touchmove', (e) => this.handleMove(e, dragData), { passive: false });
-        document.addEventListener('touchend', (e) => this.handleEnd(e, dragData));
+        handleElement.addEventListener('touchstart', handlers.touchstart, { passive: false });
+        document.addEventListener('touchmove', handlers.touchmove, { passive: false });
+        document.addEventListener('touchend', handlers.touchend);
 
         // Keyboard navigation
-        handleElement.addEventListener('keydown', (e) => this.handleKeyboard(e, dragData));
+        handleElement.addEventListener('keydown', handlers.keydown);
 
         // Click handler for non-drag interactions
-        element.addEventListener('click', (e) => this.handleClick(e, dragData));
+        element.addEventListener('click', handlers.click);
     }
 
     setupAccessibility(dragData) {
@@ -420,14 +436,66 @@ class DragUtility {
     }
 
     /**
-     * Remove drag functionality from an element
+     * Remove drag functionality from an element with proper cleanup
      */
     removeDraggable(element) {
         const dragData = this.activeDrags.get(element);
         if (dragData) {
+            this.teardownEventListeners(dragData);
             this.restorePointerEvents(dragData);
             this.activeDrags.delete(element);
+            
+            if (this.debug) {
+                console.log('Removed drag functionality and cleaned up listeners for element:', element);
+            }
         }
+    }
+
+    /**
+     * Cleanup all event listeners for a drag element
+     */
+    teardownEventListeners(dragData) {
+        if (!dragData.eventHandlers || !dragData.handleElement) return;
+
+        const { element, handleElement, eventHandlers } = dragData;
+
+        try {
+            // Remove handle-specific events
+            handleElement.removeEventListener('mousedown', eventHandlers.mousedown);
+            handleElement.removeEventListener('touchstart', eventHandlers.touchstart);
+            handleElement.removeEventListener('keydown', eventHandlers.keydown);
+
+            // Remove document-level events
+            document.removeEventListener('mousemove', eventHandlers.mousemove);
+            document.removeEventListener('mouseup', eventHandlers.mouseup);
+            document.removeEventListener('touchmove', eventHandlers.touchmove);
+            document.removeEventListener('touchend', eventHandlers.touchend);
+
+            // Remove element-specific events
+            element.removeEventListener('click', eventHandlers.click);
+
+            // Clear stored handlers
+            dragData.eventHandlers = null;
+            dragData.handleElement = null;
+
+            if (this.debug) {
+                console.log('Successfully removed all event listeners for drag element');
+            }
+        } catch (error) {
+            console.error('Error during event listener cleanup:', error);
+        }
+    }
+
+    /**
+     * Cleanup all drag utilities and event listeners
+     */
+    cleanup() {
+        const elementsToCleanup = Array.from(this.activeDrags.keys());
+        elementsToCleanup.forEach(element => {
+            this.removeDraggable(element);
+        });
+        
+        console.log(`Cleaned up ${elementsToCleanup.length} drag elements`);
     }
 
     /**
@@ -451,3 +519,10 @@ class DragUtility {
 
 // Create global instance
 window.dragUtility = new DragUtility();
+
+// Cleanup on page unload to prevent memory leaks
+window.addEventListener('beforeunload', () => {
+    if (window.dragUtility) {
+        window.dragUtility.cleanup();
+    }
+});

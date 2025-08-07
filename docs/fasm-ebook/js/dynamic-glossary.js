@@ -363,13 +363,13 @@ class DynamicGlossary {
     }
 
     /**
-     * Sync glossary with AI helper
+     * Sync glossary with AI helper with validation
      */
     syncWithAI(instructionName) {
         const instruction = this.getInstruction(instructionName);
         if (!instruction) return null;
 
-        return {
+        const syncData = {
             name: instruction.name,
             syntax: instruction.syntax,
             description: instruction.description,
@@ -378,8 +378,174 @@ class DynamicGlossary {
             category: instruction.category,
             crossRefs: instruction.crossRefs || [],
             usageHints: this.generateUsageHints(instruction),
-            relatedPatterns: this.findRelatedPatterns(instruction)
+            relatedPatterns: this.findRelatedPatterns(instruction),
+            syncTimestamp: new Date().toISOString(),
+            checksum: this.calculateChecksum(instruction)
         };
+
+        // Validate sync data integrity
+        if (!this.validateSyncData(syncData)) {
+            console.error('Sync data validation failed for instruction:', instructionName);
+            return null;
+        }
+
+        // Notify observers of sync
+        this.notifyObservers('synced', { instruction: instructionName, data: syncData });
+        
+        return syncData;
+    }
+
+    /**
+     * Validate sync data integrity
+     */
+    validateSyncData(syncData) {
+        const requiredFields = ['name', 'description', 'category'];
+        
+        for (const field of requiredFields) {
+            if (!syncData[field] || typeof syncData[field] !== 'string' || syncData[field].trim() === '') {
+                console.error(`Sync validation failed: missing or invalid ${field}`);
+                return false;
+            }
+        }
+
+        // Validate examples array
+        if (syncData.examples && !Array.isArray(syncData.examples)) {
+            console.error('Sync validation failed: examples must be an array');
+            return false;
+        }
+
+        // Validate cross-references
+        if (syncData.crossRefs && !Array.isArray(syncData.crossRefs)) {
+            console.error('Sync validation failed: crossRefs must be an array');
+            return false;
+        }
+
+        // Check for reasonable string lengths
+        if (syncData.description.length > 500) {
+            console.warn('Sync validation warning: description is unusually long');
+        }
+
+        return true;
+    }
+
+    /**
+     * Calculate checksum for data integrity
+     */
+    calculateChecksum(instruction) {
+        const dataString = JSON.stringify({
+            name: instruction.name,
+            description: instruction.description,
+            syntax: instruction.syntax,
+            category: instruction.category
+        });
+        
+        // Simple hash function for checksum
+        let hash = 0;
+        for (let i = 0; i < dataString.length; i++) {
+            const char = dataString.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return hash.toString(16);
+    }
+
+    /**
+     * Validate glossary data consistency during updates
+     */
+    validateGlossaryConsistency() {
+        const inconsistencies = [];
+        
+        // Check for duplicate instruction names
+        const nameMap = new Map();
+        for (const [key, instruction] of this.instructions) {
+            const name = instruction.name.toLowerCase();
+            if (nameMap.has(name)) {
+                inconsistencies.push({
+                    type: 'duplicate_name',
+                    instruction: instruction.name,
+                    duplicate: nameMap.get(name)
+                });
+            } else {
+                nameMap.set(name, instruction.name);
+            }
+        }
+
+        // Check for broken cross-references
+        for (const [key, instruction] of this.instructions) {
+            if (instruction.crossRefs) {
+                for (const ref of instruction.crossRefs) {
+                    if (!this.instructions.has(ref.toLowerCase())) {
+                        inconsistencies.push({
+                            type: 'broken_crossref',
+                            instruction: instruction.name,
+                            brokenRef: ref
+                        });
+                    }
+                }
+            }
+        }
+
+        // Check for orphaned categories
+        const usedCategories = new Set();
+        for (const instruction of this.instructions.values()) {
+            usedCategories.add(instruction.category);
+        }
+        
+        for (const category of this.categories.keys()) {
+            if (!usedCategories.has(category)) {
+                inconsistencies.push({
+                    type: 'orphaned_category',
+                    category
+                });
+            }
+        }
+
+        // Report inconsistencies
+        if (inconsistencies.length > 0) {
+            console.warn('Glossary consistency issues found:', inconsistencies);
+            this.notifyObservers('validation_issues', { issues: inconsistencies });
+        } else {
+            this.notifyObservers('validation_passed', { timestamp: new Date() });
+        }
+
+        return inconsistencies;
+    }
+
+    /**
+     * Auto-fix common glossary inconsistencies
+     */
+    autoFixInconsistencies() {
+        const inconsistencies = this.validateGlossaryConsistency();
+        let fixedCount = 0;
+
+        for (const issue of inconsistencies) {
+            switch (issue.type) {
+                case 'broken_crossref':
+                    // Remove broken cross-references
+                    const instruction = this.instructions.get(issue.instruction.toLowerCase());
+                    if (instruction && instruction.crossRefs) {
+                        instruction.crossRefs = instruction.crossRefs.filter(ref => 
+                            this.instructions.has(ref.toLowerCase())
+                        );
+                        fixedCount++;
+                    }
+                    break;
+                    
+                case 'orphaned_category':
+                    // Remove orphaned categories
+                    this.categories.delete(issue.category);
+                    fixedCount++;
+                    break;
+            }
+        }
+
+        if (fixedCount > 0) {
+            console.log(`Auto-fixed ${fixedCount} glossary inconsistencies`);
+            this.notifyObservers('auto_fixed', { count: fixedCount });
+            this.buildSearchIndex(); // Rebuild index after fixes
+        }
+
+        return fixedCount;
     }
 
     generateUsageHints(instruction) {
@@ -471,9 +637,11 @@ class DynamicGlossary {
     }
 
     /**
-     * Health check for glossary system
+     * Health check for glossary system with validation
      */
     getStatus() {
+        const inconsistencies = this.validateGlossaryConsistency();
+        
         return {
             loaded: this.isLoaded,
             instructionCount: this.instructions.size,
@@ -484,10 +652,31 @@ class DynamicGlossary {
             },
             observerCount: this.observers.size,
             lastUpdated: this.metadata?.lastUpdated,
-            version: this.metadata?.version
+            version: this.metadata?.version,
+            validation: {
+                consistent: inconsistencies.length === 0,
+                issues: inconsistencies.length,
+                lastValidation: new Date().toISOString()
+            }
         };
     }
 }
 
 // Create global instance
 window.dynamicGlossary = new DynamicGlossary();
+
+// Validate glossary periodically and on important events
+setInterval(() => {
+    if (window.dynamicGlossary && window.dynamicGlossary.isLoaded) {
+        window.dynamicGlossary.validateGlossaryConsistency();
+    }
+}, 300000); // Every 5 minutes
+
+// Auto-fix on load if needed
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        if (window.dynamicGlossary && window.dynamicGlossary.isLoaded) {
+            window.dynamicGlossary.autoFixInconsistencies();
+        }
+    }, 2000);
+});

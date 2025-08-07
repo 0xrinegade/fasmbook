@@ -485,18 +485,24 @@ class FASMeBook {
             
             const actionsDiv = header.querySelector('.code-actions') || header;
             
+            // Create debounced handlers for copy and download
+            const debouncedCopy = this.debounce((button, text) => {
+                this.handleCopyClick(button, text);
+            }, 500);
+            
+            const debouncedDownload = this.debounce((button, text) => {
+                this.handleDownloadClick(button, text);
+            }, 1000);
+            
             // Add copy button
             const copyButton = document.createElement('button');
             copyButton.className = 'code-copy';
             copyButton.innerHTML = '⧉ Copy';
             copyButton.title = 'Copy to clipboard';
-            copyButton.addEventListener('click', () => {
-                navigator.clipboard.writeText(block.textContent).then(() => {
-                    copyButton.textContent = '✓ Copied';
-                    setTimeout(() => {
-                        copyButton.innerHTML = '⧉ Copy';
-                    }, 2000);
-                });
+            copyButton.setAttribute('aria-label', 'Copy code to clipboard');
+            copyButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                debouncedCopy(copyButton, block.textContent);
             });
             
             // Add download button
@@ -504,26 +510,10 @@ class FASMeBook {
             downloadButton.className = 'code-download';
             downloadButton.innerHTML = '⧄ Download';
             downloadButton.title = 'Download as file';
-            downloadButton.addEventListener('click', () => {
-                const text = block.textContent;
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
-                const filename = `code-snippet-${timestamp}.txt`;
-                
-                const blob = new Blob([text], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const downloadLink = document.createElement('a');
-                downloadLink.href = url;
-                downloadLink.download = filename;
-                downloadLink.style.display = 'none';
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-                URL.revokeObjectURL(url);
-                
-                downloadButton.textContent = '✓ Downloaded';
-                setTimeout(() => {
-                    downloadButton.innerHTML = '⧄ Download';
-                }, 2000);
+            downloadButton.setAttribute('aria-label', 'Download code as text file');
+            downloadButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                debouncedDownload(downloadButton, block.textContent);
             });
             
             actionsDiv.appendChild(copyButton);
@@ -1110,6 +1100,146 @@ class FASMeBook {
         
         // Initially show icons
         controlIcons.classList.remove('fade-out');
+    }
+
+    /**
+     * Debounce utility function to prevent rapid button clicks
+     */
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    /**
+     * Handle copy button click with feedback and error handling
+     */
+    async handleCopyClick(button, text) {
+        if (button.disabled) return;
+        
+        button.disabled = true;
+        const originalHTML = button.innerHTML;
+        
+        try {
+            await navigator.clipboard.writeText(text);
+            button.innerHTML = '✓ Copied';
+            button.setAttribute('aria-label', 'Code copied to clipboard');
+            
+            // Announce to screen readers
+            this.announceToScreenReader('Code copied to clipboard');
+            
+        } catch (error) {
+            console.error('Failed to copy text:', error);
+            button.innerHTML = '✗ Failed';
+            button.setAttribute('aria-label', 'Failed to copy code');
+            
+            // Fallback for older browsers
+            this.fallbackCopyToClipboard(text);
+        }
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.setAttribute('aria-label', 'Copy code to clipboard');
+            button.disabled = false;
+        }, 2000);
+    }
+
+    /**
+     * Handle download button click with error handling
+     */
+    async handleDownloadClick(button, text) {
+        if (button.disabled) return;
+        
+        button.disabled = true;
+        const originalHTML = button.innerHTML;
+        
+        try {
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+            const filename = `fasm-code-${timestamp}.asm`;
+            
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = filename;
+            downloadLink.style.display = 'none';
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            // Clean up the URL object
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            
+            button.innerHTML = '✓ Downloaded';
+            button.setAttribute('aria-label', 'Code downloaded successfully');
+            
+            // Announce to screen readers
+            this.announceToScreenReader(`Code downloaded as ${filename}`);
+            
+        } catch (error) {
+            console.error('Failed to download file:', error);
+            button.innerHTML = '✗ Failed';
+            button.setAttribute('aria-label', 'Failed to download code');
+        }
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.setAttribute('aria-label', 'Download code as text file');
+            button.disabled = false;
+        }, 2000);
+    }
+
+    /**
+     * Fallback copy method for older browsers
+     */
+    fallbackCopyToClipboard(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            this.announceToScreenReader('Code copied to clipboard');
+        } catch (error) {
+            console.error('Fallback copy failed:', error);
+        }
+        
+        document.body.removeChild(textArea);
+    }
+
+    /**
+     * Announce message to screen readers
+     */
+    announceToScreenReader(message) {
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.style.position = 'absolute';
+        announcement.style.left = '-10000px';
+        announcement.style.height = '1px';
+        announcement.style.width = '1px';
+        announcement.style.overflow = 'hidden';
+        announcement.textContent = message;
+        
+        document.body.appendChild(announcement);
+        setTimeout(() => {
+            if (document.body.contains(announcement)) {
+                document.body.removeChild(announcement);
+            }
+        }, 1000);
     }
 }
 
