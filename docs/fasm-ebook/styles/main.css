@@ -559,7 +559,7 @@ input, textarea, select, pre code, .code-block {
     transition: all 0.3s ease;
     z-index: 1500;
     background-color: var(--bg-color);
-    border-left: 2px solid var(--border-color);
+    border-left: none;
     height: 100vh;
     padding: 0;
 }
@@ -922,7 +922,7 @@ input, textarea, select, pre code, .code-block {
     width: 48px;
     height: 48px;
     border-radius: 12px;
-    border: 2px solid #333;
+    border: none;
     background-color: var(--bg-color);
     cursor: pointer;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -961,7 +961,7 @@ input, textarea, select, pre code, .code-block {
     display: none;
     width: 100%;
     background-color: var(--bg-color);
-    border-radius: 8px;
+    border-radius: 0;
     margin-top: 1rem;
     overflow-y: auto;
     max-height: calc(100vh - 200px);
@@ -986,14 +986,14 @@ input, textarea, select, pre code, .code-block {
 /* Settings header for dragging */
 .settings-header {
     padding: 1rem;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: none;
     background-color: var(--highlight-color);
     cursor: move;
     user-select: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-radius: 10px 10px 0 0;
+    border-radius: 0;
 }
 
 .settings-header:hover {
