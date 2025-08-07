@@ -7,18 +7,27 @@
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/ebook.css">
     <link rel="stylesheet" href="styles/eink.css">
+    <link rel="stylesheet" href="styles/accessibility.css">
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
     <link rel="manifest" href="manifest.json">
 </head>
 <body class="eink-mode">
+    <!-- Skip Links for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <a href="#navigation-panel" class="skip-link">Skip to navigation</a>
+    <a href="#ai-toggle" class="skip-link">Skip to AI assistant</a>
+    
+    <!-- ARIA Live Region for Announcements -->
+    <div id="sr-announcements" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+    
     <!-- Navigation Panel -->
-    <nav id="navigation-panel" class="nav-panel">
+    <nav id="navigation-panel" class="nav-panel" role="navigation" aria-label="Book navigation">
         <div class="nav-header">
-            <h1>FASM Programming Book</h1>
-            <button id="nav-toggle" class="nav-toggle">☰</button>
+            <h1 id="book-title">FASM Programming Book</h1>
+            <button id="nav-toggle" class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="nav-content">☰</button>
         </div>
         
-        <div class="nav-content">
+        <div id="nav-content" class="nav-content" aria-labelledby="book-title">
             <!-- Table of Contents -->
             <div class="toc-section">
                 <h3>Table of Contents</h3>
@@ -28,26 +37,26 @@
             </div>
             
             <!-- Reading Progress -->
-            <div class="progress-section">
-                <h3>Reading Progress</h3>
-                <div class="progress-bar">
+            <div class="progress-section" role="region" aria-labelledby="progress-heading">
+                <h3 id="progress-heading">Reading Progress</h3>
+                <div class="progress-bar" role="progressbar" aria-labelledby="progress-heading" aria-describedby="progress-text">
                     <div id="progress-fill" class="progress-fill"></div>
                 </div>
                 <span id="progress-text">0% Complete</span>
             </div>
             
             <!-- Bookmarks -->
-            <div class="bookmarks-section">
-                <h3>Bookmarks</h3>
-                <ul id="bookmarks-list" class="bookmarks-list">
+            <div class="bookmarks-section" role="region" aria-labelledby="bookmarks-heading">
+                <h3 id="bookmarks-heading">Bookmarks</h3>
+                <ul id="bookmarks-list" class="bookmarks-list" aria-labelledby="bookmarks-heading">
                     <!-- Will be populated by JavaScript -->
                 </ul>
             </div>
             
             <!-- Reading History -->
-            <div class="history-section">
-                <h3>Recent Reading</h3>
-                <ul id="history-list" class="history-list">
+            <div class="history-section" role="region" aria-labelledby="history-heading">
+                <h3 id="history-heading">Recent Reading</h3>
+                <ul id="history-list" class="history-list" aria-labelledby="history-heading">
                     <!-- Will be populated by JavaScript -->
                 </ul>
             </div>
@@ -67,21 +76,21 @@
     </nav>
     
     <!-- Main Content Area -->
-    <main id="main-content" class="main-content">
+    <main id="main-content" class="main-content" role="main" aria-labelledby="chapter-title">
         <!-- Chapter Navigation -->
-        <div class="chapter-nav">
-            <button id="prev-chapter" class="nav-btn">← Previous</button>
-            <span id="chapter-info" class="chapter-info">Loading...</span>
-            <button id="next-chapter" class="nav-btn">Next →</button>
-        </div>
+        <nav class="chapter-nav" role="navigation" aria-label="Chapter navigation">
+            <button id="prev-chapter" class="nav-btn" aria-label="Go to previous chapter">← Previous</button>
+            <span id="chapter-info" class="chapter-info" aria-live="polite">Loading...</span>
+            <button id="next-chapter" class="nav-btn" aria-label="Go to next chapter">Next →</button>
+        </nav>
         
         <!-- Content Display -->
-        <article id="chapter-content" class="chapter-content">
+        <article id="chapter-content" class="chapter-content" role="article" aria-labelledby="chapter-title">
             <!-- Initial loading content -->
-            <div class="initial-loading">
-                <h2>▣ FASM Programming eBook</h2>
+            <div class="initial-loading" aria-live="polite">
+                <h2 id="chapter-title">▣ FASM Programming eBook</h2>
                 <p>Loading the complete assembly programming guide...</p>
-                <div style="margin: 20px 0;">
+                <div style="margin: 20px 0;" role="progressbar" aria-label="Loading progress">
                     <div style="width: 100%; background: #e0e0e0; height: 4px; border-radius: 2px;">
                         <div style="width: 0%; background: #666666; height: 100%; border-radius: 2px; animation: loadingBar 2s ease-in-out infinite;"></div>
                     </div>
@@ -91,11 +100,11 @@
         </article>
         
         <!-- Page Navigation -->
-        <div class="page-nav">
-            <button id="prev-page" class="page-btn">← Previous Page</button>
-            <span id="page-info" class="page-info">Page 1 of 1</span>
-            <button id="next-page" class="page-btn">Next Page →</button>
-        </div>
+        <nav class="page-nav" role="navigation" aria-label="Page navigation">
+            <button id="prev-page" class="page-btn" aria-label="Go to previous page">← Previous Page</button>
+            <span id="page-info" class="page-info" aria-live="polite">Page 1 of 1</span>
+            <button id="next-page" class="page-btn" aria-label="Go to next page">Next Page →</button>
+        </nav>
     </main>
     
     <!-- Drawing Canvas Overlay (for eInk devices) -->
@@ -153,8 +162,12 @@
         
         <!-- AI Helper -->
         <div id="ai-helper" class="ai-helper">
-            <button id="ai-toggle" class="ai-toggle" title="AI Assistant">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button id="ai-toggle" class="ai-toggle" 
+                    aria-label="Open AI Programming Assistant" 
+                    aria-expanded="false" 
+                    aria-controls="ai-window"
+                    title="AI Assistant - Click to open or drag to move">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M12 8V4H8"></path>
                     <rect width="16" height="12" x="4" y="8" rx="2"></rect>
                     <path d="m2 14 2-2 4 4"></path>
@@ -162,20 +175,36 @@
                     <path d="m9 15 3-3 3 3"></path>
                 </svg>
             </button>
-            <div id="ai-window" class="ai-window">
-                <div class="ai-header">
-                    <h3>FASM Programming Assistant</h3>
-                    <button id="ai-close" class="ai-close">×</button>
+            <div id="ai-window" class="ai-window" 
+                 role="dialog" 
+                 aria-modal="true" 
+                 aria-labelledby="ai-title"
+                 aria-describedby="ai-description">
+                <div class="ai-header" data-drag-handle aria-label="Drag to move window">
+                    <h3 id="ai-title">FASM Programming Assistant</h3>
+                    <button id="ai-close" class="ai-close" 
+                            aria-label="Close AI Assistant">×</button>
                 </div>
                 <div class="ai-content">
-                    <div id="ai-chat" class="ai-chat">
+                    <div id="ai-description" class="sr-only">AI assistant for FASM programming help and guidance</div>
+                    <div id="ai-chat" class="ai-chat" 
+                         role="log" 
+                         aria-live="polite" 
+                         aria-label="Conversation with AI assistant">
                         <div class="ai-message">
                             <strong>Assistant:</strong> Hello! I'm your FASM programming assistant. I can help explain concepts, debug code, suggest optimizations, and answer questions about assembly programming. What would you like to know?
                         </div>
                     </div>
-                    <div class="ai-input">
-                        <input type="text" id="ai-input-field" placeholder="Ask me anything about FASM or assembly programming...">
-                        <button id="ai-send" class="ai-send">Send</button>
+                    <div class="ai-input" role="form" aria-label="Send message to AI assistant">
+                        <label for="ai-input-field" class="sr-only">Ask the AI assistant a question</label>
+                        <input type="text" 
+                               id="ai-input-field" 
+                               aria-label="Type your question for the AI assistant"
+                               aria-describedby="ai-input-help"
+                               placeholder="Ask me anything about FASM or assembly programming...">
+                        <div id="ai-input-help" class="sr-only">Press Enter to send or use the Send button</div>
+                        <button id="ai-send" class="ai-send" 
+                                aria-label="Send message to AI assistant">Send</button>
                     </div>
                 </div>
             </div>
@@ -184,6 +213,9 @@
     
     <!-- JavaScript -->
     <script src="js/config.js"></script>
+    <script src="js/drag-utility.js"></script>
+    <script src="js/dom-cache.js"></script>
+    <script src="js/dynamic-glossary.js"></script>
     <script src="js/instruction-glossary.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/markdown-parser.js"></script>

@@ -1,0 +1,486 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "lastUpdated": "2024-01-15",
+    "totalInstructions": 150,
+    "categories": [
+      "Data Movement",
+      "Arithmetic",
+      "Logical",
+      "Comparison",
+      "Control Flow",
+      "Stack Operations",
+      "String Operations",
+      "System Calls",
+      "Floating Point",
+      "SIMD",
+      "Memory Management",
+      "Debugging"
+    ]
+  },
+  "instructions": {
+    "MOV": {
+      "category": "Data Movement",
+      "syntax": "MOV destination, source",
+      "description": "Copies data from source to destination. Despite the name, the source data remains unchanged.",
+      "flags": "None",
+      "cycles": "1 (register-register), 3-4 (memory)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "Various (B8-BF for immediate to register)",
+      "examples": [
+        "mov eax, 42        ; Load immediate value",
+        "mov eax, ebx       ; Copy register",
+        "mov [ebx], eax     ; Store to memory"
+      ],
+      "notes": "On modern CPUs, register-to-register moves have zero latency due to register renaming.",
+      "crossRefs": ["PUSH", "POP", "LEA", "XCHG"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["copy", "load", "store", "transfer"]
+    },
+    "PUSH": {
+      "category": "Stack Operations",
+      "syntax": "PUSH source",
+      "description": "Decrements ESP and stores the source operand at the new top of stack.",
+      "flags": "None",
+      "cycles": "1-3 (depending on operand type)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "50-57 (register), 68 (immediate), FF/6 (memory)",
+      "examples": [
+        "push eax          ; Push register onto stack",
+        "push 42           ; Push immediate value",
+        "push dword [ebx]  ; Push memory location"
+      ],
+      "notes": "Always decrements ESP by 4 bytes in 32-bit mode, 8 bytes in 64-bit mode.",
+      "crossRefs": ["POP", "CALL", "RET", "ESP"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["stack", "save", "preserve"]
+    },
+    "POP": {
+      "category": "Stack Operations",
+      "syntax": "POP destination",
+      "description": "Loads the value from the top of stack and increments ESP.",
+      "flags": "None",
+      "cycles": "1-3 (depending on destination)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "58-5F (register), 8F/0 (memory)",
+      "examples": [
+        "pop eax           ; Pop to register",
+        "pop dword [ebx]   ; Pop to memory location"
+      ],
+      "notes": "Cannot pop immediate values or segment registers in some modes.",
+      "crossRefs": ["PUSH", "CALL", "RET", "ESP"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["stack", "restore", "retrieve"]
+    },
+    "ADD": {
+      "category": "Arithmetic",
+      "syntax": "ADD destination, source",
+      "description": "Adds source to destination and stores result in destination.",
+      "flags": "OF SF ZF AF PF CF",
+      "cycles": "1 (register), 3-4 (memory)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "00-05 (various forms)",
+      "examples": [
+        "add eax, ebx      ; Add registers",
+        "add eax, 10       ; Add immediate",
+        "add [esi], eax    ; Add to memory"
+      ],
+      "notes": "Sets carry flag if result exceeds destination size.",
+      "crossRefs": ["SUB", "ADC", "INC", "LEA"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["addition", "sum", "arithmetic"]
+    },
+    "SUB": {
+      "category": "Arithmetic",
+      "syntax": "SUB destination, source",
+      "description": "Subtracts source from destination and stores result in destination.",
+      "flags": "OF SF ZF AF PF CF",
+      "cycles": "1 (register), 3-4 (memory)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "28-2D (various forms)",
+      "examples": [
+        "sub eax, ebx      ; Subtract registers",
+        "sub eax, 5        ; Subtract immediate",
+        "sub [edi], ecx    ; Subtract from memory"
+      ],
+      "notes": "Sets carry flag if result is negative (underflow).",
+      "crossRefs": ["ADD", "SBB", "DEC", "CMP"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["subtraction", "difference", "arithmetic"]
+    },
+    "MUL": {
+      "category": "Arithmetic",
+      "syntax": "MUL source",
+      "description": "Unsigned multiply: AX = AL * source (8-bit) or DX:AX = AX * source (16-bit) or EDX:EAX = EAX * source (32-bit).",
+      "flags": "OF CF (others undefined)",
+      "cycles": "11-18 (varies by processor)",
+      "introduced": "Intel 8086 (1978)",
+      "encoding": "F6/4 (8-bit), F7/4 (16/32-bit)",
+      "examples": [
+        "mul bl            ; AL = AL * BL, result in AX",
+        "mul cx            ; AX = AX * CX, result in DX:AX",
+        "mul ebx           ; EAX = EAX * EBX, result in EDX:EAX"
+      ],
+      "notes": "Always uses accumulator (AL/AX/EAX) as implicit operand.",
+      "crossRefs": ["IMUL", "DIV", "IDIV"],
+      "usageCount": 0,
+      "difficulty": "intermediate",
+      "keywords": ["multiplication", "unsigned", "accumulator"]
+    },
+    "IMUL": {
+      "category": "Arithmetic",
+      "syntax": "IMUL destination, source / IMUL source",
+      "description": "Signed integer multiplication with multiple forms.",
+      "flags": "OF CF (others undefined)",
+      "cycles": "11-18 (varies by processor and form)",
+      "introduced": "Intel 8086 (1978)",
+      "encoding": "F6/5, F7/5, 0F AF, 6B, 69",
+      "examples": [
+        "imul eax, ebx     ; EAX = EAX * EBX",
+        "imul ecx, edi, 4  ; ECX = EDI * 4",
+        "imul ebx          ; EDX:EAX = EAX * EBX"
+      ],
+      "notes": "Three-operand form allows destination different from source.",
+      "crossRefs": ["MUL", "DIV", "IDIV"],
+      "usageCount": 0,
+      "difficulty": "intermediate",
+      "keywords": ["multiplication", "signed", "three-operand"]
+    },
+    "DIV": {
+      "category": "Arithmetic", 
+      "syntax": "DIV source",
+      "description": "Unsigned divide: AL = AX / source, AH = AX % source (8-bit) or AX = DX:AX / source, DX = DX:AX % source (16-bit).",
+      "flags": "All undefined",
+      "cycles": "17-32 (varies by processor)",
+      "introduced": "Intel 8086 (1978)",
+      "encoding": "F6/6 (8-bit), F7/6 (16/32-bit)",
+      "examples": [
+        "div bl            ; AL = AX / BL, AH = AX % BL",
+        "div cx            ; AX = DX:AX / CX, DX = remainder",
+        "div ebx           ; EAX = EDX:EAX / EBX, EDX = remainder"
+      ],
+      "notes": "Can cause divide-by-zero or divide overflow exceptions.",
+      "crossRefs": ["IDIV", "MUL", "IMUL"],
+      "usageCount": 0,
+      "difficulty": "intermediate",
+      "keywords": ["division", "unsigned", "quotient", "remainder"]
+    },
+    "CMP": {
+      "category": "Comparison",
+      "syntax": "CMP operand1, operand2",
+      "description": "Compares operands by subtracting operand2 from operand1 but doesn't store result.",
+      "flags": "OF SF ZF AF PF CF",
+      "cycles": "1 (register), 2-3 (memory)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "38-3D (various forms)",
+      "examples": [
+        "cmp eax, ebx      ; Compare registers",
+        "cmp eax, 0        ; Compare with immediate",
+        "cmp [esi], 100    ; Compare memory with immediate"
+      ],
+      "notes": "Essential for conditional jumps and branches.",
+      "crossRefs": ["JE", "JNE", "JG", "JL", "TEST"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["compare", "condition", "flags"]
+    },
+    "TEST": {
+      "category": "Comparison",
+      "syntax": "TEST operand1, operand2",
+      "description": "Performs bitwise AND of operands but doesn't store result, only sets flags.",
+      "flags": "SF ZF PF (OF=0, CF=0, AF undefined)",
+      "cycles": "1 (register), 2-3 (memory)",
+      "introduced": "Intel 8086 (1978)",
+      "encoding": "84-85, A8-A9",
+      "examples": [
+        "test eax, eax     ; Test if EAX is zero",
+        "test al, 1        ; Test if bit 0 is set",
+        "test [ebx], 0xFF  ; Test memory byte"
+      ],
+      "notes": "Often used to test if register is zero or check specific bits.",
+      "crossRefs": ["CMP", "AND", "JZ", "JNZ"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["test", "bitwise", "zero", "flags"]
+    },
+    "JMP": {
+      "category": "Control Flow",
+      "syntax": "JMP target",
+      "description": "Unconditional jump to target address.",
+      "flags": "None",
+      "cycles": "1-3 (depending on target type)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "EB (short), E9 (near), EA (far), FF/4-5 (indirect)",
+      "examples": [
+        "jmp label         ; Jump to label",
+        "jmp eax           ; Jump to address in EAX",
+        "jmp [ebx]         ; Jump to address pointed by EBX"
+      ],
+      "notes": "Can be short (-128 to +127), near (±2GB), or far (different segment).",
+      "crossRefs": ["JE", "JNE", "CALL", "RET"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["jump", "unconditional", "branch"]
+    },
+    "JE": {
+      "category": "Control Flow",
+      "syntax": "JE target / JZ target",
+      "description": "Jump if equal (ZF=1). Same as JZ (jump if zero).",
+      "flags": "None (tests ZF)",
+      "cycles": "1 (not taken), 3-4 (taken)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "74 (short), 0F 84 (near)",
+      "examples": [
+        "cmp eax, ebx",
+        "je equal          ; Jump if EAX == EBX",
+        "test eax, eax",
+        "jz zero           ; Jump if EAX is zero"
+      ],
+      "notes": "Always paired with CMP, TEST, or arithmetic instructions.",
+      "crossRefs": ["JNE", "CMP", "TEST", "JZ"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["conditional", "equal", "zero", "branch"]
+    },
+    "JNE": {
+      "category": "Control Flow", 
+      "syntax": "JNE target / JNZ target",
+      "description": "Jump if not equal (ZF=0). Same as JNZ (jump if not zero).",
+      "flags": "None (tests ZF)",
+      "cycles": "1 (not taken), 3-4 (taken)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "75 (short), 0F 85 (near)",
+      "examples": [
+        "cmp eax, 0",
+        "jne not_zero      ; Jump if EAX != 0",
+        "test ebx, ebx",
+        "jnz continue      ; Jump if EBX is not zero"
+      ],
+      "notes": "Most commonly used conditional jump instruction.",
+      "crossRefs": ["JE", "CMP", "TEST", "JNZ"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["conditional", "not equal", "not zero", "branch"]
+    },
+    "CALL": {
+      "category": "Control Flow",
+      "syntax": "CALL target",
+      "description": "Pushes return address onto stack and jumps to target address.",
+      "flags": "None",
+      "cycles": "3-7 (depending on target type)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "E8 (near), 9A (far), FF/2-3 (indirect)",
+      "examples": [
+        "call function     ; Call near function",
+        "call eax          ; Call function at address in EAX",
+        "call [ebx+4]      ; Call function at memory address"
+      ],
+      "notes": "Always paired with RET instruction in called function.",
+      "crossRefs": ["RET", "PUSH", "POP", "JMP"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["call", "function", "subroutine", "stack"]
+    },
+    "RET": {
+      "category": "Control Flow",
+      "syntax": "RET [immediate]",
+      "description": "Pops return address from stack and jumps to it. Optional immediate value adjusts stack pointer.",
+      "flags": "None",
+      "cycles": "2-5 (depending on type)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "C3 (near), CB (far), C2/CA (with immediate)",
+      "examples": [
+        "ret               ; Return to caller",
+        "ret 8             ; Return and pop 8 bytes from stack"
+      ],
+      "notes": "Must match corresponding CALL instruction type (near/far).",
+      "crossRefs": ["CALL", "POP", "IRET"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["return", "function", "stack", "caller"]
+    },
+    "LEA": {
+      "category": "Data Movement",
+      "syntax": "LEA destination, source",
+      "description": "Load Effective Address: calculates address of source operand and stores in destination.",
+      "flags": "None",
+      "cycles": "1",
+      "introduced": "Intel 8086 (1978)",
+      "encoding": "8D",
+      "examples": [
+        "lea eax, [ebx+ecx*2+4]  ; EAX = EBX + ECX*2 + 4",
+        "lea esi, [edi+8]        ; ESI = EDI + 8",
+        "lea edx, [eax+eax*4]    ; EDX = EAX * 5 (fast multiply)"
+      ],
+      "notes": "Efficient for address calculations and some arithmetic without memory access.",
+      "crossRefs": ["MOV", "ADD", "MUL"],
+      "usageCount": 0,
+      "difficulty": "intermediate",
+      "keywords": ["address", "effective", "calculation", "pointer"]
+    },
+    "NOP": {
+      "category": "Control Flow",
+      "syntax": "NOP",
+      "description": "No operation. Does nothing but advance instruction pointer.",
+      "flags": "None",
+      "cycles": "1",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "90 (actually XCHG EAX, EAX)",
+      "examples": [
+        "nop               ; Do nothing",
+        "nop               ; Alignment padding",
+        "nop               ; Timing delay"
+      ],
+      "notes": "Often used for instruction alignment and debugging breakpoints.",
+      "crossRefs": ["PAUSE", "HLT"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["no operation", "padding", "alignment", "delay"]
+    },
+    "AND": {
+      "category": "Logical",
+      "syntax": "AND destination, source",
+      "description": "Bitwise AND operation between destination and source, storing result in destination.",
+      "flags": "SF ZF PF (OF=0, CF=0, AF undefined)",
+      "cycles": "1 (register), 3-4 (memory)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "20-25 (various forms)",
+      "examples": [
+        "and eax, 0xFF     ; Clear upper 24 bits",
+        "and eax, ebx      ; Bitwise AND registers",
+        "and [esi], 0xFE   ; Clear bit 0 in memory"
+      ],
+      "notes": "Commonly used for bit masking and clearing specific bits.",
+      "crossRefs": ["OR", "XOR", "TEST", "NOT"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["bitwise", "logical", "mask", "clear"]
+    },
+    "OR": {
+      "category": "Logical",
+      "syntax": "OR destination, source", 
+      "description": "Bitwise OR operation between destination and source, storing result in destination.",
+      "flags": "SF ZF PF (OF=0, CF=0, AF undefined)",
+      "cycles": "1 (register), 3-4 (memory)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "08-0D (various forms)",
+      "examples": [
+        "or eax, 1         ; Set bit 0",
+        "or eax, eax       ; Test if EAX is zero (same as TEST)",
+        "or [edi], ebx     ; Set bits in memory"
+      ],
+      "notes": "Often used for setting specific bits or combining bit patterns.",
+      "crossRefs": ["AND", "XOR", "TEST"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["bitwise", "logical", "set", "combine"]
+    },
+    "XOR": {
+      "category": "Logical",
+      "syntax": "XOR destination, source",
+      "description": "Bitwise exclusive OR operation between destination and source, storing result in destination.",
+      "flags": "SF ZF PF (OF=0, CF=0, AF undefined)",
+      "cycles": "1 (register), 3-4 (memory)",
+      "introduced": "Intel 8008 (1972)",
+      "encoding": "30-35 (various forms)",
+      "examples": [
+        "xor eax, eax      ; Clear EAX to zero",
+        "xor eax, ebx      ; Toggle bits based on EBX",
+        "xor [esi], 0x80   ; Toggle bit 7 in memory"
+      ],
+      "notes": "XOR reg, reg is the preferred way to zero a register (faster than MOV reg, 0).",
+      "crossRefs": ["AND", "OR", "NOT", "TEST"],
+      "usageCount": 0,
+      "difficulty": "beginner",
+      "keywords": ["bitwise", "exclusive", "toggle", "clear", "zero"]
+    },
+    "SHL": {
+      "category": "Logical",
+      "syntax": "SHL destination, count",
+      "description": "Shift left: shifts bits left by count positions, filling with zeros.",
+      "flags": "CF OF SF ZF PF (AF undefined)",
+      "cycles": "1-3 (depending on count)",
+      "introduced": "Intel 8086 (1978)",
+      "encoding": "D0/4, D1/4, D2/4, D3/4, C0/4, C1/4",
+      "examples": [
+        "shl eax, 1        ; Multiply EAX by 2",
+        "shl ebx, cl       ; Shift EBX left by CL count",
+        "shl [esi], 3      ; Shift memory left by 3 bits"
+      ],
+      "notes": "Each left shift effectively multiplies by 2. Limited to 31 shifts maximum.",
+      "crossRefs": ["SHR", "SAR", "ROL", "ROR"],
+      "usageCount": 0,
+      "difficulty": "intermediate",
+      "keywords": ["shift", "left", "multiply", "bits"]
+    },
+    "SHR": {
+      "category": "Logical",
+      "syntax": "SHR destination, count", 
+      "description": "Shift right: shifts bits right by count positions, filling with zeros (unsigned).",
+      "flags": "CF OF SF ZF PF (AF undefined)",
+      "cycles": "1-3 (depending on count)",
+      "introduced": "Intel 8086 (1978)",
+      "encoding": "D0/5, D1/5, D2/5, D3/5, C0/5, C1/5",
+      "examples": [
+        "shr eax, 1        ; Divide EAX by 2 (unsigned)",
+        "shr ebx, cl       ; Shift EBX right by CL count",
+        "shr [edi], 4      ; Shift memory right by 4 bits"
+      ],
+      "notes": "Each right shift effectively divides by 2 (unsigned). Use SAR for signed division.",
+      "crossRefs": ["SHL", "SAR", "ROL", "ROR"],
+      "usageCount": 0,
+      "difficulty": "intermediate",
+      "keywords": ["shift", "right", "divide", "unsigned"]
+    }
+  },
+  "patterns": {
+    "common_sequences": [
+      {
+        "name": "Function Prologue",
+        "instructions": ["PUSH", "MOV"],
+        "pattern": "push ebp\nmov ebp, esp",
+        "description": "Standard function entry sequence"
+      },
+      {
+        "name": "Function Epilogue", 
+        "instructions": ["MOV", "POP", "RET"],
+        "pattern": "mov esp, ebp\npop ebp\nret",
+        "description": "Standard function exit sequence"
+      },
+      {
+        "name": "Clear Register",
+        "instructions": ["XOR"],
+        "pattern": "xor reg, reg",
+        "description": "Fastest way to zero a register"
+      },
+      {
+        "name": "Compare and Branch",
+        "instructions": ["CMP", "JE", "JNE"],
+        "pattern": "cmp operand1, operand2\nje/jne target",
+        "description": "Basic conditional branching"
+      }
+    ],
+    "optimization_tips": [
+      {
+        "slow": "mov eax, 0",
+        "fast": "xor eax, eax",
+        "reason": "XOR is faster and shorter"
+      },
+      {
+        "slow": "add eax, eax",
+        "fast": "shl eax, 1", 
+        "reason": "Shift is clearer for multiplication by powers of 2"
+      },
+      {
+        "slow": "imul eax, 5",
+        "fast": "lea eax, [eax + eax*4]",
+        "reason": "LEA can be faster for simple multiplications"
+      }
+    ]
+  }
+}

@@ -793,8 +793,56 @@ class FASMeBookSettings {
     }
     
     openAdvancedSettings() {
-        // Create advanced settings modal
-        const modal = this.createAdvancedSettingsModal();
+        // Use DOM cache for advanced settings modal
+        let modal;
+        
+        if (window.domCache) {
+            modal = window.domCache.getOrCreateSettingsModal({
+                displayMode: this.settings.displayMode,
+                fontSize: this.settings.fontSize,
+                lineHeight: this.settings.lineHeight,
+                drawingEnabled: this.settings.drawingEnabled,
+                autoBookmark: this.settings.autoBookmark,
+                soundEnabled: this.settings.soundEnabled,
+                animations: this.settings.animations,
+                showProgress: this.settings.showProgress,
+                readingGoal: this.settings.readingGoal,
+                autoSave: this.settings.autoSave,
+                keyboardShortcuts: this.settings.keyboardShortcuts,
+                syncEnabled: this.settings.syncEnabled
+            });
+            
+            if (modal) {
+                // Setup event listeners for the cached modal
+                this.setupAdvancedModalEvents(modal);
+                
+                // Make modal draggable using shared utility
+                if (window.dragUtility && !modal.hasAttribute('data-draggable')) {
+                    window.dragUtility.makeDraggable(modal, {
+                        isToggle: false,
+                        handle: '.modal-header',
+                        storageKey: 'advancedSettingsPosition',
+                        onEscape: () => {
+                            modal.remove();
+                        }
+                    });
+                    modal.setAttribute('data-draggable', 'true');
+                }
+                
+                document.body.appendChild(modal);
+                
+                // Focus first input for accessibility
+                const firstInput = modal.querySelector('select, input, button');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+                
+                return;
+            }
+        }
+        
+        // Fallback to creating modal if cache not available
+        modal = this.createAdvancedSettingsModal();
         document.body.appendChild(modal);
     }
     
@@ -850,6 +898,156 @@ class FASMeBookSettings {
         modal.querySelector('#recalculate-progress').addEventListener('click', () => this.recalculateProgress());
         
         return modal;
+    }
+    
+    setupAdvancedModalEvents(modal) {
+        // Remove any existing listeners to prevent duplicates
+        const existingListeners = modal.querySelectorAll('[data-listener-added]');
+        existingListeners.forEach(el => {
+            el.removeAttribute('data-listener-added');
+            // Note: We can't easily remove specific listeners, so we rely on preventing duplicates
+        });
+        
+        // Close modal events
+        const closeBtn = modal.querySelector('.modal-close');
+        const cancelBtn = modal.querySelector('#cancel-settings');
+        const saveBtn = modal.querySelector('#save-settings');
+        
+        if (closeBtn && !closeBtn.hasAttribute('data-listener-added')) {
+            closeBtn.addEventListener('click', () => modal.remove());
+            closeBtn.setAttribute('data-listener-added', 'true');
+        }
+        
+        if (cancelBtn && !cancelBtn.hasAttribute('data-listener-added')) {
+            cancelBtn.addEventListener('click', () => modal.remove());
+            cancelBtn.setAttribute('data-listener-added', 'true');
+        }
+        
+        if (saveBtn && !saveBtn.hasAttribute('data-listener-added')) {
+            saveBtn.addEventListener('click', () => {
+                this.saveModalSettings(modal);
+                modal.remove();
+            });
+            saveBtn.setAttribute('data-listener-added', 'true');
+        }
+        
+        // Settings control events
+        this.setupModalFormControls(modal);
+        
+        // Reset and export buttons
+        const resetBtn = modal.querySelector('#reset-settings');
+        const exportBtn = modal.querySelector('#export-settings');
+        const importBtn = modal.querySelector('#import-settings');
+        
+        if (resetBtn && !resetBtn.hasAttribute('data-listener-added')) {
+            resetBtn.addEventListener('click', () => this.resetSettingsConfirm());
+            resetBtn.setAttribute('data-listener-added', 'true');
+        }
+        
+        if (exportBtn && !exportBtn.hasAttribute('data-listener-added')) {
+            exportBtn.addEventListener('click', () => this.exportSettings());
+            exportBtn.setAttribute('data-listener-added', 'true');
+        }
+        
+        if (importBtn && !importBtn.hasAttribute('data-listener-added')) {
+            importBtn.addEventListener('click', () => this.importSettings());
+            importBtn.setAttribute('data-listener-added', 'true');
+        }
+    }
+    
+    setupModalFormControls(modal) {
+        // Display mode control
+        const displayMode = modal.querySelector('#display-mode');
+        if (displayMode && !displayMode.hasAttribute('data-listener-added')) {
+            displayMode.addEventListener('change', (e) => {
+                this.updateSetting('displayMode', e.target.value);
+                this.applyDisplayMode(e.target.value);
+                this.announceSettingChange('Display mode', e.target.value);
+            });
+            displayMode.setAttribute('data-listener-added', 'true');
+        }
+        
+        // Font size slider
+        const fontSize = modal.querySelector('#font-size');
+        const fontSizeValue = modal.querySelector('#font-size-value');
+        if (fontSize && !fontSize.hasAttribute('data-listener-added')) {
+            fontSize.addEventListener('input', (e) => {
+                const size = parseInt(e.target.value);
+                if (fontSizeValue) fontSizeValue.textContent = `${size}px`;
+                this.updateSetting('fontSize', size);
+                this.applyFontSize(size);
+                this.announceSettingChange('Font size', `${size} pixels`);
+            });
+            fontSize.setAttribute('data-listener-added', 'true');
+        }
+        
+        // Line height slider
+        const lineHeight = modal.querySelector('#line-height');
+        const lineHeightValue = modal.querySelector('#line-height-value');
+        if (lineHeight && !lineHeight.hasAttribute('data-listener-added')) {
+            lineHeight.addEventListener('input', (e) => {
+                const height = parseFloat(e.target.value);
+                if (lineHeightValue) lineHeightValue.textContent = height.toFixed(1);
+                this.updateSetting('lineHeight', height);
+                this.applyLineHeight(height);
+                this.announceSettingChange('Line height', height.toFixed(1));
+            });
+            lineHeight.setAttribute('data-listener-added', 'true');
+        }
+        
+        // Reading goal slider
+        const readingGoal = modal.querySelector('#reading-goal');
+        const readingGoalValue = modal.querySelector('#reading-goal-value');
+        if (readingGoal && !readingGoal.hasAttribute('data-listener-added')) {
+            readingGoal.addEventListener('input', (e) => {
+                const goal = parseInt(e.target.value);
+                if (readingGoalValue) readingGoalValue.textContent = `${goal} min`;
+                this.updateSetting('readingGoal', goal);
+                this.announceSettingChange('Reading goal', `${goal} minutes`);
+            });
+            readingGoal.setAttribute('data-listener-added', 'true');
+        }
+        
+        // Checkbox controls
+        const checkboxes = [
+            { id: 'drawing-enabled', setting: 'drawingEnabled', label: 'Drawing tools' },
+            { id: 'auto-bookmark', setting: 'autoBookmark', label: 'Auto-bookmark' },
+            { id: 'sound-enabled', setting: 'soundEnabled', label: 'Sound effects' },
+            { id: 'animations', setting: 'animations', label: 'Animations' },
+            { id: 'show-progress', setting: 'showProgress', label: 'Progress display' },
+            { id: 'auto-save', setting: 'autoSave', label: 'Auto-save' },
+            { id: 'keyboard-shortcuts', setting: 'keyboardShortcuts', label: 'Keyboard shortcuts' },
+            { id: 'sync-enabled', setting: 'syncEnabled', label: 'Device sync' }
+        ];
+        
+        checkboxes.forEach(({ id, setting, label }) => {
+            const checkbox = modal.querySelector(`#${id}`);
+            if (checkbox && !checkbox.hasAttribute('data-listener-added')) {
+                checkbox.addEventListener('change', (e) => {
+                    this.updateSetting(setting, e.target.checked);
+                    this.announceSettingChange(label, e.target.checked ? 'enabled' : 'disabled');
+                });
+                checkbox.setAttribute('data-listener-added', 'true');
+            }
+        });
+    }
+    
+    announceSettingChange(settingName, value) {
+        // Announce changes to screen readers
+        if (window.dragUtility) {
+            window.dragUtility.announceToScreenReader(`${settingName} changed to ${value}`);
+        }
+    }
+    
+    saveModalSettings(modal) {
+        // This method saves all settings from the modal form
+        const formData = new FormData(modal.querySelector('form') || modal);
+        
+        // Save all changed settings
+        this.saveSettings();
+        
+        // Announce completion
+        this.announceSettingChange('Settings', 'saved successfully');
     }
     
     saveAdvancedSettings(modal) {

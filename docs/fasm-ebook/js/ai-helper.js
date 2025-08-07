@@ -61,6 +61,17 @@ class FASMeBookAI {
         localStorage.setItem('aiTogglePosition', JSON.stringify(this.togglePosition));
     }
     
+    updateTogglePosition() {
+        const aiToggle = document.getElementById('ai-toggle');
+        if (aiToggle) {
+            this.togglePosition = {
+                right: aiToggle.style.right,
+                bottom: aiToggle.style.bottom
+            };
+            this.saveTogglePosition();
+        }
+    }
+    
     initializeDraggableToggle() {
         const aiToggle = document.getElementById('ai-toggle');
         if (aiToggle) {
@@ -68,23 +79,47 @@ class FASMeBookAI {
             aiToggle.style.right = this.togglePosition.right;
             aiToggle.style.bottom = this.togglePosition.bottom;
             
-            // Add direct click handler for toggle functionality
-            if (!aiToggle.hasAttribute('data-click-handler')) {
-                aiToggle.addEventListener('click', (e) => {
-                    // Prevent event if we're dragging or just finished dragging
-                    if (this.isDraggingToggle || this.justFinishedDragging) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return;
+            // Make draggable using shared drag utility
+            if (!aiToggle.hasAttribute('data-draggable') && window.dragUtility) {
+                window.dragUtility.makeDraggable(aiToggle, {
+                    isToggle: true,
+                    storageKey: 'aiTogglePosition',
+                    onClick: (e) => {
+                        this.toggleWindow();
+                    },
+                    onDragStart: (element) => {
+                        this.isDraggingToggle = true;
+                        this.justFinishedDragging = false;
+                        // Disable pointer events on modal if open
+                        if (this.isOpen) {
+                            const aiWindow = document.getElementById('ai-window');
+                            if (aiWindow) {
+                                aiWindow.style.pointerEvents = 'none';
+                            }
+                        }
+                    },
+                    onDragEnd: (element) => {
+                        this.isDraggingToggle = false;
+                        this.justFinishedDragging = true;
+                        this.updateTogglePosition();
+                        
+                        // Re-enable pointer events
+                        const aiWindow = document.getElementById('ai-window');
+                        if (aiWindow) {
+                            aiWindow.style.pointerEvents = '';
+                        }
+                        
+                        // Clear justFinishedDragging after delay
+                        setTimeout(() => {
+                            this.justFinishedDragging = false;
+                        }, 100);
+                    },
+                    onEscape: () => {
+                        if (this.isOpen) {
+                            this.closeWindow();
+                        }
                     }
-                    this.toggleWindow();
                 });
-                aiToggle.setAttribute('data-click-handler', 'true');
-            }
-            
-            // Make draggable only once
-            if (!aiToggle.hasAttribute('data-draggable')) {
-                this.makeDraggable(aiToggle, true);
                 aiToggle.setAttribute('data-draggable', 'true');
             }
         }
@@ -231,10 +266,48 @@ class FASMeBookAI {
         `);
     }
     
-    showInstructionHelp(instruction) {
+    async showInstructionHelp(instruction) {
         const cleanInstruction = instruction.trim().toLowerCase();
         
-        // Check if we have detailed instruction information
+        // Use dynamic glossary first
+        if (window.dynamicGlossary && window.dynamicGlossary.isLoaded) {
+            const instructionInfo = window.dynamicGlossary.getInstruction(cleanInstruction);
+            if (instructionInfo) {
+                this.openWindow();
+                const relatedInstructions = window.dynamicGlossary.getRelatedInstructions(cleanInstruction);
+                const aiSyncData = window.dynamicGlossary.syncWithAI(cleanInstruction);
+                
+                this.addMessage('assistant', `
+                    **${instruction.toUpperCase()} Instruction**
+                    
+                    **Description:** ${instructionInfo.description}
+                    
+                    **Syntax:** ${instructionInfo.syntax}
+                    
+                    **Category:** ${instructionInfo.category}
+                    
+                    **Difficulty:** ${instructionInfo.difficulty}
+                    
+                    **Flags Affected:** ${instructionInfo.flags || 'None specified'}
+                    
+                    **Performance:** ${instructionInfo.cycles || 'Variable'}
+                    
+                    **Examples:**
+                    ${(instructionInfo.examples || []).map(ex => `• \`${ex}\``).join('\n')}
+                    
+                    ${instructionInfo.notes ? `**Notes:** ${instructionInfo.notes}` : ''}
+                    
+                    ${aiSyncData.usageHints.length > 0 ? `**Tips:** ${aiSyncData.usageHints.join(', ')}` : ''}
+                    
+                    ${relatedInstructions.length > 0 ? `**Related:** ${relatedInstructions.map(r => r.name).join(', ')}` : ''}
+                    
+                    Would you like me to show examples or explain optimization techniques for this instruction?
+                `);
+                return;
+            }
+        }
+        
+        // Fallback to static glossary if dynamic not available
         if (window.instructionGlossary) {
             const instructionInfo = window.instructionGlossary.getInstruction(cleanInstruction);
             if (instructionInfo) {
@@ -258,7 +331,7 @@ class FASMeBookAI {
             }
         }
         
-        // Fallback explanation
+        // Final fallback explanation
         const explanation = this.getBasicInstructionHelp(cleanInstruction);
         this.openWindow();
         this.addMessage('assistant', explanation);
@@ -588,204 +661,6 @@ Smaller instructions are better because:
         });
     }
     
-    makeDraggable(element, isToggleButton = false) {
-        let isDragging = false;
-        let dragOffset = { x: 0, y: 0 };
-        let hasMoved = false;
-        let startPosition = { x: 0, y: 0 };
-        let dragStartTime = 0;
-        
-        const onMouseDown = (e) => {
-            // Only allow dragging from header area for window, anywhere for toggle button
-            if (!isToggleButton && !e.target.closest('.ai-header, .ai-drag-handle')) return;
-            
-            // Don't drag if clicking close button or other controls
-            if (e.target.closest('.ai-close, .ai-send, input, button, select') && !isToggleButton) return;
-            
-            // Reset movement tracking
-            hasMoved = false;
-            startPosition = { x: e.clientX, y: e.clientY };
-            dragStartTime = Date.now();
-            
-            isDragging = true;
-            if (isToggleButton) {
-                this.isDraggingToggle = true;
-                this.justFinishedDragging = false;
-            } else {
-                this.isDragging = true;
-            }
-            
-            const rect = element.getBoundingClientRect();
-            dragOffset.x = e.clientX - rect.left;
-            dragOffset.y = e.clientY - rect.top;
-            
-            element.style.cursor = 'grabbing';
-            
-            // Disable pointer events on potential interfering elements more comprehensively
-            if (!isToggleButton) {
-                // Disable pointer events on all child elements except the drag handle
-                const allChildren = element.querySelectorAll('*:not(.ai-drag-handle)');
-                allChildren.forEach(el => {
-                    if (!el.closest('.ai-drag-handle')) {
-                        el.style.pointerEvents = 'none';
-                    }
-                });
-                
-                // Also disable backdrop pointer events if modal is open
-                const backdrop = document.querySelector('.modal-backdrop');
-                if (backdrop) {
-                    backdrop.style.pointerEvents = 'none';
-                }
-            } else {
-                // For toggle button, prevent any modal from opening during drag
-                if (this.isOpen) {
-                    const aiWindow = document.getElementById('ai-window');
-                    if (aiWindow) {
-                        aiWindow.style.pointerEvents = 'none';
-                    }
-                }
-            }
-            
-            e.preventDefault();
-            e.stopPropagation();
-        };
-        
-        const onMouseMove = (e) => {
-            if (!isDragging) return;
-            
-            // Check if we've moved enough to consider this a drag operation
-            const moveDistance = Math.sqrt(
-                Math.pow(e.clientX - startPosition.x, 2) + 
-                Math.pow(e.clientY - startPosition.y, 2)
-            );
-            
-            // Only start dragging if we've moved more than 3 pixels (lower threshold)
-            if (moveDistance > 3) {
-                hasMoved = true;
-                
-                const newLeft = e.clientX - dragOffset.x;
-                const newTop = e.clientY - dragOffset.y;
-                
-                // Constrain to viewport
-                const maxLeft = window.innerWidth - element.offsetWidth;
-                const maxTop = window.innerHeight - element.offsetHeight;
-                
-                const constrainedLeft = Math.max(0, Math.min(newLeft, maxLeft));
-                const constrainedTop = Math.max(0, Math.min(newTop, maxTop));
-                
-                if (isToggleButton) {
-                    // For toggle button, use right/bottom positioning
-                    const right = window.innerWidth - constrainedLeft - element.offsetWidth;
-                    const bottom = window.innerHeight - constrainedTop - element.offsetHeight;
-                    
-                    element.style.right = `${right}px`;
-                    element.style.bottom = `${bottom}px`;
-                    element.style.left = 'auto';
-                    element.style.top = 'auto';
-                    
-                    this.togglePosition = { 
-                        right: `${right}px`, 
-                        bottom: `${bottom}px` 
-                    };
-                } else {
-                    // For AI window, clear transform and use absolute positioning
-                    element.style.transform = 'none';
-                    element.style.left = `${constrainedLeft}px`;
-                    element.style.top = `${constrainedTop}px`;
-                    element.style.right = 'auto';
-                    element.style.bottom = 'auto';
-                }
-            }
-            
-            e.preventDefault();
-            e.stopPropagation();
-        };
-        
-        const onMouseUp = (e) => {
-            if (isDragging) {
-                isDragging = false;
-                
-                element.style.cursor = isToggleButton ? 'pointer' : 'default';
-                
-                // Re-enable pointer events on interfering elements
-                if (!isToggleButton) {
-                    // Re-enable all child elements
-                    const allChildren = element.querySelectorAll('*');
-                    allChildren.forEach(el => {
-                        el.style.pointerEvents = 'auto';
-                    });
-                    
-                    // Re-enable backdrop pointer events
-                    const backdrop = document.querySelector('.modal-backdrop');
-                    if (backdrop) {
-                        backdrop.style.pointerEvents = 'auto';
-                    }
-                    
-                    this.isDragging = false;
-                } else {
-                    // Re-enable modal pointer events
-                    const aiWindow = document.getElementById('ai-window');
-                    if (aiWindow) {
-                        aiWindow.style.pointerEvents = 'auto';
-                    }
-                }
-                
-                if (isToggleButton) {
-                    // Set flag to prevent immediate click after drag
-                    if (hasMoved) {
-                        this.justFinishedDragging = true;
-                        this.saveTogglePosition();
-                        
-                        // Clear the flag after a short delay
-                        setTimeout(() => {
-                            this.justFinishedDragging = false;
-                        }, 100);
-                    }
-                    
-                    this.isDraggingToggle = false;
-                }
-            }
-            
-            e.preventDefault();
-            e.stopPropagation();
-        };
-        
-        element.addEventListener('mousedown', onMouseDown);
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-        
-        // Touch events for mobile
-        element.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            onMouseDown({ 
-                clientX: touch.clientX, 
-                clientY: touch.clientY, 
-                preventDefault: () => e.preventDefault(),
-                stopPropagation: () => e.stopPropagation(),
-                target: e.target 
-            });
-        });
-        
-        document.addEventListener('touchmove', (e) => {
-            if (isDragging) {
-                const touch = e.touches[0];
-                onMouseMove({ 
-                    clientX: touch.clientX, 
-                    clientY: touch.clientY, 
-                    preventDefault: () => e.preventDefault(),
-                    stopPropagation: () => e.stopPropagation()
-                });
-            }
-        });
-        
-        document.addEventListener('touchend', (e) => {
-            onMouseUp({
-                preventDefault: () => e.preventDefault(),
-                stopPropagation: () => e.stopPropagation()
-            });
-        });
-    }
-    
     toggleExpansion() {
         const aiWindow = document.getElementById('ai-window');
         if (!aiWindow) return;
@@ -1049,9 +924,21 @@ Smaller instructions are better because:
             aiWindow.classList.add('visible');
             this.isOpen = true;
             
-            // Enable dragging for the window only once
-            if (!aiWindow.hasAttribute('data-draggable')) {
-                this.makeDraggable(aiWindow, false);
+            // Enable dragging for the window only once using shared drag utility
+            if (!aiWindow.hasAttribute('data-draggable') && window.dragUtility) {
+                window.dragUtility.makeDraggable(aiWindow, {
+                    isToggle: false,
+                    handle: '.ai-header, .ai-drag-handle',
+                    onDragStart: (element) => {
+                        this.isDragging = true;
+                    },
+                    onDragEnd: (element) => {
+                        this.isDragging = false;
+                    },
+                    onEscape: () => {
+                        this.closeWindow();
+                    }
+                });
                 aiWindow.setAttribute('data-draggable', 'true');
             }
             
