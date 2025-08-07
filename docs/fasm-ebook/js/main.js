@@ -66,6 +66,9 @@ class FASMeBook {
             // Load user data
             this.loadUserData();
             
+            // Restore reading progress from storage
+            this.restoreProgress();
+            
             console.log('FASM eBook initialized successfully');
         } catch (error) {
             console.error('Initialization error:', error);
@@ -616,7 +619,7 @@ class FASMeBook {
         const totalPages = this.chapters.reduce((sum, ch) => sum + ch.pages, 0);
         const completedPages = this.chapters.slice(0, currentIndex).reduce((sum, ch) => sum + ch.pages, 0) + this.currentPage;
         
-        const percentage = Math.round((completedPages / totalPages) * 100);
+        const percentage = completedPages > 0 ? Math.max(1, Math.round((completedPages / totalPages) * 100)) : 0;
         
         const progressFill = document.getElementById('progress-fill');
         const progressText = document.getElementById('progress-text');
@@ -627,6 +630,41 @@ class FASMeBook {
         
         if (progressText) {
             progressText.textContent = `${percentage}% Complete`;
+        }
+        
+        // Save reading progress to storage (save overall book progress)
+        if (this.currentChapter && window.fasmStorage) {
+            const progressData = {
+                percentage: percentage,
+                currentChapter: this.currentChapter.id,
+                currentPage: this.currentPage,
+                timestamp: Date.now()
+            };
+            window.fasmStorage.set('overall-book-progress', progressData);
+        }
+    }
+    
+    restoreProgress() {
+        if (!window.fasmStorage) return;
+        
+        try {
+            // Get saved overall book progress
+            const savedProgress = window.fasmStorage.get('overall-book-progress');
+            
+            if (savedProgress && savedProgress.percentage > 0) {
+                const progressFill = document.getElementById('progress-fill');
+                const progressText = document.getElementById('progress-text');
+                
+                if (progressFill) {
+                    progressFill.style.width = `${savedProgress.percentage}%`;
+                }
+                
+                if (progressText) {
+                    progressText.textContent = `${savedProgress.percentage}% Complete`;
+                }
+            }
+        } catch (error) {
+            console.warn('Error restoring progress:', error);
         }
     }
     
