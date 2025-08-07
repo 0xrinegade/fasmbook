@@ -678,26 +678,23 @@ Smaller instructions are better because:
                 left: aiWindow.style.left,
                 top: aiWindow.style.top,
                 right: aiWindow.style.right,
-                bottom: aiWindow.style.bottom
+                bottom: aiWindow.style.bottom,
+                transform: aiWindow.style.transform
             };
             
-            // Expand to fullscreen
-            aiWindow.style.width = '95vw';
-            aiWindow.style.height = '90vh';
-            aiWindow.style.left = '50%';
-            aiWindow.style.top = '50%';
-            aiWindow.style.right = 'auto';
-            aiWindow.style.bottom = 'auto';
-            aiWindow.style.transform = 'translate(-50%, -50%)';
+            // Let CSS handle the expanded state
             aiWindow.classList.add('expanded');
         } else {
             // Restore previous size and position
             if (this.savedWindowState) {
                 Object.keys(this.savedWindowState).forEach(prop => {
-                    aiWindow.style[prop] = this.savedWindowState[prop];
+                    if (this.savedWindowState[prop]) {
+                        aiWindow.style[prop] = this.savedWindowState[prop];
+                    } else {
+                        aiWindow.style[prop] = '';
+                    }
                 });
             }
-            aiWindow.style.transform = '';
             aiWindow.classList.remove('expanded');
         }
     }

@@ -761,6 +761,8 @@ input, textarea, select, pre code, .code-block {
 
 /* Enhanced AI Window Styles */
 .ai-window.expanded {
+    display: flex !important;
+    flex-direction: column !important;
     width: 95vw !important;
     height: 90vh !important;
     left: 50% !important;
