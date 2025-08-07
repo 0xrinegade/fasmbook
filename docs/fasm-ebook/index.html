@@ -65,8 +65,10 @@
             <div class="glossary-section">
                 <h3>Instruction Reference</h3>
                 <div class="glossary-search">
+                    <label for="glossary-search" class="sr-only">Search instructions</label>
                     <input type="text" id="glossary-search" placeholder="Search instructions..." 
-                           onkeyup="searchInstructions(this.value)">
+                           onkeyup="searchInstructions(this.value)" 
+                           aria-label="Search instruction reference">
                 </div>
                 <ul id="glossary-list" class="glossary-list">
                     <!-- Will be populated by JavaScript -->
@@ -114,7 +116,9 @@
     <div id="control-icons" class="control-icons">
         <!-- Settings Panel -->
         <div id="settings-panel" class="settings-panel">
-            <button id="settings-toggle" class="settings-toggle" title="Settings">
+            <button id="settings-toggle" class="settings-toggle" 
+                    title="Settings" 
+                    aria-label="Open reading settings">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="3"></circle>
                     <path d="m12 1 1.73 1v3.52a8.97 8.97 0 0 1 2.24.68l2.49-2.49L19.73 5l-2.49 2.49a8.97 8.97 0 0 1 .68 2.24H21v2.46h-3.52a8.97 8.97 0 0 1-.68 2.24l2.49 2.49L18 19.73l-2.49-2.49a8.97 8.97 0 0 1-2.24.68V21h-2.46v-3.52a8.97 8.97 0 0 1-2.24-.68L5.27 19.73 4 18.46l2.49-2.49a8.97 8.97 0 0 1-.68-2.24H2v-2.46h3.52a8.97 8.97 0 0 1 .68-2.24L3.73 5.27 5 4l2.49 2.49A8.97 8.97 0 0 1 9.73 5.5V2h2.46z"></path>
@@ -127,7 +131,7 @@
                 </div>
                 <div class="settings-body">
                     <div class="setting-group">
-                        <label>Display Mode:</label>
+                        <label for="display-mode">Display Mode:</label>
                         <select id="display-mode">
                             <option value="eink">eInk Friendly</option>
                             <option value="standard">Standard</option>
@@ -136,25 +140,29 @@
                     </div>
                     
                     <div class="setting-group">
-                        <label>Font Size:</label>
-                        <input type="range" id="font-size" min="12" max="24" value="16">
+                        <label for="font-size">Font Size:</label>
+                        <input type="range" id="font-size" min="12" max="24" value="16" aria-describedby="font-size-value">
                         <span id="font-size-value">16px</span>
                     </div>
                     
                     <div class="setting-group">
-                        <label>Line Height:</label>
-                        <input type="range" id="line-height" min="1.2" max="2.0" step="0.1" value="1.6">
+                        <label for="line-height">Line Height:</label>
+                        <input type="range" id="line-height" min="1.2" max="2.0" step="0.1" value="1.6" aria-describedby="line-height-value">
                         <span id="line-height-value">1.6</span>
                     </div>
                     
                     <div class="setting-group">
-                        <label>Drawing Mode:</label>
-                        <input type="checkbox" id="drawing-mode"> Enable Drawing
+                        <label for="drawing-mode">
+                            <input type="checkbox" id="drawing-mode"> Drawing Mode
+                        </label>
+                        <span class="setting-description">Enable drawing annotations</span>
                     </div>
                     
                     <div class="setting-group">
-                        <label>Zen Mode:</label>
-                        <input type="checkbox" id="zen-mode"> Hide Controls
+                        <label for="zen-mode">
+                            <input type="checkbox" id="zen-mode"> Zen Mode
+                        </label>
+                        <span class="setting-description">Hide UI controls for distraction-free reading</span>
                     </div>
                 </div>
             </div>

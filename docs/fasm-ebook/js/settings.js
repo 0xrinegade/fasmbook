@@ -175,7 +175,7 @@ class FASMeBookSettings {
             const themeGroup = document.createElement('div');
             themeGroup.className = 'setting-group';
             themeGroup.innerHTML = `
-                <label>Theme:</label>
+                <label for="theme-select">Theme:</label>
                 <select id="theme-select">
                     <option value="eink">eInk Friendly</option>
                     <option value="standard">Standard</option>
