@@ -1594,7 +1594,6 @@ input, textarea, select, pre code, .code-block {
     background-color: rgba(0, 0, 0, 0.1);
     z-index: 1200;
     display: none;
-    backdrop-filter: blur(2px);
     transition: opacity var(--animation-duration) ease;
 }
 
@@ -1887,7 +1886,6 @@ a:focus-visible {
     z-index: 1200;
     opacity: 0;
     transition: opacity var(--animation-duration) var(--animation-easing);
-    backdrop-filter: blur(2px);
 }
 
 .modal-backdrop.visible {
