@@ -319,6 +319,14 @@ class MarkdownParser {
     escapeRegExp(string) {
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
+
+    /**
+     * Set current chapter context for instruction tracking
+     * @param {Object} chapterInfo - Chapter information object
+     */
+    setCurrentChapter(chapterInfo) {
+        this.currentChapter = chapterInfo;
+    }
 }
 
 // Export for use in other modules

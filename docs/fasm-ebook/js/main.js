@@ -192,12 +192,12 @@ class FASMeBook {
     
     scanMarkdownForInstructions(markdown, chapter) {
         // Use robust markdown parser instead of fragile regex patterns
-        if (!this.markdownParser) {
-            this.markdownParser = new MarkdownParser();
+        if (!this.codeBlockParser) {
+            this.codeBlockParser = new MarkdownParser();
         }
         
         try {
-            const codeBlocks = this.markdownParser.parseCodeBlocks(markdown, chapter);
+            const codeBlocks = this.codeBlockParser.parseCodeBlocks(markdown, chapter);
             
             codeBlocks.forEach(block => {
                 this.scanCodeBlockForInstructions(block.rawContent, chapter, block.startLine);
@@ -205,7 +205,7 @@ class FASMeBook {
             
             // Optional: Track platform-specific code usage
             if (this.debugMode) {
-                const platformInfo = this.markdownParser.detectPlatformSpecificCode(markdown);
+                const platformInfo = this.codeBlockParser.detectPlatformSpecificCode(markdown);
                 console.log(`Platform detection for ${chapter.id}:`, platformInfo);
             }
         } catch (error) {
