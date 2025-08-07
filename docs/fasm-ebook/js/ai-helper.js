@@ -584,6 +584,9 @@ Smaller instructions are better because:
             // Only allow dragging from header area for window, anywhere for toggle button
             if (!isToggleButton && !e.target.closest('.ai-header, .ai-drag-handle')) return;
             
+            // Don't drag if clicking close button or other controls
+            if (e.target.closest('.ai-close, .ai-send, input, button, select') && !isToggleButton) return;
+            
             // Reset movement tracking
             hasMoved = false;
             startPosition = { x: e.clientX, y: e.clientY };
@@ -598,6 +601,15 @@ Smaller instructions are better because:
             dragOffset.y = e.clientY - rect.top;
             
             element.style.cursor = 'grabbing';
+            
+            // Disable pointer events on potential interfering elements
+            if (!isToggleButton) {
+                const interferingElements = element.querySelectorAll('.ai-chat, .ai-content, .ai-input');
+                interferingElements.forEach(el => {
+                    el.style.pointerEvents = 'none';
+                });
+            }
+            
             e.preventDefault();
         };
         
@@ -659,6 +671,14 @@ Smaller instructions are better because:
                 }
                 
                 element.style.cursor = isToggleButton ? 'pointer' : 'default';
+                
+                // Re-enable pointer events on interfering elements
+                if (!isToggleButton) {
+                    const interferingElements = element.querySelectorAll('.ai-chat, .ai-content, .ai-input');
+                    interferingElements.forEach(el => {
+                        el.style.pointerEvents = 'auto';
+                    });
+                }
                 
                 // If we haven't moved much, this was a click, not a drag
                 if (!hasMoved && isToggleButton) {
@@ -937,10 +957,20 @@ Smaller instructions are better because:
     }
     
     toggleWindow() {
+        // Close other modals first
+        this.closeOtherModals();
+        
         if (this.isOpen) {
             this.closeWindow();
         } else {
             this.openWindow();
+        }
+    }
+    
+    closeOtherModals() {
+        // Close settings if open
+        if (window.fasmSettings && window.fasmSettings.isOpen) {
+            window.fasmSettings.close();
         }
     }
     

@@ -62,7 +62,11 @@ class FASMeBookSettings {
         const settingsClose = document.querySelector('.settings-close');
         
         if (settingsToggle) {
-            settingsToggle.addEventListener('click', () => this.toggle());
+            settingsToggle.addEventListener('click', () => {
+                // Close other modals first
+                this.closeOtherModals();
+                this.toggle();
+            });
         }
         
         if (settingsClose) {
@@ -99,6 +103,13 @@ class FASMeBookSettings {
         
         // Advanced settings button
         this.createAdvancedSettingsButton();
+    }
+    
+    closeOtherModals() {
+        // Close AI assistant if open
+        if (window.fasmAI && window.fasmAI.isOpen) {
+            window.fasmAI.close();
+        }
     }
     
     setupDisplayModeControl() {
@@ -214,8 +225,8 @@ class FASMeBookSettings {
             // Only allow dragging from header area
             if (!e.target.closest('.settings-header')) return;
             
-            // Don't drag if clicking close button
-            if (e.target.closest('.settings-close')) return;
+            // Don't drag if clicking close button or other controls
+            if (e.target.closest('.settings-close, input, button, select')) return;
             
             // Reset movement tracking
             hasMoved = false;
@@ -235,6 +246,12 @@ class FASMeBookSettings {
             if (backdrop) {
                 backdrop.style.pointerEvents = 'none';
             }
+            
+            // Disable pointer events on potential interfering elements
+            const interferingElements = element.querySelectorAll('.settings-body, .setting-group');
+            interferingElements.forEach(el => {
+                el.style.pointerEvents = 'none';
+            });
             
             e.preventDefault();
         };
@@ -284,6 +301,12 @@ class FASMeBookSettings {
                 if (backdrop) {
                     backdrop.style.pointerEvents = 'auto';
                 }
+                
+                // Re-enable pointer events on interfering elements
+                const interferingElements = element.querySelectorAll('.settings-body, .setting-group');
+                interferingElements.forEach(el => {
+                    el.style.pointerEvents = 'auto';
+                });
             }
         };
         
