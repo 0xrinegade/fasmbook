@@ -31,10 +31,14 @@ body {
     color: var(--text-color);
     background-color: var(--bg-color);
     display: grid;
-    grid-template-columns: var(--nav-width) 1fr auto;
+    grid-template-columns: var(--nav-width) 1fr 0px;
     grid-template-areas: "nav main sidebar";
     min-height: 100vh;
     transition: all 0.3s ease;
+}
+
+body.sidebar-open {
+    grid-template-columns: var(--nav-width) 1fr 320px;
 }
 
 /* Targeted grayscale filter for emoji characters only */
@@ -394,10 +398,10 @@ input, textarea, select, pre code, .code-block {
     padding: 2rem;
     max-width: none;
     transition: padding-left 0.3s ease, padding-right 0.3s ease;
+    overflow-x: hidden;
 }
 
 .main-content.sidebar-open {
-    padding-left: 1rem;
     padding-right: 1rem;
 }
 
@@ -449,7 +453,8 @@ input, textarea, select, pre code, .code-block {
 
 /* Chapter Content */
 .chapter-content {
-    width: 75%;
+    width: min(75vw, 800px);
+    max-width: 75vw;
     margin: 0 auto;
     line-height: var(--line-height);
 }
@@ -551,7 +556,7 @@ input, textarea, select, pre code, .code-block {
     gap: 16px;
     width: 0;
     overflow: hidden;
-    transition: width 0.3s ease, opacity 0.4s ease;
+    transition: all 0.3s ease;
     z-index: 1500;
     background-color: var(--bg-color);
     border-left: 2px solid var(--border-color);
@@ -560,8 +565,23 @@ input, textarea, select, pre code, .code-block {
 }
 
 .control-icons.sidebar-open {
-    width: 320px;
+    width: 100%;
     padding: 1rem;
+}
+
+/* When sidebar is closed, position buttons as floating */
+.control-icons:not(.sidebar-open) .settings-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1500;
+}
+
+.control-icons:not(.sidebar-open) .ai-toggle {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 1500;
 }
 
 .control-icons.zen-mode {
@@ -579,11 +599,8 @@ input, textarea, select, pre code, .code-block {
 }
 
 .ai-toggle {
-    position: fixed;
     width: 48px;
     height: 48px;
-    right: 1rem;
-    bottom: 7rem;
     border-radius: 12px;
     border: 2px solid #333;
     background-color: var(--bg-color);
@@ -849,35 +866,6 @@ input, textarea, select, pre code, .code-block {
 .virtual-visible-container {
     position: relative;
     width: 100%;
-}
-
-/* AI Toggle Button Draggable */
-.ai-toggle {
-    position: fixed;
-    width: 48px;
-    height: 48px;
-    background-color: var(--bg-color);
-    border: 1px solid #333;
-    border-radius: 50%;
-    cursor: pointer;
-    z-index: 1500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-color);
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.ai-toggle:hover {
-    background-color: var(--highlight-color);
-    border-color: var(--accent-color);
-    transform: scale(1.05);
-}
-
-.ai-toggle svg {
-    width: 24px;
-    height: 24px;
 }
 
 /* Improved chat container boundaries */

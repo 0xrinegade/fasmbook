@@ -926,6 +926,7 @@ Smaller instructions are better because:
             this.closeOtherModals();
             
             // Show sidebar and AI window
+            document.body.classList.add('sidebar-open');
             controlIcons.classList.add('sidebar-open');
             aiWindow.classList.add('visible');
             
@@ -1026,6 +1027,7 @@ Smaller instructions are better because:
             
             if (!isSettingsOpen) {
                 // No other panels open, close sidebar completely
+                document.body.classList.remove('sidebar-open');
                 controlIcons.classList.remove('sidebar-open');
                 if (mainContent) {
                     mainContent.classList.remove('sidebar-open');

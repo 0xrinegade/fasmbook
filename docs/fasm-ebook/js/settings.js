@@ -539,6 +539,7 @@ class FASMeBookSettings {
             this.closeOtherModals();
             
             // Show sidebar and settings content
+            document.body.classList.add('sidebar-open');
             controlIcons.classList.add('sidebar-open');
             settingsContent.classList.add('visible');
             
@@ -572,6 +573,7 @@ class FASMeBookSettings {
             
             if (!isAIOpen) {
                 // No other panels open, close sidebar completely
+                document.body.classList.remove('sidebar-open');
                 controlIcons.classList.remove('sidebar-open');
                 if (mainContent) {
                     mainContent.classList.remove('sidebar-open');
