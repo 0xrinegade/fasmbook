@@ -11,6 +11,7 @@ class FASMeBookAI {
         // Dragging functionality
         this.isDragging = false;
         this.isDraggingToggle = false;
+        this.justFinishedDragging = false;
         this.dragOffset = { x: 0, y: 0 };
         this.togglePosition = this.loadTogglePosition();
         
@@ -38,7 +39,20 @@ class FASMeBookAI {
     loadTogglePosition() {
         const saved = localStorage.getItem('aiTogglePosition');
         if (saved) {
-            return JSON.parse(saved);
+            try {
+                const position = JSON.parse(saved);
+                // Validate the position values to prevent corruption
+                if (position && typeof position.right === 'string' && typeof position.bottom === 'string') {
+                    // Check if values are reasonable (not negative huge numbers or invalid)
+                    const rightNum = parseInt(position.right);
+                    const bottomNum = parseInt(position.bottom);
+                    if (!isNaN(rightNum) && !isNaN(bottomNum) && rightNum >= 0 && bottomNum >= 0 && rightNum < window.innerWidth && bottomNum < window.innerHeight) {
+                        return position;
+                    }
+                }
+            } catch (e) {
+                console.warn('Invalid stored AI toggle position, using default');
+            }
         }
         return { right: '1rem', bottom: '7rem' }; // Default position
     }
@@ -57,8 +71,8 @@ class FASMeBookAI {
             // Add direct click handler for toggle functionality
             if (!aiToggle.hasAttribute('data-click-handler')) {
                 aiToggle.addEventListener('click', (e) => {
-                    // Prevent event if we're dragging
-                    if (this.isDraggingToggle) {
+                    // Prevent event if we're dragging or just finished dragging
+                    if (this.isDraggingToggle || this.justFinishedDragging) {
                         e.preventDefault();
                         e.stopPropagation();
                         return;
@@ -579,6 +593,7 @@ Smaller instructions are better because:
         let dragOffset = { x: 0, y: 0 };
         let hasMoved = false;
         let startPosition = { x: 0, y: 0 };
+        let dragStartTime = 0;
         
         const onMouseDown = (e) => {
             // Only allow dragging from header area for window, anywhere for toggle button
@@ -590,10 +605,14 @@ Smaller instructions are better because:
             // Reset movement tracking
             hasMoved = false;
             startPosition = { x: e.clientX, y: e.clientY };
+            dragStartTime = Date.now();
             
             isDragging = true;
             if (isToggleButton) {
                 this.isDraggingToggle = true;
+                this.justFinishedDragging = false;
+            } else {
+                this.isDragging = true;
             }
             
             const rect = element.getBoundingClientRect();
@@ -602,15 +621,33 @@ Smaller instructions are better because:
             
             element.style.cursor = 'grabbing';
             
-            // Disable pointer events on potential interfering elements
+            // Disable pointer events on potential interfering elements more comprehensively
             if (!isToggleButton) {
-                const interferingElements = element.querySelectorAll('.ai-chat, .ai-content, .ai-input');
-                interferingElements.forEach(el => {
-                    el.style.pointerEvents = 'none';
+                // Disable pointer events on all child elements except the drag handle
+                const allChildren = element.querySelectorAll('*:not(.ai-drag-handle)');
+                allChildren.forEach(el => {
+                    if (!el.closest('.ai-drag-handle')) {
+                        el.style.pointerEvents = 'none';
+                    }
                 });
+                
+                // Also disable backdrop pointer events if modal is open
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.style.pointerEvents = 'none';
+                }
+            } else {
+                // For toggle button, prevent any modal from opening during drag
+                if (this.isOpen) {
+                    const aiWindow = document.getElementById('ai-window');
+                    if (aiWindow) {
+                        aiWindow.style.pointerEvents = 'none';
+                    }
+                }
             }
             
             e.preventDefault();
+            e.stopPropagation();
         };
         
         const onMouseMove = (e) => {
@@ -622,8 +659,8 @@ Smaller instructions are better because:
                 Math.pow(e.clientY - startPosition.y, 2)
             );
             
-            // Only start dragging if we've moved more than 5 pixels
-            if (moveDistance > 5) {
+            // Only start dragging if we've moved more than 3 pixels (lower threshold)
+            if (moveDistance > 3) {
                 hasMoved = true;
                 
                 const newLeft = e.clientX - dragOffset.x;
@@ -661,35 +698,56 @@ Smaller instructions are better because:
             }
             
             e.preventDefault();
+            e.stopPropagation();
         };
         
         const onMouseUp = (e) => {
             if (isDragging) {
                 isDragging = false;
-                if (isToggleButton) {
-                    this.isDraggingToggle = false;
-                }
                 
                 element.style.cursor = isToggleButton ? 'pointer' : 'default';
                 
                 // Re-enable pointer events on interfering elements
                 if (!isToggleButton) {
-                    const interferingElements = element.querySelectorAll('.ai-chat, .ai-content, .ai-input');
-                    interferingElements.forEach(el => {
+                    // Re-enable all child elements
+                    const allChildren = element.querySelectorAll('*');
+                    allChildren.forEach(el => {
                         el.style.pointerEvents = 'auto';
                     });
+                    
+                    // Re-enable backdrop pointer events
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.style.pointerEvents = 'auto';
+                    }
+                    
+                    this.isDragging = false;
+                } else {
+                    // Re-enable modal pointer events
+                    const aiWindow = document.getElementById('ai-window');
+                    if (aiWindow) {
+                        aiWindow.style.pointerEvents = 'auto';
+                    }
                 }
                 
-                // If we haven't moved much, this was a click, not a drag
-                if (!hasMoved && isToggleButton) {
-                    // For toggle button, click is handled by separate click event listener
-                    // Don't trigger toggle here to avoid double-triggering
-                }
-                
-                if (isToggleButton && hasMoved) {
-                    this.saveTogglePosition();
+                if (isToggleButton) {
+                    // Set flag to prevent immediate click after drag
+                    if (hasMoved) {
+                        this.justFinishedDragging = true;
+                        this.saveTogglePosition();
+                        
+                        // Clear the flag after a short delay
+                        setTimeout(() => {
+                            this.justFinishedDragging = false;
+                        }, 100);
+                    }
+                    
+                    this.isDraggingToggle = false;
                 }
             }
+            
+            e.preventDefault();
+            e.stopPropagation();
         };
         
         element.addEventListener('mousedown', onMouseDown);
@@ -703,6 +761,7 @@ Smaller instructions are better because:
                 clientX: touch.clientX, 
                 clientY: touch.clientY, 
                 preventDefault: () => e.preventDefault(),
+                stopPropagation: () => e.stopPropagation(),
                 target: e.target 
             });
         });
@@ -713,13 +772,17 @@ Smaller instructions are better because:
                 onMouseMove({ 
                     clientX: touch.clientX, 
                     clientY: touch.clientY, 
-                    preventDefault: () => e.preventDefault() 
+                    preventDefault: () => e.preventDefault(),
+                    stopPropagation: () => e.stopPropagation()
                 });
             }
         });
         
         document.addEventListener('touchend', (e) => {
-            onMouseUp(e);
+            onMouseUp({
+                preventDefault: () => e.preventDefault(),
+                stopPropagation: () => e.stopPropagation()
+            });
         });
     }
     
@@ -972,6 +1035,10 @@ Smaller instructions are better because:
         if (window.fasmSettings && window.fasmSettings.isOpen) {
             window.fasmSettings.close();
         }
+    }
+    
+    close() {
+        this.closeWindow();
     }
     
     openWindow() {
