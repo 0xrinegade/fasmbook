@@ -19,6 +19,7 @@ class FASMeBookSettings {
         
         this.settings = {};
         this.isOpen = false;
+        this.isDragging = false; // Track dragging state for backdrop management
         
         // PWA install prompt
         this.deferredPrompt = null;
@@ -221,12 +222,20 @@ class FASMeBookSettings {
             startPosition = { x: e.clientX, y: e.clientY };
             
             isDragging = true;
+            this.isDragging = true; // Set on instance for backdrop detection
             
             const rect = element.getBoundingClientRect();
             dragOffset.x = e.clientX - rect.left;
             dragOffset.y = e.clientY - rect.top;
             
             header.style.cursor = 'grabbing';
+            
+            // Disable pointer events on backdrop while dragging
+            const backdrop = document.querySelector('.settings-backdrop');
+            if (backdrop) {
+                backdrop.style.pointerEvents = 'none';
+            }
+            
             e.preventDefault();
         };
         
@@ -267,7 +276,14 @@ class FASMeBookSettings {
         const onMouseUp = (e) => {
             if (isDragging) {
                 isDragging = false;
+                this.isDragging = false; // Clear instance flag
                 header.style.cursor = 'move';
+                
+                // Re-enable backdrop pointer events after dragging
+                const backdrop = document.querySelector('.settings-backdrop');
+                if (backdrop) {
+                    backdrop.style.pointerEvents = 'auto';
+                }
             }
         };
         
@@ -554,13 +570,25 @@ class FASMeBookSettings {
             backdrop = document.createElement('div');
             backdrop.className = 'modal-backdrop settings-backdrop';
             backdrop.style.zIndex = '1590'; // Below settings panel
+            backdrop.style.pointerEvents = 'none'; // Don't block dragging
             document.body.appendChild(backdrop);
             
-            // Allow clicking backdrop to close
+            // Allow clicking backdrop to close, but enable pointer events only for clicks
             backdrop.addEventListener('click', (e) => {
                 if (e.target === backdrop) {
                     this.close();
                 }
+            });
+            
+            // Enable pointer events only when not dragging
+            backdrop.addEventListener('mouseenter', () => {
+                if (!this.isDragging) {
+                    backdrop.style.pointerEvents = 'auto';
+                }
+            });
+            
+            backdrop.addEventListener('mouseleave', () => {
+                backdrop.style.pointerEvents = 'none';
             });
         }
         
