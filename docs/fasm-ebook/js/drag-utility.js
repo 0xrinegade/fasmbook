@@ -252,26 +252,33 @@ class DragUtility {
         let newX = point.x - dragData.offset.x;
         let newY = point.y - dragData.offset.y;
 
+        // Get current element dimensions for constraint calculations
+        const rect = element.getBoundingClientRect();
+        const elementWidth = rect.width;
+        const elementHeight = rect.height;
+
         // Constrain to viewport if enabled
         if (this.constrainToViewport) {
-            const rect = element.getBoundingClientRect();
-            newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
-            newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
+            newX = Math.max(0, Math.min(newX, window.innerWidth - elementWidth));
+            newY = Math.max(0, Math.min(newY, window.innerHeight - elementHeight));
         }
 
         // For toggle buttons, use right/bottom positioning
         if (dragData.options.isToggle) {
-            const rightPos = window.innerWidth - newX - element.offsetWidth;
-            const bottomPos = window.innerHeight - newY - element.offsetHeight;
+            const rightPos = Math.max(0, window.innerWidth - newX - elementWidth);
+            const bottomPos = Math.max(0, window.innerHeight - newY - elementHeight);
             
             element.style.right = `${rightPos}px`;
             element.style.bottom = `${bottomPos}px`;
             element.style.left = 'auto';
             element.style.top = 'auto';
         } else {
-            // For modals, use left/top positioning
-            element.style.left = `${newX}px`;
-            element.style.top = `${newY}px`;
+            // For modals, use left/top positioning with bounds checking
+            const constrainedX = Math.max(0, Math.min(newX, window.innerWidth - elementWidth));
+            const constrainedY = Math.max(0, Math.min(newY, window.innerHeight - elementHeight));
+            
+            element.style.left = `${constrainedX}px`;
+            element.style.top = `${constrainedY}px`;
             element.style.right = 'auto';
             element.style.bottom = 'auto';
         }

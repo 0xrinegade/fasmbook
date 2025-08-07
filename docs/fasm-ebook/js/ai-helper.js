@@ -27,13 +27,20 @@ class FASMeBookAI {
     }
     
     init() {
+        // Ensure AI window starts hidden
+        const aiWindow = document.getElementById('ai-window');
+        if (aiWindow) {
+            aiWindow.classList.remove('visible');
+            this.isOpen = false;
+        }
+        
         this.setupEventListeners();
         this.loadConversationHistory();
         this.detectCurrentChapter();
         this.initializeContextualHelp();
         this.initializeDraggableToggle();
         this.initializeVirtualScrolling();
-        this.setupChatBoundaries();
+        // Note: setupChatBoundaries is now called only when window opens
     }
     
     loadTogglePosition() {
@@ -156,12 +163,8 @@ class FASMeBookAI {
             aiContent.style.overflow = 'hidden';
         }
         
-        // Ensure AI window has proper flex layout
-        const aiWindow = document.getElementById('ai-window');
-        if (aiWindow) {
-            aiWindow.style.display = 'flex';
-            aiWindow.style.flexDirection = 'column';
-        }
+        // Don't modify AI window display - this is controlled by CSS classes
+        // The .ai-window has display:none by default and display:flex when .visible is added
     }
     
     detectCurrentChapter() {
@@ -948,6 +951,12 @@ Smaller instructions are better because:
                 aiWindow.setAttribute('data-enhanced', 'true');
             }
             
+            // Restore conversation history to UI when first opened
+            if (!aiWindow.hasAttribute('data-history-loaded')) {
+                this.restoreConversationHistory();
+                aiWindow.setAttribute('data-history-loaded', 'true');
+            }
+            
             // Focus on input
             const aiInput = document.getElementById('ai-input-field');
             if (aiInput) {
@@ -1351,12 +1360,36 @@ Smaller instructions are better because:
         if (window.fasmStorage) {
             this.conversationHistory = window.fasmStorage.get('ai-conversation', []);
             
-            // Restore conversation in UI
-            this.conversationHistory.forEach(msg => {
-                if (msg.sender !== 'assistant' || msg.content !== 'Hello! I\'m your FASM programming assistant...') {
-                    this.addMessage(msg.sender, msg.content);
-                }
-            });
+            // Note: Don't restore conversation in UI during initial load
+            // Messages will be displayed when the AI window is opened
+        }
+    }
+    
+    restoreConversationHistory() {
+        // Restore conversation in UI when window opens
+        if (this.conversationHistory.length > 0) {
+            const aiChat = document.getElementById('ai-chat');
+            if (aiChat) {
+                // Clear any existing content first
+                aiChat.innerHTML = '';
+                
+                // Add each message to the UI
+                this.conversationHistory.forEach(msg => {
+                    if (msg.sender !== 'assistant' || msg.content !== 'Hello! I\'m your FASM programming assistant...') {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = `ai-message ${msg.sender}`;
+                        
+                        const senderName = msg.sender === 'user' ? 'You' : 'Assistant';
+                        const messageContent = this.formatMessageContent(msg.content);
+                        
+                        messageDiv.innerHTML = `<strong>${senderName}:</strong> ${messageContent}`;
+                        aiChat.appendChild(messageDiv);
+                    }
+                });
+                
+                // Scroll to bottom
+                aiChat.scrollTop = aiChat.scrollHeight;
+            }
         }
     }
     

@@ -31,8 +31,8 @@ test.describe('FASM eBook - AI Assistant', () => {
     
     // Should have proper header and content
     await expect(aiWindow.locator('.ai-header')).toBeVisible();
-    await expect(aiWindow.locator('#ai-messages')).toBeVisible();
-    await expect(aiWindow.locator('#ai-input')).toBeVisible();
+    await expect(aiWindow.locator('#ai-chat')).toBeVisible();
+    await expect(aiWindow.locator('#ai-input-field')).toBeVisible();
     
     // Click to close
     await aiToggle.click();
@@ -147,8 +147,8 @@ test.describe('FASM eBook - AI Assistant', () => {
       // Should open some settings interface
     }
     
-    // Check for navigation button
-    const navBtn = aiWindow.locator('.ai-nav-btn, [data-action="navigation"]');
+    // Check for navigation button - use more specific selector to avoid strict mode violation
+    const navBtn = aiWindow.locator('button[title="Toggle Navigation"]');
     if (await navBtn.count() > 0) {
       await navBtn.click();
       await page.waitForTimeout(500);
@@ -193,7 +193,7 @@ test.describe('FASM eBook - AI Assistant', () => {
     await page.waitForTimeout(500);
     
     // Check for input field and send button
-    const input = aiWindow.locator('#ai-input, input[type="text"], textarea');
+    const input = aiWindow.locator('#ai-input-field, input[type="text"], textarea');
     const sendBtn = aiWindow.locator('.ai-send-btn, [data-action="send"], button:has-text("Send")');
     
     if (await input.count() > 0) {
@@ -205,7 +205,7 @@ test.describe('FASM eBook - AI Assistant', () => {
         await page.waitForTimeout(500);
         
         // Check that message appears in chat
-        const messages = aiWindow.locator('#ai-messages, .ai-messages, .chat-messages');
+        const messages = aiWindow.locator('#ai-chat, .ai-messages, .chat-messages');
         if (await messages.count() > 0) {
           await expect(messages).toContainText('Test message');
         }
