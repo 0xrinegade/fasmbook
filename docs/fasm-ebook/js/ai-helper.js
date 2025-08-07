@@ -918,31 +918,25 @@ Smaller instructions are better because:
     
     openWindow() {
         const aiWindow = document.getElementById('ai-window');
-        if (aiWindow) {
-            // Add viewport boundary detection
-            this.adjustWindowPosition(aiWindow);
-            aiWindow.classList.add('visible');
-            this.isOpen = true;
+        const controlIcons = document.querySelector('.control-icons');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (aiWindow && controlIcons) {
+            // Close other panels first
+            this.closeOtherModals();
             
-            // Enable dragging for the window only once using shared drag utility
-            if (!aiWindow.hasAttribute('data-draggable') && window.dragUtility) {
-                window.dragUtility.makeDraggable(aiWindow, {
-                    isToggle: false,
-                    handle: '.ai-header, .ai-drag-handle',
-                    onDragStart: (element) => {
-                        this.isDragging = true;
-                    },
-                    onDragEnd: (element) => {
-                        this.isDragging = false;
-                    },
-                    onEscape: () => {
-                        this.closeWindow();
-                    }
-                });
-                aiWindow.setAttribute('data-draggable', 'true');
+            // Show sidebar and AI window
+            controlIcons.classList.add('sidebar-open');
+            aiWindow.classList.add('visible');
+            
+            // Adjust main content padding
+            if (mainContent) {
+                mainContent.classList.add('sidebar-open');
             }
             
-            // Setup enhanced header only once
+            this.isOpen = true;
+            
+            // Setup enhanced header only once (removing drag functionality)
             if (!aiWindow.hasAttribute('data-enhanced')) {
                 this.setupEnhancedHeader();
                 aiWindow.setAttribute('data-enhanced', 'true');
@@ -1019,14 +1013,32 @@ Smaller instructions are better because:
     
     closeWindow() {
         const aiWindow = document.getElementById('ai-window');
-        if (aiWindow) {
-            aiWindow.classList.add('closing');
+        const controlIcons = document.querySelector('.control-icons');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (aiWindow && controlIcons) {
+            // Hide AI window
+            aiWindow.classList.remove('visible');
             
-            // Wait for animation to complete before hiding
-            setTimeout(() => {
-                aiWindow.classList.remove('visible', 'closing');
-                this.isOpen = false;
-            }, 300); // Match animation duration
+            // Check if any other panels are open
+            const settingsContent = document.querySelector('.settings-content');
+            const isSettingsOpen = settingsContent && settingsContent.classList.contains('visible');
+            
+            if (!isSettingsOpen) {
+                // No other panels open, close sidebar completely
+                controlIcons.classList.remove('sidebar-open');
+                if (mainContent) {
+                    mainContent.classList.remove('sidebar-open');
+                }
+            }
+            
+            this.isOpen = false;
+            
+            // Return focus to toggle button
+            const aiToggle = document.getElementById('ai-toggle');
+            if (aiToggle) {
+                aiToggle.focus();
+            }
         }
     }
     

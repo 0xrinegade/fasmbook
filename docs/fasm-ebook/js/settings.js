@@ -87,13 +87,7 @@ class FASMeBookSettings {
             }
         });
         
-        // Make settings content draggable
-        if (settingsContent && !settingsContent.hasAttribute('data-draggable')) {
-            this.makeDraggable(settingsContent);
-            settingsContent.setAttribute('data-draggable', 'true');
-        }
-        
-        // Setting controls
+        // Setting controls (no longer making content draggable - using sidebar now)
         this.setupDisplayModeControl();
         this.setupFontSizeControl();
         this.setupLineHeightControl();
@@ -537,53 +531,60 @@ class FASMeBookSettings {
     
     open() {
         const settingsContent = document.querySelector('.settings-content');
-        if (settingsContent) {
-            // Add viewport boundary detection
-            this.adjustPanelPosition(settingsContent);
+        const controlIcons = document.querySelector('.control-icons');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (settingsContent && controlIcons) {
+            // Close other panels first
+            this.closeOtherModals();
+            
+            // Show sidebar and settings content
+            controlIcons.classList.add('sidebar-open');
             settingsContent.classList.add('visible');
+            
+            // Adjust main content padding
+            if (mainContent) {
+                mainContent.classList.add('sidebar-open');
+            }
+            
             this.isOpen = true;
             
-            // Add backdrop
-            this.showBackdrop();
-        }
-    }
-    
-    adjustPanelPosition(panel) {
-        // Reset position classes
-        panel.classList.remove('adjust-left', 'adjust-down');
-        
-        // Get viewport dimensions
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        
-        // Get panel dimensions (use computed or fallback values)
-        const panelWidth = 320; // min(320px, calc(100vw - 2rem))
-        const panelHeight = 400; // estimated height
-        
-        // Check if panel would go outside right edge (considering right: 1rem positioning)
-        const availableWidth = viewportWidth - 32; // Account for margins
-        if (panelWidth > availableWidth * 0.8) {
-            panel.classList.add('adjust-left');
-        }
-        
-        // Check if panel would go outside bottom edge (considering top: 5rem positioning)
-        const availableHeight = viewportHeight - 160; // Account for top position and margins
-        if (panelHeight > availableHeight) {
-            panel.classList.add('adjust-down');
+            // Focus management for accessibility
+            const firstFocusable = settingsContent.querySelector('select, input, button');
+            if (firstFocusable) {
+                firstFocusable.focus();
+            }
         }
     }
     
     close() {
         const settingsContent = document.querySelector('.settings-content');
-        if (settingsContent) {
-            settingsContent.classList.add('closing');
+        const controlIcons = document.querySelector('.control-icons');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (settingsContent && controlIcons) {
+            // Hide settings content
+            settingsContent.classList.remove('visible');
             
-            // Wait for animation to complete before hiding
-            setTimeout(() => {
-                settingsContent.classList.remove('visible', 'closing');
-                this.isOpen = false;
-                this.hideBackdrop();
-            }, 300); // Match animation duration
+            // Check if any other panels are open
+            const aiWindow = document.querySelector('.ai-window');
+            const isAIOpen = aiWindow && aiWindow.classList.contains('visible');
+            
+            if (!isAIOpen) {
+                // No other panels open, close sidebar completely
+                controlIcons.classList.remove('sidebar-open');
+                if (mainContent) {
+                    mainContent.classList.remove('sidebar-open');
+                }
+            }
+            
+            this.isOpen = false;
+            
+            // Return focus to toggle button
+            const settingsToggle = document.getElementById('settings-toggle');
+            if (settingsToggle) {
+                settingsToggle.focus();
+            }
         }
     }
     
