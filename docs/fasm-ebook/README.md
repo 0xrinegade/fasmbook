@@ -4,7 +4,7 @@ A comprehensive, interactive eBook for learning FASM (Flat Assembler) programmin
 
 ## Features
 
-### 📖 **Professional eBook Experience**
+### ▤ **Professional eBook Experience**
 - Clean, paper-like interface optimized for eInk devices (reMarkable, Kindle, etc.)
 - Responsive design that works on all screen sizes
 - Customizable font size, line height, and display modes
@@ -26,7 +26,7 @@ A comprehensive, interactive eBook for learning FASM (Flat Assembler) programmin
 - Floating assistant window that doesn't interfere with reading
 - Conversation history and learning progression
 
-### 🔍 **Advanced Navigation**
+### ◎ **Advanced Navigation**
 - Keyboard shortcuts for efficient navigation
 - Touch gestures (swipe to turn pages)
 - Quick search functionality
@@ -218,19 +218,19 @@ The FASM eBook includes comprehensive technical debt improvements for enhanced r
 - **Robust Markdown Parsing**: AST-based parsing replacing fragile regex patterns
 - **Cross-Platform Compatibility**: Support for Linux, macOS, and Windows development
 
-### 🔧 **Development Tools**
+### ⚙ **Development Tools**
 - **Enhanced Test Runner**: Comprehensive E2E testing with 80+ test cases
 - **Smart Port Cleanup**: Cross-platform port management with multiple tool support
 - **Artifact Optimization**: Selective uploads with compression and size limits
 - **Input Validation**: Comprehensive validation for all user inputs and configurations
 
-### 📊 **Quality Assurance**
+### ▦ **Quality Assurance**
 - **Performance Monitoring**: Core Web Vitals tracking and optimization
 - **Accessibility Testing**: WCAG 2.1 AA compliance validation
 - **Cross-Browser Testing**: Chrome, Firefox, Safari with mobile variants
 - **Visual Regression Testing**: UI consistency validation across devices
 
-### 📚 **Documentation**
+### ▣ **Documentation**
 - **Technical Documentation**: Comprehensive improvement guides
 - **Developer Reference**: Quick reference for common tasks
 - **Configuration Guide**: Complete configuration system documentation
@@ -341,4 +341,4 @@ Contributions welcome! Areas for improvement:
 
 ---
 
-*Happy learning with FASM! 🚀*
+*Happy learning with FASM! ◦*

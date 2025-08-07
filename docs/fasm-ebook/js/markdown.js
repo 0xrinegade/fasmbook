@@ -104,8 +104,8 @@ class FASMMarkdownParser {
                 <div class="code-header">
                     <span class="code-language">${lang.toUpperCase()}</span>
                     <div class="code-actions">
-                        <button class="code-copy" onclick="copyCodeToClipboard(this)" title="Copy to clipboard">📋 Copy</button>
-                        <button class="code-download" onclick="downloadCodeSnippet(this)" title="Download as file">💾 Download</button>
+                        <button class="code-copy" onclick="copyCodeToClipboard(this)" title="Copy to clipboard">⧉ Copy</button>
+                        <button class="code-download" onclick="downloadCodeSnippet(this)" title="Download as file">⧄ Download</button>
                     </div>
                 </div>
                 <pre><code class="language-${lang}">${highlightedCode}</code></pre>
@@ -548,12 +548,12 @@ class FASMMarkdownParser {
         html = html.replace(/(<div class="exercise-box">[\s\S]*?)(?=<div|<h[1-6]|$)/g, '$1</div>');
         
         // Example boxes
-        html = html.replace(/^💡 \*\*(Example[^*]*)\*\*:/gm, 
+        html = html.replace(/^◯ \*\*(Example[^*]*)\*\*:/gm, 
             '<div class="example-box"><strong>$1:</strong>');
         html = html.replace(/(<div class="example-box">[\s\S]*?)(?=<div|<h[1-6]|$)/g, '$1</div>');
         
         // Tip boxes
-        html = html.replace(/^💡 \*\*(Tip[^*]*)\*\*:/gm, 
+        html = html.replace(/^◯ \*\*(Tip[^*]*)\*\*:/gm, 
             '<div class="tip-box"><strong>$1:</strong>');
         html = html.replace(/(<div class="tip-box">[\s\S]*?)(?=<div|<h[1-6]|$)/g, '$1</div>');
         
@@ -664,7 +664,7 @@ function copyCodeToClipboard(button) {
             
             button.textContent = '✓';
             setTimeout(() => {
-                button.textContent = '📋';
+                button.textContent = '⧉';
             }, 2000);
         });
     }

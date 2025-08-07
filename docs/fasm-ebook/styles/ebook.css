@@ -11,7 +11,7 @@
 }
 
 .learning-objectives::before {
-    content: "🎯";
+    content: "◎";
     position: absolute;
     top: -12px;
     left: 20px;
@@ -57,7 +57,7 @@
 }
 
 .did-you-know::before {
-    content: "💡 Did You Know?";
+    content: "◯ Did You Know?";
     position: absolute;
     top: -12px;
     left: 20px;
@@ -163,7 +163,7 @@
 }
 
 .code-explanation .cons::before {
-    content: "🔴 ";
+    content: "● ";
 }
 
 /* Exercise sections */
@@ -828,7 +828,7 @@
 }
 
 .example-box::before {
-    content: "💡 Example";
+    content: "◯ Example";
     font-weight: bold;
     display: block;
     margin-bottom: 0.7rem;
@@ -836,7 +836,7 @@
 }
 
 .tip-box::before {
-    content: "💡 Tip";
+    content: "◯ Tip";
     font-weight: bold;
     display: block;
     margin-bottom: 0.7rem;

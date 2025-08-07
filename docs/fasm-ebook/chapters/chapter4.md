@@ -34,7 +34,7 @@ not_greater:
     add esi, 4                     ; Move to next element
     loop max_loop                  ; Continue until ECX = 0
 
-## 📚 Comprehensive Instruction Reference: LOOP
+## ▣ Comprehensive Instruction Reference: LOOP
 
 > **🚩 Iteration Control**: LOOP provides compact loop control by combining decrement and conditional jump in a single instruction.
 
@@ -253,7 +253,7 @@ outer_loop:
 mov ecx, array_length
 shr ecx, 2              ; Divide by 4 (process 4 elements per iteration)
 
-## 📚 Comprehensive Instruction Reference: SHR
+## ▣ Comprehensive Instruction Reference: SHR
 
 > **🚩 Bit Shifting Master**: SHR (Shift Right) performs logical right shifts, effectively dividing by powers of 2 and manipulating bit patterns.
 

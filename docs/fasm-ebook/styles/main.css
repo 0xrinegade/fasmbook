@@ -35,6 +35,21 @@ body {
     transition: all 0.3s ease;
 }
 
+/* Targeted grayscale filter for emoji characters only */
+*::before, *::after {
+    filter: grayscale(100%);
+}
+
+/* Ensure all emoji characters in content are rendered in grayscale */
+.chapter-content, .ai-chat, .drawing-tools, button {
+    filter: grayscale(100%);
+}
+
+/* Override for form elements and non-emoji content that need normal rendering */
+input, textarea, select, pre code, .code-block {
+    filter: none;
+}
+
 /* Loading Animation */
 @keyframes loadingBar {
     0% { width: 0%; }

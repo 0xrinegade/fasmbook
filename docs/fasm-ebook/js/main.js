@@ -485,13 +485,13 @@ class FASMeBook {
             // Add copy button
             const copyButton = document.createElement('button');
             copyButton.className = 'code-copy';
-            copyButton.innerHTML = '📋 Copy';
+            copyButton.innerHTML = '⧉ Copy';
             copyButton.title = 'Copy to clipboard';
             copyButton.addEventListener('click', () => {
                 navigator.clipboard.writeText(block.textContent).then(() => {
                     copyButton.textContent = '✓ Copied';
                     setTimeout(() => {
-                        copyButton.innerHTML = '📋 Copy';
+                        copyButton.innerHTML = '⧉ Copy';
                     }, 2000);
                 });
             });
@@ -499,7 +499,7 @@ class FASMeBook {
             // Add download button
             const downloadButton = document.createElement('button');
             downloadButton.className = 'code-download';
-            downloadButton.innerHTML = '💾 Download';
+            downloadButton.innerHTML = '⧄ Download';
             downloadButton.title = 'Download as file';
             downloadButton.addEventListener('click', () => {
                 const text = block.textContent;
@@ -519,7 +519,7 @@ class FASMeBook {
                 
                 downloadButton.textContent = '✓ Downloaded';
                 setTimeout(() => {
-                    downloadButton.innerHTML = '💾 Download';
+                    downloadButton.innerHTML = '⧄ Download';
                 }, 2000);
             });
             

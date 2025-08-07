@@ -5,7 +5,7 @@
 > **🚩 Advanced Topic**: This chapter requires solid foundation in assembly programming  
 > **🚩 Performance Critical**: Focus on cycle counting and optimization throughout
 
-## Learning Objectives 🎯
+## Learning Objectives ◎
 
 By the end of this chapter, you will:
 - Master thread architecture and synchronization primitives at the assembly level
@@ -19,7 +19,7 @@ By the end of this chapter, you will:
 
 In the beginning, computers were simple sequential machines—one instruction after another, in perfect order. Today's computing landscape is radically different. Your smartphone contains multiple CPU cores, your graphics card has thousands of processing units, and even your smart watch leverages parallel execution for efficiency. Understanding how to harness this parallelism at the assembly level isn't just an academic exercise—it's essential for building high-performance systems that can compete in our multi-core, GPU-accelerated world.
 
-> **💡 Did You Know?** The human brain processes information massively in parallel with ~86 billion neurons firing simultaneously. Modern GPUs attempt to mimic this with thousands of cores, but the brain still outperforms them in many tasks while using only about 20 watts of power!
+> **◯ Did You Know?** The human brain processes information massively in parallel with ~86 billion neurons firing simultaneously. Modern GPUs attempt to mimic this with thousands of cores, but the brain still outperforms them in many tasks while using only about 20 watts of power!
 
 This chapter takes you deep into the world of concurrent programming, from traditional threading models to lock-free data structures, from high-load JSON-RPC servers to GPU-accelerated cryptographic functions. You'll learn not just how to write parallel code, but how to think in parallel, optimize for modern hardware, and avoid the subtle bugs that plague concurrent systems.
 
@@ -47,7 +47,7 @@ Every thread consists of:
 3. **Thread Local Storage (TLS)**: Per-thread data storage
 4. **Synchronization Primitives**: Mutexes, semaphores, condition variables
 
-> **💡 Historical Trivia**: The concept of threads was first implemented in the Multics operating system in 1965, but didn't become mainstream until the 1990s when SMP (Symmetric Multiprocessing) systems became common.
+> **◯ Historical Trivia**: The concept of threads was first implemented in the Multics operating system in 1965, but didn't become mainstream until the 1990s when SMP (Symmetric Multiprocessing) systems became common.
 
 Let's create our first thread in assembly and examine every aspect of its lifecycle:
 
@@ -60,82 +60,82 @@ entry start
 include 'win32a.inc'
 
 section '.data' data readable writeable
-    ; 📊 Thread management structures - Memory layout analysis
-    thread_handle    dd ?                    ; 📊 Memory: 4 bytes, Cycles: 0
-    thread_id        dd ?                    ; 📊 Memory: 4 bytes, Cycles: 0  
-    thread_stack     equ 65536              ; 📊 64KB stack per thread
+    ; ▦ Thread management structures - Memory layout analysis
+    thread_handle    dd ?                    ; ▦ Memory: 4 bytes, Cycles: 0
+    thread_id        dd ?                    ; ▦ Memory: 4 bytes, Cycles: 0  
+    thread_stack     equ 65536              ; ▦ 64KB stack per thread
     
     ; 🔒 Shared data requiring synchronization
-    shared_counter   dd 0                   ; 📊 Memory: 4 bytes, Critical Section required
-    critical_section CRITICAL_SECTION      ; 📊 Memory: 24 bytes on x86, 40 on x64
+    shared_counter   dd 0                   ; ▦ Memory: 4 bytes, Critical Section required
+    critical_section CRITICAL_SECTION      ; ▦ Memory: 24 bytes on x86, 40 on x64
     
     ; 📡 Status and communication channels
-    thread_running   dd 1                   ; 📊 Thread lifecycle flag
-    message_buffer   rb 256                 ; 📊 Inter-thread communication buffer
+    thread_running   dd 1                   ; ▦ Thread lifecycle flag
+    message_buffer   rb 256                 ; ▦ Inter-thread communication buffer
     
     ; ⏱️ Performance monitoring infrastructure
-    start_time       dq ?                   ; 📊 High-resolution timestamp (8 bytes)
-    end_time         dq ?                   ; 📊 Completion timestamp (8 bytes)
+    start_time       dq ?                   ; ▦ High-resolution timestamp (8 bytes)
+    end_time         dq ?                   ; ▦ Completion timestamp (8 bytes)
     
 section '.code' code readable executable
 
-; 🎯 Thread entry point - this is where parallel execution begins
+; ◎ Thread entry point - this is where parallel execution begins
 ; 📥 Parameters: lpParameter (our custom data structure)
 ; 📤 Returns: Thread exit code
-; 📊 Performance: ~20-30 cycles overhead + actual work
+; ▦ Performance: ~20-30 cycles overhead + actual work
 worker_thread proc lpParameter
-    ; 🚀 Thread initialization - critical for performance
+    ; ◦ Thread initialization - critical for performance
     ; 💭 Why this approach? Each thread gets its own stack space and CPU context
     ; ✅ Benefit: Complete isolation between threads
-    ; 🔴 Cost: Memory overhead (~1MB per thread)
+    ; ● Cost: Memory overhead (~1MB per thread)
     
-    ; 💾 Save all registers we'll modify (calling convention requirement)
-    ; 📊 Total: 9 cycles, 6 bytes for complete register preservation
-    push ebp                                ; 📊 Cycles: 2, Size: 1 byte (55)
-    mov ebp, esp                           ; 📊 Cycles: 1, Size: 2 bytes (89 E5)
-    push esi                               ; 📊 Cycles: 2, Size: 1 byte (56)
-    push edi                               ; 📊 Cycles: 2, Size: 1 byte (57)
-    push ebx                               ; 📊 Cycles: 2, Size: 1 byte (53)
+    ; ⧄ Save all registers we'll modify (calling convention requirement)
+    ; ▦ Total: 9 cycles, 6 bytes for complete register preservation
+    push ebp                                ; ▦ Cycles: 2, Size: 1 byte (55)
+    mov ebp, esp                           ; ▦ Cycles: 1, Size: 2 bytes (89 E5)
+    push esi                               ; ▦ Cycles: 2, Size: 1 byte (56)
+    push edi                               ; ▦ Cycles: 2, Size: 1 byte (57)
+    push ebx                               ; ▦ Cycles: 2, Size: 1 byte (53)
     
     ; ⏱️ Get high-resolution timestamp for performance measurement
     ; 🤔 Design Decision: Why QueryPerformanceCounter vs RDTSC?
     ; ✅ QueryPerformanceCounter: Cross-platform, handles CPU frequency scaling
     ; ❌ RDTSC: CPU-specific, affected by power management, but faster
-    lea eax, [start_time]                  ; 📊 Cycles: 1, Size: 3 bytes
-    push eax                               ; 📊 Cycles: 2, Size: 1 byte
-    call [QueryPerformanceCounter]         ; 📊 Cycles: 50-100 (system call overhead)
+    lea eax, [start_time]                  ; ▦ Cycles: 1, Size: 3 bytes
+    push eax                               ; ▦ Cycles: 2, Size: 1 byte
+    call [QueryPerformanceCounter]         ; ▦ Cycles: 50-100 (system call overhead)
     
     ; 🔄 Main thread work loop - this is where actual computation happens
     ; 🤔 Design decision: Use local counter to minimize contention
     ; 💚 Pros: Reduces cache line bouncing between threads
-    ; 🔴 Cons: Slightly more complex bookkeeping
-    mov ecx, 1000000                       ; 📊 1 million iterations for benchmark
+    ; ● Cons: Slightly more complex bookkeeping
+    mov ecx, 1000000                       ; ▦ 1 million iterations for benchmark
     
 thread_work_loop:
-    ; 🎯 Simulate meaningful work - mathematical computation
+    ; ◎ Simulate meaningful work - mathematical computation
     ; 💭 These operations represent typical CPU-bound tasks
-    ; ⚡ Optimization opportunity: This could be vectorized with SIMD
-    push ecx                               ; 📊 Save loop counter (Cycles: 2)
+    ; ▲ Optimization opportunity: This could be vectorized with SIMD
+    push ecx                               ; ▦ Save loop counter (Cycles: 2)
     
     ; 🔢 Complex mathematical operation - demonstrates CPU utilization
-    ; 📊 Total: ~27-37 cycles per iteration (CPU-bound work)
-    mov eax, ecx                          ; 📊 Cycles: 1, Load counter value
-    imul eax, eax                         ; 📊 Cycles: 3-4, Square the value
-    mov edx, 0                            ; 📊 Cycles: 1, Clear high bits for division
-    mov ebx, 17                           ; 📊 Cycles: 1, Prime number divisor
-    div ebx                               ; 📊 Cycles: 20-30, Division operation (expensive!)
+    ; ▦ Total: ~27-37 cycles per iteration (CPU-bound work)
+    mov eax, ecx                          ; ▦ Cycles: 1, Load counter value
+    imul eax, eax                         ; ▦ Cycles: 3-4, Square the value
+    mov edx, 0                            ; ▦ Cycles: 1, Clear high bits for division
+    mov ebx, 17                           ; ▦ Cycles: 1, Prime number divisor
+    div ebx                               ; ▦ Cycles: 20-30, Division operation (expensive!)
     
-    ; 💾 Memory operation - demonstrates cache behavior
+    ; ⧄ Memory operation - demonstrates cache behavior
     ; 🤔 Why this addressing mode? Shows cache line utilization patterns
-    mov [message_buffer + ecx*4], eax     ; 📊 Cycles: 3-4, Store result (cache-dependent)
+    mov [message_buffer + ecx*4], eax     ; ▦ Cycles: 3-4, Store result (cache-dependent)
     
-    pop ecx                               ; 📊 Restore counter (Cycles: 1)
-    dec ecx                               ; 📊 Cycles: 1, Decrement counter
-    jnz thread_work_loop                  ; 📊 Cycles: 1-3, Branch prediction dependent
+    pop ecx                               ; ▦ Restore counter (Cycles: 1)
+    dec ecx                               ; ▦ Cycles: 1, Decrement counter
+    jnz thread_work_loop                  ; ▦ Cycles: 1-3, Branch prediction dependent
     
     ; 🔒 Synchronized counter increment - demonstrates thread safety
     ; ⚠️ Critical Section: This is where race conditions can occur without proper synchronization
-    call enter_critical_section           ; 📊 Our custom lock function (implementation below)
+    call enter_critical_section           ; ▦ Our custom lock function (implementation below)
     
     inc dword [shared_counter]            ; Cycles: 4-5, Atomic increment
     ; Note: This operation is NOT atomic without proper synchronization!

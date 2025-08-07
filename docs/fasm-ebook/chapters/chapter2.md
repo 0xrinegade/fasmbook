@@ -90,7 +90,7 @@ start:
     cmp eax, 1                      ; Cycles: 1, Did we get exactly 1 number?
     jne input_error                 ; Cycles: 1-3, Branch if parsing failed
 
-## 📚 Comprehensive Instruction Reference: JNE
+## ▣ Comprehensive Instruction Reference: JNE
 
 > **🚩 Conditional Logic Mastery**: JNE (Jump if Not Equal) is your primary tool for implementing inequality logic and error handling in programs.
 
@@ -232,7 +232,7 @@ do_multiplication:
     ; Decision: Use imul for signed arithmetic (handles negative numbers)
     imul eax, ebx                   ; Cycles: 3-4, Signed multiplication
 
-## 📚 Comprehensive Instruction Reference: IMUL
+## ▣ Comprehensive Instruction Reference: IMUL
 
 > **🚩 Signed Multiplication Mastery**: IMUL provides sophisticated signed multiplication with multiple forms for different programming needs.
 
@@ -368,7 +368,7 @@ add eax, array_base     ; Add base address
 
 ---
 
-## 📚 Comprehensive Instruction Reference: CDQ
+## ▣ Comprehensive Instruction Reference: CDQ
 
 > **🚩 Sign Extension for Division**: CDQ prepares signed numbers for division by extending the sign bit from EAX into EDX.
 
@@ -475,7 +475,7 @@ cdq                     ; EDX = 0xFFFFFFFF (WRONG for unsigned!)
 
 ---
 
-## 📚 Comprehensive Instruction Reference: IDIV
+## ▣ Comprehensive Instruction Reference: IDIV
 
 > **🚩 Signed Division Master**: IDIV performs signed integer division with quotient and remainder results, handling the complexities of two's complement arithmetic.
 
@@ -640,7 +640,7 @@ do_division:
     ; Check for division by zero - critical error prevention
     test ebx, ebx                   ; Cycles: 1, Test if divisor is zero
 
-## 📚 Comprehensive Instruction Reference: TEST
+## ▣ Comprehensive Instruction Reference: TEST
 
 > **🚩 Efficient Zero Testing**: TEST provides the most efficient way to check for zero values and bit patterns without modifying operands.
 
@@ -779,7 +779,7 @@ jz is_even              ; Even numbers have bit 0 = 0
 
 ---
 
-## 📚 Comprehensive Instruction Reference: SUB
+## ▣ Comprehensive Instruction Reference: SUB
 
 > **🚩 Arithmetic Foundation**: SUB is the complement to ADD, providing subtraction with comprehensive flag updates for all comparison and arithmetic operations.
 

@@ -4,7 +4,7 @@
 > **🚩 Foundation Chapter**: Essential understanding for all subsequent chapters  
 > **🚩 Memory Focus**: Deep dive into x86 memory models and optimization
 
-## Learning Objectives 🎯
+## Learning Objectives ◎
 
 By the end of this chapter, you will:
 - Master all fundamental data types and their memory representations
@@ -17,7 +17,7 @@ By the end of this chapter, you will:
 
 Memory is the canvas upon which all computation takes place. In high-level languages, this canvas is often hidden behind abstractions—variables that seem to hold values by magic, arrays that expand and contract automatically, and objects that contain both data and behavior. But in assembly language, you work directly with the raw memory substrate, and understanding this landscape is crucial to writing efficient, reliable code.
 
-> **💡 Did You Know?** The term "byte" was coined by Werner Buchholz at IBM in 1956. He needed a word to describe a group of bits, and chose "byte" as a play on "bite," but changed the spelling to avoid confusion with "bit."
+> **◯ Did You Know?** The term "byte" was coined by Werner Buchholz at IBM in 1956. He needed a word to describe a group of bits, and chose "byte" as a play on "bite," but changed the spelling to avoid confusion with "bit."
 
 In this chapter, we'll explore memory from the ground up. You'll learn how different data types are represented in binary, how the processor accesses memory, and how to organize your data for maximum efficiency. We'll build several programs that demonstrate sophisticated memory management techniques, and by the end of this chapter, you'll think about data the way the processor does.
 
@@ -102,7 +102,7 @@ start:
     mov ecx, 5                  ; Array length
     xor eax, eax                ; Clear accumulator
 
-## 📚 Comprehensive Instruction Reference: XOR
+## ▣ Comprehensive Instruction Reference: XOR
 
 > **🚩 Bitwise Logic Master**: XOR is one of the most versatile instructions in assembly, serving roles in encryption, optimization, bit manipulation, and register clearing.
 
@@ -303,7 +303,7 @@ shr [lfsr_state], 1     ; Shift state right
 or [lfsr_state], eax    ; Insert new random bit
 ```
 
-## 📚 Comprehensive Instruction Reference: Bit Shift Operations (SHL, SHR, SAR)
+## ▣ Comprehensive Instruction Reference: Bit Shift Operations (SHL, SHR, SAR)
 
 > **🚩 Bit Manipulation Foundation**: Shift instructions provide essential bit manipulation capabilities for arithmetic operations, data alignment, and efficient multiplication/division.
 
@@ -539,7 +539,7 @@ no_shift:
 ; Better: Just do the shift (0-count shifts are fast)
 ```
 
-**⚡ Advanced Optimization Patterns:**
+**▲ Advanced Optimization Patterns:**
 ```assembly
 ; Bit rotation using shifts (for values that fit)
 ; Rotate EAX left by 3 bits (32-bit value)
@@ -605,7 +605,7 @@ test eax, eax            ; Use result for predictable branching
 jz common_case           ; Branch predictor learns pattern
 ```
 
-## 📚 Comprehensive Instruction Reference: OR
+## ▣ Comprehensive Instruction Reference: OR
 
 > **🚩 Bitwise Logic Foundation**: The OR instruction performs bitwise logical OR operations, essential for bit setting, flag combining, and data merging operations.
 
@@ -817,7 +817,7 @@ or eax, 0               ; Pointless - no bits are set
 or eax, 0xFFFFFFFF      ; Sets all bits (use mov eax, -1)
 ```
 
-**⚡ Advanced Optimization Patterns:**
+**▲ Advanced Optimization Patterns:**
 ```assembly
 ; Parallel bit field construction
 mov eax, [field_a]      ; Load first field
@@ -888,7 +888,7 @@ update_loop:
     loop update_loop        ; Sequential access pattern
 ```
 
-## 📚 Comprehensive Instruction Reference: AND
+## ▣ Comprehensive Instruction Reference: AND
 
 > **🚩 Bitwise Logic Foundation**: The AND instruction performs bitwise logical AND operations, essential for bit masking, flag checking, and data filtering operations.
 
@@ -1114,7 +1114,7 @@ and eax, eax             ; Sets flags but modifies EAX!
 test eax, eax            ; Tests without modification
 ```
 
-**⚡ Advanced Optimization Patterns:**
+**▲ Advanced Optimization Patterns:**
 ```assembly
 ; Branchless conditional masking
 ; Traditional approach:

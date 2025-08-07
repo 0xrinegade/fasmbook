@@ -1,7 +1,7 @@
 # Answer Key and Solutions Manual
 *Complete Solutions to All Homework Exercises and Programming Challenges*
 
-> **📚 How to Use This Manual**: Each solution includes multiple approaches, performance analysis, and detailed explanations to help you understand not just the "what" but the "why" behind each solution.
+> **▣ How to Use This Manual**: Each solution includes multiple approaches, performance analysis, and detailed explanations to help you understand not just the "what" but the "why" behind each solution.
 
 ## Chapter 0: How to Use This Book - Solutions
 
@@ -17,24 +17,24 @@ entry start
 include 'win32a.inc'
 
 section '.data' data readable writeable
-    message db 'Hello from Assembly!', 13, 10, 0  ; 📊 Memory: 21 bytes
-    counter dd 0                                   ; 📊 Memory: 4 bytes
+    message db 'Hello from Assembly!', 13, 10, 0  ; ▦ Memory: 21 bytes
+    counter dd 0                                   ; ▦ Memory: 4 bytes
 
 section '.code' code readable executable  
 start:
-    mov eax, 1              ; 📊 Cycles: 1, Initialize counter
-    mov [counter], eax      ; 📊 Cycles: 3, Store to memory
+    mov eax, 1              ; ▦ Cycles: 1, Initialize counter
+    mov [counter], eax      ; ▦ Cycles: 3, Store to memory
     
 loop_start:
-    push message            ; 📊 Cycles: 2, Setup function call
-    call [printf]           ; 📊 Cycles: 15-20, System call overhead
-    add esp, 4              ; 📊 Cycles: 1, Stack cleanup
+    push message            ; ▦ Cycles: 2, Setup function call
+    call [printf]           ; ▦ Cycles: 15-20, System call overhead
+    add esp, 4              ; ▦ Cycles: 1, Stack cleanup
     
-    inc dword [counter]     ; 📊 Cycles: 4-5, Increment memory location
-    cmp dword [counter], 6  ; 📊 Cycles: 3-4, Compare with target
-    jl loop_start          ; 📊 Cycles: 1-3, Conditional branch
+    inc dword [counter]     ; ▦ Cycles: 4-5, Increment memory location
+    cmp dword [counter], 6  ; ▦ Cycles: 3-4, Compare with target
+    jl loop_start          ; ▦ Cycles: 1-3, Conditional branch
     
-    push 0                  ; 📊 Cycles: 2, Exit code
+    push 0                  ; ▦ Cycles: 2, Exit code
     call [ExitProcess]      ; Never returns
 
 section '.idata' import data readable writeable
@@ -53,7 +53,7 @@ section '.idata' import data readable writeable
 - **Per Loop Iteration**: ~27-35 cycles  
 - **Total Execution**: ~140-180 cycles (5 iterations)
 
-**⚡ Optimization Opportunities:**
+**▲ Optimization Opportunities:**
 1. Use register-based counter: saves 7-9 cycles per iteration
 2. Unroll loop for small fixed counts: saves branch overhead
 3. Use immediate addressing where possible
@@ -66,14 +66,14 @@ section '.idata' import data readable writeable
 
 **Exercise 1.1: Cycle Counting**
 ```assembly
-mov eax, 5      ; 📊 1 cycle (immediate to register)
-mov ebx, 10     ; 📊 1 cycle (immediate to register)  
-add eax, ebx    ; 📊 1 cycle (register arithmetic)
-mov [result], eax ; 📊 3 cycles (register to memory)
+mov eax, 5      ; ▦ 1 cycle (immediate to register)
+mov ebx, 10     ; ▦ 1 cycle (immediate to register)  
+add eax, ebx    ; ▦ 1 cycle (register arithmetic)
+mov [result], eax ; ▦ 3 cycles (register to memory)
 ; Total: 6 cycles
 ```
 
-**🎯 Teaching Point**: Register operations are consistently 1 cycle, while memory operations take 3+ cycles due to cache access and potential pipeline stalls.
+**◎ Teaching Point**: Register operations are consistently 1 cycle, while memory operations take 3+ cycles due to cache access and potential pipeline stalls.
 
 **Exercise 1.2: Memory Layout**
 ```assembly
@@ -110,7 +110,7 @@ include 'win32a.inc'
 
 section '.data' data readable writeable
     message db 'Hello, ', 0
-    name db 'John Doe', 0      ; 📊 Personalize this
+    name db 'John Doe', 0      ; ▦ Personalize this
     newline db 13, 10, 0
     counter dd 0
 
@@ -121,21 +121,21 @@ start:
     
 loop_start:
     ; Display "Hello, "
-    push message               ; 📊 2 cycles
-    call [printf]              ; 📊 15-20 cycles
-    add esp, 4                 ; 📊 1 cycle
+    push message               ; ▦ 2 cycles
+    call [printf]              ; ▦ 15-20 cycles
+    add esp, 4                 ; ▦ 1 cycle
     
     ; Display name
-    push name                  ; 📊 2 cycles
-    call [printf]              ; 📊 15-20 cycles
-    add esp, 4                 ; 📊 1 cycle
+    push name                  ; ▦ 2 cycles
+    call [printf]              ; ▦ 15-20 cycles
+    add esp, 4                 ; ▦ 1 cycle
     
     ; Display newline
-    push newline               ; 📊 2 cycles
-    call [printf]              ; 📊 15-20 cycles
-    add esp, 4                 ; 📊 1 cycle
+    push newline               ; ▦ 2 cycles
+    call [printf]              ; ▦ 15-20 cycles
+    add esp, 4                 ; ▦ 1 cycle
     
-    inc dword [counter]        ; 📊 4-5 cycles
+    inc dword [counter]        ; ▦ 4-5 cycles
     cmp dword [counter], 11    ; Count from 1 to 10
     jl loop_start
     
@@ -143,9 +143,9 @@ loop_start:
     call [ExitProcess]
 ```
 
-**📊 Performance Impact**: Multiple printf calls per iteration increase overhead to ~70-80 cycles per loop.
+**▦ Performance Impact**: Multiple printf calls per iteration increase overhead to ~70-80 cycles per loop.
 
-**⚡ Optimization**: Combine strings into single format string:
+**▲ Optimization**: Combine strings into single format string:
 ```assembly
 message db 'Hello, John Doe', 13, 10, 0  ; Single printf call
 ```
@@ -164,31 +164,31 @@ section '.data' data readable writeable
 
 section '.code' code readable executable
 start:
-    mov ecx, 1                 ; 📊 Counter in register (1 cycle)
+    mov ecx, 1                 ; ▦ Counter in register (1 cycle)
     
 optimized_loop:
     ; Display current count
-    push ecx                   ; 📊 2 cycles - save counter
-    push ecx                   ; 📊 2 cycles - printf parameter  
-    push message               ; 📊 2 cycles - format string
-    call [printf]              ; 📊 15-20 cycles
-    add esp, 8                 ; 📊 1 cycle - cleanup 2 parameters
-    pop ecx                    ; 📊 1 cycle - restore counter
+    push ecx                   ; ▦ 2 cycles - save counter
+    push ecx                   ; ▦ 2 cycles - printf parameter  
+    push message               ; ▦ 2 cycles - format string
+    call [printf]              ; ▦ 15-20 cycles
+    add esp, 8                 ; ▦ 1 cycle - cleanup 2 parameters
+    pop ecx                    ; ▦ 1 cycle - restore counter
     
-    inc ecx                    ; 📊 1 cycle - increment
-    cmp ecx, 6                 ; 📊 1 cycle - compare
-    jl optimized_loop          ; 📊 1-3 cycles - branch
+    inc ecx                    ; ▦ 1 cycle - increment
+    cmp ecx, 6                 ; ▦ 1 cycle - compare
+    jl optimized_loop          ; ▦ 1-3 cycles - branch
     
     push 0
     call [ExitProcess]
 ```
 
-**📊 Performance Analysis**:
+**▦ Performance Analysis**:
 - **Per iteration**: ~27-32 cycles (down from ~35-45 with memory operations)
 - **Improvement**: 20-25% faster due to register-only counter operations
 - **Total instructions**: 9 per iteration (down from 12)
 
-**🎯 Key Optimizations**:
+**◎ Key Optimizations**:
 1. **Register storage**: Counter never touches memory
 2. **Instruction reduction**: Direct register compare vs memory compare
 3. **Cache efficiency**: No memory traffic for counter operations
@@ -203,46 +203,46 @@ entry start
 include 'win32a.inc'
 
 section '.data' data readable writeable
-    numbers dd 1000 dup(?)     ; 📊 Array of 1000 integers
-    results dd 1000 dup(?)     ; 📊 Results array
+    numbers dd 1000 dup(?)     ; ▦ Array of 1000 integers
+    results dd 1000 dup(?)     ; ▦ Results array
     
 section '.code' code readable executable
 start:
     ; Initialize data
-    mov edi, numbers           ; 📊 Source pointer (1 cycle)
-    mov esi, results           ; 📊 Destination pointer (1 cycle)
-    mov ecx, 1000              ; 📊 Loop counter (1 cycle)
-    mov ebx, 1                 ; 📊 Initialize counter (1 cycle)
+    mov edi, numbers           ; ▦ Source pointer (1 cycle)
+    mov esi, results           ; ▦ Destination pointer (1 cycle)
+    mov ecx, 1000              ; ▦ Loop counter (1 cycle)
+    mov ebx, 1                 ; ▦ Initialize counter (1 cycle)
     
 init_loop:
-    mov [edi], ebx             ; 📊 Initialize with sequence (3 cycles)
-    add edi, 4                 ; 📊 Next element (1 cycle)
-    inc ebx                    ; 📊 Next value (1 cycle)
-    dec ecx                    ; 📊 Decrement counter (1 cycle)
-    jnz init_loop              ; 📊 Loop if not zero (1-3 cycles)
+    mov [edi], ebx             ; ▦ Initialize with sequence (3 cycles)
+    add edi, 4                 ; ▦ Next element (1 cycle)
+    inc ebx                    ; ▦ Next value (1 cycle)
+    dec ecx                    ; ▦ Decrement counter (1 cycle)
+    jnz init_loop              ; ▦ Loop if not zero (1-3 cycles)
     
     ; Processing loop - optimized for speed
-    mov esi, numbers           ; 📊 Reset source (1 cycle)
-    mov edi, results           ; 📊 Reset destination (1 cycle)
-    mov ecx, 1000              ; 📊 Reset counter (1 cycle)
+    mov esi, numbers           ; ▦ Reset source (1 cycle)
+    mov edi, results           ; ▦ Reset destination (1 cycle)
+    mov ecx, 1000              ; ▦ Reset counter (1 cycle)
     
 process_loop:
-    mov eax, [esi]             ; 📊 Load number (2-3 cycles)
+    mov eax, [esi]             ; ▦ Load number (2-3 cycles)
     ; Mathematical function: f(x) = x² + 2x + 1 = (x+1)²
-    inc eax                    ; 📊 x + 1 (1 cycle)
-    imul eax, eax              ; 📊 (x+1)² (3-4 cycles)
-    mov [edi], eax             ; 📊 Store result (2-3 cycles)
+    inc eax                    ; ▦ x + 1 (1 cycle)
+    imul eax, eax              ; ▦ (x+1)² (3-4 cycles)
+    mov [edi], eax             ; ▦ Store result (2-3 cycles)
     
-    add esi, 4                 ; 📊 Next input (1 cycle)
-    add edi, 4                 ; 📊 Next output (1 cycle)
-    dec ecx                    ; 📊 Decrement counter (1 cycle)
-    jnz process_loop           ; 📊 Loop condition (1-3 cycles)
+    add esi, 4                 ; ▦ Next input (1 cycle)
+    add edi, 4                 ; ▦ Next output (1 cycle)
+    dec ecx                    ; ▦ Decrement counter (1 cycle)
+    jnz process_loop           ; ▦ Loop condition (1-3 cycles)
     
     push 0
     call [ExitProcess]
 ```
 
-**📊 Cycle Analysis**:
+**▦ Cycle Analysis**:
 - **Initialization**: ~8,000 cycles (8 cycles × 1000 iterations)
 - **Processing**: ~12,000 cycles (12 cycles × 1000 iterations)  
 - **Total**: ~20,000 cycles
@@ -281,7 +281,7 @@ process_loop_unrolled:
 
 **✅ Improved Performance**: ~8,500 cycles total - meets target!
 
-**🎯 Optimization Techniques Used**:
+**◎ Optimization Techniques Used**:
 1. **Loop unrolling**: Reduces branch overhead by 75%
 2. **Register reuse**: Minimizes memory traffic
 3. **Instruction scheduling**: Overlaps memory operations
@@ -353,12 +353,12 @@ done:
     ret                    ; return sum (1 cycle)
 ```
 
-**📊 Performance Comparison**:
+**▦ Performance Comparison**:
 - **-O0**: ~15 cycles per iteration
 - **-O3**: ~6 cycles per iteration  
 - **Hand-optimized**: ~4 cycles per iteration
 
-**🎯 Key Insights**:
+**◎ Key Insights**:
 1. Compiler optimization dramatically improves performance
 2. Hand optimization can still beat modern compilers by 30-50%
 3. Register allocation is critical for performance
@@ -368,7 +368,7 @@ done:
 
 ## General Optimization Principles Learned
 
-**🚀 Performance Rules**:
+**◦ Performance Rules**:
 1. **Register > Memory**: 3-4x performance difference
 2. **Instruction Count Matters**: Fewer instructions = faster execution
 3. **Memory Access Patterns**: Sequential access is fastest

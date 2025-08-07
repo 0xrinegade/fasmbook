@@ -561,7 +561,7 @@ class InstructionGlossary {
                         <strong>Found in ${instruction.usages.length} locations:</strong><br>
                         ${instruction.usages.slice(0, 5).map(usage => 
                             `<a href="#" onclick="navigateToUsage('${usage.chapter}', ${usage.line})" class="usage-link" title="${usage.context}">
-                                📖 ${usage.chapterTitle || usage.chapter} (line ${usage.line})
+                                ▤ ${usage.chapterTitle || usage.chapter} (line ${usage.line})
                              </a>`
                         ).join('<br>')}
                         ${instruction.usages.length > 5 ? `<br><small><em>... and ${instruction.usages.length - 5} more locations</em></small>` : ''}

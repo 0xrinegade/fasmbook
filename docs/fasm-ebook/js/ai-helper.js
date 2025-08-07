@@ -1317,7 +1317,7 @@ Smaller instructions are better because:
     }
     
     getHelpMessage() {
-        return `**I can help you with:**\n\n🔧 **Technical Support:**\n• Instruction explanations and usage\n• Register management strategies\n• Memory addressing modes\n• Assembly syntax and conventions\n\n💡 **Learning Assistance:**\n• Code examples and tutorials\n• Best practices and patterns\n• Architecture-specific guidance\n• Performance optimization tips\n\n🐛 **Debugging Help:**\n• Error analysis and solutions\n• Common pitfall identification\n• Debugging technique suggestions\n• Code review and improvements\n\n📚 **Educational Content:**\n• Concept explanations\n• Historical context\n• Real-world applications\n• Advanced topics\n\n**Just ask me anything about FASM, assembly programming, or computer architecture!**`;
+        return `**I can help you with:**\n\n⚙ **Technical Support:**\n• Instruction explanations and usage\n• Register management strategies\n• Memory addressing modes\n• Assembly syntax and conventions\n\n◯ **Learning Assistance:**\n• Code examples and tutorials\n• Best practices and patterns\n• Architecture-specific guidance\n• Performance optimization tips\n\n▲ **Debugging Help:**\n• Error analysis and solutions\n• Common pitfall identification\n• Debugging technique suggestions\n• Code review and improvements\n\n▣ **Educational Content:**\n• Concept explanations\n• Historical context\n• Real-world applications\n• Advanced topics\n\n**Just ask me anything about FASM, assembly programming, or computer architecture!**`;
     }
     
     getContextualResponse(message) {

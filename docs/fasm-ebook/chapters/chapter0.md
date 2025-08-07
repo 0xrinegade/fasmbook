@@ -1,7 +1,7 @@
 # Chapter 0: How to Use This Book
 *Your Complete Roadmap to Assembly Programming Mastery*
 
-## Welcome, Future Assembly Programmer! 🚀
+## Welcome, Future Assembly Programmer! ◦
 
 Congratulations! You're about to embark on one of the most rewarding journeys in programming. This chapter is your personal guide—think of me as your friendly mentor who will help you navigate this comprehensive book and achieve assembly programming mastery.
 
@@ -9,7 +9,7 @@ Congratulations! You're about to embark on one of the most rewarding journeys in
 
 ---
 
-## 🎯 Who This Book Is For
+## ◎ Who This Book Is For
 
 ### **Complete Beginners** 
 *"I've never written assembly code before"*
@@ -48,7 +48,7 @@ Congratulations! You're about to embark on one of the most rewarding journeys in
 ### **Part I: Your First Steps into the Machine** *(Chapters 1-5)*
 > *Foundation building - essential for everyone*
 
-**📚 What You'll Learn:**
+**▣ What You'll Learn:**
 - How to think like a processor
 - FASM syntax and development workflow  
 - Memory models and data structures
@@ -56,12 +56,12 @@ Congratulations! You're about to embark on one of the most rewarding journeys in
 - Register usage and optimization
 
 **⏱️ Time Investment**: 15-20 hours
-**🎯 Goal**: Write simple but efficient assembly programs
+**◎ Goal**: Write simple but efficient assembly programs
 
 ### **Part II: Crafting Real Programs** *(Chapters 6-10)*  
 > *Practical programming skills*
 
-**📚 What You'll Learn:**
+**▣ What You'll Learn:**
 - Program flow and control structures
 - Function design and calling conventions
 - String processing and text manipulation
@@ -69,12 +69,12 @@ Congratulations! You're about to embark on one of the most rewarding journeys in
 - Advanced data structures
 
 **⏱️ Time Investment**: 20-25 hours
-**🎯 Goal**: Build complete applications in assembly
+**◎ Goal**: Build complete applications in assembly
 
 ### **Part III: Systems Programming Mastery** *(Chapters 11-18)*
 > *Professional and advanced topics*
 
-**📚 What You'll Learn:**
+**▣ What You'll Learn:**
 - Memory management and allocators
 - Operating system interfaces
 - I/O and networking programming  
@@ -83,19 +83,19 @@ Congratulations! You're about to embark on one of the most rewarding journeys in
 - Advanced topics: BPF, virtualization, containers
 
 **⏱️ Time Investment**: 30-40 hours  
-**🎯 Goal**: Master professional assembly programming
+**◎ Goal**: Master professional assembly programming
 
 ---
 
-## 📖 How to Read Each Chapter
+## ▤ How to Read Each Chapter
 
 ### **Chapter Structure** (Every chapter follows this pattern)
 
 1. **🎬 Opening Story**: Real-world context and motivation
-2. **📋 Learning Objectives**: What you'll master in this chapter
-3. **🔧 Core Concepts**: Main teaching content with examples
-4. **💡 Did You Know?**: Historical trivia and interesting facts
-5. **⚡ Performance Deep-Dive**: Cycle counting and optimization
+2. **⧉ Learning Objectives**: What you'll master in this chapter
+3. **⚙ Core Concepts**: Main teaching content with examples
+4. **◯ Did You Know?**: Historical trivia and interesting facts
+5. **▲ Performance Deep-Dive**: Cycle counting and optimization
 6. **🔗 See Also**: Cross-references to related topics
 7. **🧠 Mental Exercises**: Brain challenges you can do anywhere
 8. **💻 Programming Challenges**: Hands-on coding projects
@@ -103,14 +103,14 @@ Congratulations! You're about to embark on one of the most rewarding journeys in
 
 ### **Special Features to Look For**
 
-#### **💡 Did You Know? Boxes**
+#### **◯ Did You Know? Boxes**
 > **Did You Know?** The x86 instruction set includes over 1000 different instructions, but most programs use only about 50-100 of them regularly. Mastering these core instructions gives you 90% of assembly programming power!
 
-#### **⚡ Performance Analysis Sections**
+#### **▲ Performance Analysis Sections**
 ```assembly
-mov eax, [ebx]          ; 📊 Cycles: 2-3, Memory: 1 read (4 bytes)
-add eax, 100            ; 📊 Cycles: 1, Flags: ZF, CF, SF, OF modified
-mov [ecx], eax          ; 📊 Cycles: 1-2, Memory: 1 write (4 bytes)
+mov eax, [ebx]          ; ▦ Cycles: 2-3, Memory: 1 read (4 bytes)
+add eax, 100            ; ▦ Cycles: 1, Flags: ZF, CF, SF, OF modified
+mov [ecx], eax          ; ▦ Cycles: 1-2, Memory: 1 write (4 bytes)
 ; 🔍 Total: 4-6 cycles, 2 memory operations, 4 bytes read + 4 bytes written
 ```
 
@@ -126,7 +126,7 @@ mov [ecx], eax          ; 📊 Cycles: 1-2, Memory: 1 write (4 bytes)
 
 ---
 
-## 🎯 Your First Project: "Hello, Assembly World!"
+## ◎ Your First Project: "Hello, Assembly World!"
 
 Let's get you started with immediate success. Here's your very first project—don't worry about understanding everything yet!
 
@@ -203,9 +203,9 @@ mov [var], eax ; __ cycles
 **Progressive Difficulty**:
 - 🟢 **Beginner**: Follow step-by-step instructions
 - 🟡 **Intermediate**: Given requirements, design solution
-- 🔴 **Advanced**: Optimize for specific performance targets
+- ● **Advanced**: Optimize for specific performance targets
 
-### **Research Projects** 📚
+### **Research Projects** ▣
 *Deep dives that make you an expert*
 
 **Example**: "Compare loop unrolling techniques across different CPU architectures"
@@ -233,7 +233,7 @@ The answer key isn't just "the correct code" - each solution includes:
 
 ---
 
-## 🎨 eInk Device Features
+## ◯ eInk Device Features
 
 ### **Drawing and Annotation Support**
 - **Highlight** important concepts with pressure-sensitive stylus
@@ -290,26 +290,26 @@ The AI assistant understands exactly where you are in the book and provides rele
 ### **Live Code Validation**
 Every code example in this book is automatically validated through our comprehensive GitHub Actions workflow:
 
-**🔧 What Gets Tested:**
+**⚙ What Gets Tested:**
 - **All assembly code blocks** extracted from every chapter
 - **Cross-platform compilation** (Windows PE + Linux ELF formats)
 - **Execution testing** with timeout protection
 - **Syntax validation** and error reporting
 - **Performance benchmarking** of example programs
 
-**📊 Quality Assurance:**
+**▦ Quality Assurance:**
 - **100% code coverage** - every assembly instruction is compiled
 - **Continuous integration** - tests run on every change
 - **Multiple architectures** - ensures portability
 - **Error tracking** - compilation failures are immediately detected
 
-**🚀 How to Use:**
+**◦ How to Use:**
 1. **View live examples**: Check the [examples directory](../../examples/) for ready-to-compile code
 2. **Run tests locally**: Use the GitHub Actions workflow as a compilation template
 3. **Contribute improvements**: Submit PRs with enhanced examples
 4. **Learn from CI logs**: See detailed compilation output and performance metrics
 
-**💡 Pro Tip**: The automated testing catches errors before they reach readers, ensuring every code example you encounter is guaranteed to compile and run correctly!
+**◯ Pro Tip**: The automated testing catches errors before they reach readers, ensuring every code example you encounter is guaranteed to compile and run correctly!
 
 ---
 

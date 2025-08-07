@@ -641,7 +641,7 @@ class FASMeBookDrawing {
                 
                 <div class="tab-content" id="library-tab">
                     <div class="drawing-controls">
-                        <button id="save-current" class="tool-btn">💾 Save Current</button>
+                        <button id="save-current" class="tool-btn">⧄ Save Current</button>
                         <button id="clear-saved" class="tool-btn">🗑️ Clear All</button>
                     </div>
                     <div id="saved-drawings-list" class="saved-drawings-list">
@@ -651,8 +651,8 @@ class FASMeBookDrawing {
                 
                 <div class="tab-content hidden" id="composite-tab">
                     <div class="composite-controls">
-                        <button id="start-compose" class="tool-btn">🎨 Start Composing</button>
-                        <button id="save-composition" class="tool-btn">💾 Save Composition</button>
+                        <button id="start-compose" class="tool-btn">◯ Start Composing</button>
+                        <button id="save-composition" class="tool-btn">⧄ Save Composition</button>
                         <button id="clear-composition" class="tool-btn">🗑️ Clear Canvas</button>
                     </div>
                     <div class="composition-info">
