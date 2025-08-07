@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('FASM eBook - Basic Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    // Wait for the main app to initialize
-    await expect(page.locator('h1')).toContainText('FASM Programming Book');
+    // Wait for the main app to initialize - check the navigation panel h1 specifically
+    await expect(page.locator('.nav-header h1')).toContainText('FASM Programming Book');
     
     // Wait for the content to finish loading (loading indicator should disappear)
     await page.waitForFunction(() => {

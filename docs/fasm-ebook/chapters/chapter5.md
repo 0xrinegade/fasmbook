@@ -445,7 +445,7 @@ demo_flags_register:
     add eax, 1                     ; This will set CF (carry flag)
     pushfd                         ; Push flags to stack
 
-## 📚 Comprehensive Instruction Reference: PUSHFD
+## ▣ Comprehensive Instruction Reference: PUSHFD
 
 > **🚩 Flags Register Access**: PUSHFD provides direct access to the processor's flags register, essential for low-level system programming and debugging.
 

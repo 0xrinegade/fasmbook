@@ -4,7 +4,7 @@
 > **🚩 New to Programming?** Consider reading our [Programming Fundamentals Primer](appendix-a.md) first  
 > **🚩 Coming from High-Level Languages?** You're in the right place - continue reading!
 
-## Learning Objectives 🎯
+## Learning Objectives ◎
 
 By the end of this chapter, you will:
 - Understand why assembly programming is essential for modern developers
@@ -17,7 +17,7 @@ By the end of this chapter, you will:
 
 Imagine you're an artist who has spent years painting with pre-mixed colors, only to discover that you can create your own pigments from raw materials. That's what learning assembly programming feels like for most developers. After years of working with high-level languages, you suddenly gain the ability to craft software at the most fundamental level—to speak directly to the processor in its native tongue.
 
-> **💡 Did You Know?** The first assembly language was created in 1947 for the EDSAC computer. Before that, programmers had to write programs in pure binary machine code, toggling switches on massive control panels!
+> **◯ Did You Know?** The first assembly language was created in 1947 for the EDSAC computer. Before that, programmers had to write programs in pure binary machine code, toggling switches on massive control panels!
 
 This chapter is your introduction to this new world. We'll explore why assembly programming still matters in our age of sophisticated compilers and frameworks, and why FASM (Flat Assembler) is the perfect tool for this journey. By the end of this chapter, you'll have written your first assembly program and taken your first steps into the fascinating world of low-level programming.
 
@@ -65,32 +65,32 @@ Let's start with something concrete. Here's your first assembly program—not ju
 > **🚩 If New**: Don't worry about understanding all performance details on first reading
 
 ```assembly
-format PE console        ; 📊 Memory: 0 bytes, Cycles: 0 (assembler directive)
-entry start             ; 📊 Memory: 0 bytes, Cycles: 0 (assembler directive)
+format PE console        ; ▦ Memory: 0 bytes, Cycles: 0 (assembler directive)
+entry start             ; ▦ Memory: 0 bytes, Cycles: 0 (assembler directive)
 
-include 'win32a.inc'    ; 📊 Memory: 0 bytes, Cycles: 0 (assembler directive)
+include 'win32a.inc'    ; ▦ Memory: 0 bytes, Cycles: 0 (assembler directive)
 
 section '.data' data readable writeable
-    message db 'Welcome to the Machine!', 13, 10, 0  ; 📊 Memory: 25 bytes, Cycles: 0
-    counter dd 0                                      ; 📊 Memory: 4 bytes, Cycles: 0
+    message db 'Welcome to the Machine!', 13, 10, 0  ; ▦ Memory: 25 bytes, Cycles: 0
+    counter dd 0                                      ; ▦ Memory: 4 bytes, Cycles: 0
     
 section '.code' code readable executable
 start:
-    ; 📊 Performance Analysis: Total execution = ~45-60 CPU cycles + system call overhead
-    ; 📊 Memory footprint: 29 bytes data + ~50 bytes code = 79 bytes total
+    ; ▦ Performance Analysis: Total execution = ~45-60 CPU cycles + system call overhead
+    ; ▦ Memory footprint: 29 bytes data + ~50 bytes code = 79 bytes total
     
     ; 🤔 Decision Point: Initialize our counter - Why this approach?
     ; ✅ Chosen: Use register first, then store to memory
     ; ❌ Alternative: Direct memory initialization (mov [counter], 0)
     ; 💚 Pros: Register operations are fastest (1 cycle vs 3-4 cycles memory)
-    ; 🔴 Cons: Uses extra instruction, but teaches register discipline
-    mov eax, 0                  ; 📊 Cycles: 1, Size: 5 bytes (B8 00 00 00 00)
-    mov [counter], eax          ; 📊 Cycles: 3-4, Size: 6 bytes (A3 + address)
+    ; ● Cons: Uses extra instruction, but teaches register discipline
+    mov eax, 0                  ; ▦ Cycles: 1, Size: 5 bytes (B8 00 00 00 00)
+    mov [counter], eax          ; ▦ Cycles: 3-4, Size: 6 bytes (A3 + address)
     
-    ; ⚡ Optimization Opportunity: Could use "xor eax, eax" (2 bytes, 1 cycle) instead
+    ; ▲ Optimization Opportunity: Could use "xor eax, eax" (2 bytes, 1 cycle) instead
     ; 🏠 Homework: Try both approaches and compare assembly output
 
-## 📚 Comprehensive Instruction Reference: MOV
+## ▣ Comprehensive Instruction Reference: MOV
 
 > **🚩 First Instruction Deep Dive**: This is your first encounter with the MOV instruction - the foundation of all data movement in assembly programming.
 
@@ -265,7 +265,7 @@ mov ax, 0              ; Use 16-bit when only 16 bits needed
 mov eax, 0             ; Use 32-bit for full register operations
 ```
 
-**⚡ Performance Optimization Techniques:**
+**▲ Performance Optimization Techniques:**
 ```assembly
 ; Instead of loading the same value multiple times:
 mov eax, expensive_calculation_result
@@ -309,15 +309,15 @@ movd xmm1, ebx         ; Transfer to SIMD register
 ---
     
 display_loop:
-    ; 📊 Function call overhead analysis
-    ; 📊 Stack operations: 1-2 cycles each
-    ; 📊 Call instruction: 3-4 cycles + pipeline flush
-    ; 📊 Total per iteration: ~20-25 cycles
+    ; ▦ Function call overhead analysis
+    ; ▦ Stack operations: 1-2 cycles each
+    ; ▦ Call instruction: 3-4 cycles + pipeline flush
+    ; ▦ Total per iteration: ~20-25 cycles
     
-    push message                ; 📊 Cycles: 2, Size: 5 bytes (68 + immediate)
-                               ; 📊 Stack: ESP = ESP - 4, Memory[ESP] = address of message
+    push message                ; ▦ Cycles: 2, Size: 5 bytes (68 + immediate)
+                               ; ▦ Stack: ESP = ESP - 4, Memory[ESP] = address of message
 
-## 📚 Comprehensive Instruction Reference: PUSH
+## ▣ Comprehensive Instruction Reference: PUSH
 
 > **🚩 Stack Operations Foundation**: The PUSH instruction is your gateway to understanding the processor's stack—one of the most critical concepts in systems programming.
 
@@ -535,7 +535,7 @@ cmp eax, 0xDEADBEEF     ; Check if corrupted
 jne stack_corrupted     ; Handle corruption
 ```
 
-## 📚 Comprehensive Instruction Reference: Conditional Jumps (JZ, JNZ, JE, JNE)
+## ▣ Comprehensive Instruction Reference: Conditional Jumps (JZ, JNZ, JE, JNE)
 
 > **🚩 Conditional Flow Control**: Conditional jump instructions provide the foundation for all decision-making in assembly programming, enabling if-statements, loops, and complex logic structures.
 
@@ -796,7 +796,7 @@ done:
 ; Better: Use conditional move (CMOV) or arithmetic tricks
 ```
 
-**⚡ Advanced Optimization Patterns:**
+**▲ Advanced Optimization Patterns:**
 ```assembly
 ; Branchless conditional execution using conditional moves
 cmp eax, ebx
@@ -846,7 +846,7 @@ inc eax                    ; Sets ZF, SF, OF, PF; doesn't affect CF
 ; JC/JNC still use old CF value, but JZ uses new ZF
 ```
 
-## 📚 Comprehensive Instruction Reference: LEA (Load Effective Address)
+## ▣ Comprehensive Instruction Reference: LEA (Load Effective Address)
 
 > **🚩 Address Calculation Expert**: LEA computes memory addresses without accessing memory, providing efficient address arithmetic and complex calculations in a single instruction.
 
@@ -1034,7 +1034,7 @@ lea eax, [ebx*3]         ; OK if calculating for arithmetic
 mov eax, [ebx*3]         ; WRONG - this tries to load from memory!
 ```
 
-**⚡ Advanced Optimization Patterns:**
+**▲ Advanced Optimization Patterns:**
 ```assembly
 ; LEA for fast switch table indexing
 mov eax, [case_value]
@@ -1136,7 +1136,7 @@ cmovl ecx, edx             ; Use value_b if EAX < EBX
 ; Result in ECX, no branching!
 ```
 
-## 📚 Comprehensive Instruction Reference: POP
+## ▣ Comprehensive Instruction Reference: POP
 
 > **🚩 Stack Data Retrieval**: The POP instruction retrieves data from the top of the stack, essential for function returns, register restoration, and stack-based data structures.
 
@@ -1372,7 +1372,7 @@ pop eax              ; Assumes something was pushed earlier
 ; Always verify stack state before popping
 ```
 
-**⚡ Advanced Optimization Patterns:**
+**▲ Advanced Optimization Patterns:**
 ```assembly
 ; Use POP for fast memory copying from stack
 stack_to_array_copy:
@@ -1478,7 +1478,7 @@ push eax             ; Restore valid return address
 ; - Return address integrity
 ```
 
-## 📚 Comprehensive Instruction Reference: JMP
+## ▣ Comprehensive Instruction Reference: JMP
 
 > **🚩 Unconditional Jump Foundation**: The JMP instruction provides unconditional program flow control, essential for implementing loops, function calls, and complex control structures.
 
@@ -1696,7 +1696,7 @@ else_condition:
 endif:
 ```
 
-**⚡ Advanced Optimization Patterns:**
+**▲ Advanced Optimization Patterns:**
 ```assembly
 ; Jump threading for multiple conditions
 cmp eax, 1
@@ -1821,10 +1821,10 @@ push [shared_variable]  ; Pushes current value, but value may change
 ```
 
 ---
-    call [printf]               ; 📊 Cycles: 15-20 (indirect call + system overhead)
-                               ; 📊 Actions: Pushes return address, jumps to printf
+    call [printf]               ; ▦ Cycles: 15-20 (indirect call + system overhead)
+                               ; ▦ Actions: Pushes return address, jumps to printf
 
-## 📚 Comprehensive Instruction Reference: CALL
+## ▣ Comprehensive Instruction Reference: CALL
 
 > **🚩 Function Call Foundation**: The CALL instruction is the cornerstone of structured programming, enabling modular code design and function-based architecture.
 
@@ -1942,7 +1942,7 @@ function:
     pop ebp             ; Restore frame pointer
     ret                 ; Return (stack cleanup by caller)
 
-## 📚 Comprehensive Instruction Reference: RET
+## ▣ Comprehensive Instruction Reference: RET
 
 > **🚩 Function Return Foundation**: The RET instruction is the perfect complement to CALL, providing the mechanism for functions to return control to their callers.
 
@@ -2505,10 +2505,10 @@ function:
 ```
 
 ---
-    add esp, 4                  ; 📊 Cycles: 1, Size: 3 bytes (83 C4 04)
-                               ; 📊 Cleanup: restore stack pointer
+    add esp, 4                  ; ▦ Cycles: 1, Size: 3 bytes (83 C4 04)
+                               ; ▦ Cleanup: restore stack pointer
 
-## 📚 Comprehensive Instruction Reference: ADD
+## ▣ Comprehensive Instruction Reference: ADD
 
 > **🚩 Arithmetic Foundation**: The ADD instruction is your introduction to the processor's arithmetic and logic unit (ALU), where all mathematical operations occur.
 
@@ -2730,7 +2730,7 @@ checksum_loop:
 
 ---
 
-## 📚 Comprehensive Instruction Reference: CMP
+## ▣ Comprehensive Instruction Reference: CMP
 
 > **🚩 Decision Making Foundation**: The CMP instruction is the cornerstone of program logic, enabling all conditional operations and decision-making processes.
 
@@ -2923,12 +2923,12 @@ jl less_case            ; Use flags from SUB
     
     ; 🤔 Design Decision: Loop control - critical performance section
     ; ✅ Why increment before compare? Cache efficiency and predictable patterns!
-    inc dword [counter]         ; 📊 Cycles: 4-5, Size: 6 bytes (FF 05 + address)
-                               ; 📊 Operation: Read-modify-write on memory
+    inc dword [counter]         ; ▦ Cycles: 4-5, Size: 6 bytes (FF 05 + address)
+                               ; ▦ Operation: Read-modify-write on memory
                                ; 💚 Pros: Direct memory operation, atomic
-                               ; 🔴 Cons: Slower than register operations
+                               ; ● Cons: Slower than register operations
 
-## 📚 Comprehensive Instruction Reference: INC
+## ▣ Comprehensive Instruction Reference: INC
 
 > **🚩 Increment Operations**: The INC instruction provides optimized single-increment functionality with special flag behavior that differs from ADD.
 
@@ -3141,7 +3141,7 @@ dec_loop:
 
 ---
 
-## 📚 Comprehensive Instruction Reference: Conditional Jumps (JL)
+## ▣ Comprehensive Instruction Reference: Conditional Jumps (JL)
 
 > **🚩 Program Flow Control**: Conditional jumps are the fundamental building blocks of program logic, enabling decisions, loops, and complex control flow.
 
@@ -3356,12 +3356,12 @@ mov eax, [secret_array + eax*4]  ; Only executed after bounds check
 
 ---
                                
-    cmp dword [counter], 3      ; 📊 Cycles: 3-4, Size: 7 bytes (83 3D + address + 03)
-                               ; 📊 Flags: Sets ZF, CF, SF, OF in FLAGS register
-                               ; ⚡ Alternative: Load to register first (faster)
+    cmp dword [counter], 3      ; ▦ Cycles: 3-4, Size: 7 bytes (83 3D + address + 03)
+                               ; ▦ Flags: Sets ZF, CF, SF, OF in FLAGS register
+                               ; ▲ Alternative: Load to register first (faster)
                                
-    jl display_loop             ; 📊 Cycles: 1 (not taken), 3-4 (taken), Size: 2 bytes
-                               ; 📊 Condition: Jump when SF ≠ OF (signed less than)
+    jl display_loop             ; ▦ Cycles: 1 (not taken), 3-4 (taken), Size: 2 bytes
+                               ; ▦ Condition: Jump when SF ≠ OF (signed less than)
                                ; Branch prediction: likely taken first 2 iterations
     
     ; Program termination - why this approach?
@@ -3910,7 +3910,7 @@ In Chapter 2, we'll dive deeper into FASM's syntax and learn how to structure la
 
 Remember: every expert was once a beginner. The processor doesn't care how long you've been programming—it only cares that your instructions are correct. With patience and practice, you'll develop the skills to make the machine dance to your will.
 
-> **💡 Historical Trivia**: The term "debugging" was coined by Admiral Grace Hopper in 1947 when she found a real moth trapped in a computer relay. She taped the moth in her logbook and wrote "First actual case of bug being found."
+> **◯ Historical Trivia**: The term "debugging" was coined by Admiral Grace Hopper in 1947 when she found a real moth trapped in a computer relay. She taped the moth in her logbook and wrote "First actual case of bug being found."
 
 ---
 
@@ -3989,7 +3989,7 @@ Process an array of 10 integers:
 - Count how many are even vs odd
 - Display all statistics
 
-### **Advanced Level** 🔴
+### **Advanced Level** ●
 
 **Challenge 1.6: Performance Target (90 minutes)**
 Write a program that processes 1000 numbers in under 10,000 total CPU cycles:
@@ -4006,7 +4006,7 @@ Design a program with maximum 128 bytes total memory usage that:
 
 ---
 
-## 📚 Research Projects
+## ▣ Research Projects
 
 **Project 1.A: Compiler Comparison (2-3 hours)**
 Compare assembly output from:
@@ -4033,33 +4033,33 @@ Profile a real application (browser, game, etc.):
 
 ## 📝 Chapter Summary
 
-**🎯 Key Concepts Mastered:**
+**◎ Key Concepts Mastered:**
 - ✅ Assembly programming mindset and philosophy
 - ✅ First program structure and execution flow
 - ✅ Basic performance analysis and cycle counting
 - ✅ FASM development environment setup
 - ✅ Fundamental instruction types and addressing
 
-**⚡ Performance Insights:**
+**▲ Performance Insights:**
 - Register operations are 3-4x faster than memory operations
 - Instruction encoding affects both speed and size
 - Branch prediction impacts loop performance significantly
 - Cache locality is critical for data structure design
 
-**🔧 Practical Skills:**
+**⚙ Practical Skills:**
 - Write, compile, and debug simple assembly programs
 - Analyze instruction performance characteristics
 - Make optimization trade-off decisions
 - Structure assembly projects professionally
 
-**🎯 Next Chapter Preview:**
+**◎ Next Chapter Preview:**
 Chapter 2 will teach you FASM's complete syntax system, advanced data types, and program organization techniques that enable building complex applications.
 
 ---
 
 *"The best way to learn assembly is to write assembly. The second best way is to read assembly. The third best way is to think about assembly. Do all three, every day."*
 
-**📖 Recommended Study Time**: 3-4 hours total
+**▤ Recommended Study Time**: 3-4 hours total
 - Reading: 45 minutes
 - Mental exercises: 30 minutes  
 - Programming challenges: 2-3 hours

@@ -10,6 +10,12 @@
     --line-height: 1.2;
     --nav-width: 300px;
     --header-height: 60px;
+    
+    /* Animation variables */
+    --animation-duration: 0.3s;
+    --animation-easing: cubic-bezier(0.25, 0.8, 0.25, 1);
+    --micro-animation-duration: 0.15s;
+    --bounce-easing: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 * {
@@ -24,9 +30,30 @@ body {
     line-height: var(--line-height);
     color: var(--text-color);
     background-color: var(--bg-color);
-    display: flex;
+    display: grid;
+    grid-template-columns: var(--nav-width) 1fr 0px;
+    grid-template-areas: "nav main sidebar";
     min-height: 100vh;
     transition: all 0.3s ease;
+}
+
+body.sidebar-open {
+    grid-template-columns: var(--nav-width) 1fr 320px;
+}
+
+/* Targeted grayscale filter for emoji characters only */
+*::before, *::after {
+    filter: grayscale(100%);
+}
+
+/* Ensure all emoji characters in content are rendered in grayscale */
+.chapter-content, .ai-chat, .drawing-tools, button {
+    filter: grayscale(100%);
+}
+
+/* Override for form elements and non-emoji content that need normal rendering */
+input, textarea, select, pre code, .code-block {
+    filter: none;
 }
 
 /* Loading Animation */
@@ -34,6 +61,95 @@ body {
     0% { width: 0%; }
     50% { width: 70%; }
     100% { width: 100%; }
+}
+
+/* Microanimations */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes modalSlideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes buttonPressAnimation {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes gentleFloat {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-2px);
+    }
+}
+
+@keyframes typingDots {
+    0%, 20% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.4;
+    }
 }
 
 .initial-loading {
@@ -79,14 +195,13 @@ body {
 
 /* Navigation Panel */
 .nav-panel {
+    grid-area: nav;
     width: var(--nav-width);
     background-color: var(--bg-color);
     border-right: 2px solid var(--border-color);
     height: 100vh;
     overflow-y: auto;
-    position: fixed;
-    left: 0;
-    top: 0;
+    position: relative;
     z-index: 1000;
     transition: transform 0.3s ease;
 }
@@ -119,7 +234,7 @@ body {
     cursor: pointer;
     border-radius: 8px;
     font-size: 1.2rem;
-    transition: all 0.3s ease;
+    transition: all var(--animation-duration) var(--animation-easing);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     min-width: 44px;
@@ -132,11 +247,11 @@ body {
 .nav-toggle:hover {
     background-color: var(--highlight-color);
     transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .nav-toggle:active {
-    transform: scale(0.95);
+    animation: buttonPressAnimation var(--micro-animation-duration) var(--animation-easing);
     background-color: var(--accent-color);
     color: var(--bg-color);
 }
@@ -169,7 +284,7 @@ body {
     padding: 0.5rem;
     margin: 0.125rem 0;
     border-radius: 8px;
-    transition: all 0.3s ease;
+    transition: all var(--animation-duration) var(--animation-easing);
     font-size: 0.9rem;
     line-height: 1.2;
     border: 1px solid transparent;
@@ -183,8 +298,8 @@ body {
 .toc-list a:hover, .bookmarks-list a:hover, .history-list a:hover, .glossary-list a:hover {
     background-color: var(--highlight-color);
     border-color: var(--border-color);
-    transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateX(6px) scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .toc-list a.current {
@@ -192,11 +307,12 @@ body {
     color: var(--bg-color);
     border-color: var(--accent-color);
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    animation: bounceIn var(--animation-duration) var(--bounce-easing);
 }
 
 .toc-list a:active, .bookmarks-list a:active, .history-list a:active {
-    transform: scale(0.98);
+    animation: buttonPressAnimation var(--micro-animation-duration) var(--animation-easing);
 }
 
 /* Glossary Section */
@@ -277,15 +393,20 @@ body {
 
 /* Main Content */
 .main-content {
-    margin-left: var(--nav-width);
+    grid-area: main;
     flex: 1;
     padding: 2rem;
     max-width: none;
-    transition: margin-left 0.3s ease;
+    transition: padding-left 0.3s ease, padding-right 0.3s ease;
+    overflow-x: hidden;
+}
+
+.main-content.sidebar-open {
+    padding-right: 1rem;
 }
 
 .main-content.expanded {
-    margin-left: 0;
+    /* Keep for navigation panel toggle compatibility */
 }
 
 /* Chapter Navigation */
@@ -332,7 +453,8 @@ body {
 
 /* Chapter Content */
 .chapter-content {
-    max-width: 800px;
+    width: min(75vw, 800px);
+    max-width: 75vw;
     margin: 0 auto;
     line-height: var(--line-height);
 }
@@ -402,7 +524,7 @@ body {
 .chapter-content pre code {
     background: none;
     padding: 0;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     line-height: 1.2;
 }
 
@@ -424,20 +546,46 @@ body {
 
 /* Control Icons Container */
 .control-icons {
-    position: fixed;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+    grid-area: sidebar;
+    position: relative;
+    right: auto;
+    top: auto;
+    transform: none;
     display: flex;
     flex-direction: column;
     gap: 16px;
+    width: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
     z-index: 1500;
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    background-color: var(--bg-color);
+    border-left: none;
+    height: 100vh;
+    padding: 0;
+}
+
+.control-icons.sidebar-open {
+    width: 100%;
+    padding: 1rem;
+}
+
+/* When sidebar is closed, position buttons as floating */
+.control-icons:not(.sidebar-open) .settings-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1500;
+}
+
+.control-icons:not(.sidebar-open) .ai-toggle {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 1500;
 }
 
 .control-icons.zen-mode {
     opacity: 0;
-    transform: translateY(-50%) translateX(100%);
     pointer-events: none;
 }
 
@@ -451,17 +599,14 @@ body {
 }
 
 .ai-toggle {
-    position: fixed;
     width: 48px;
     height: 48px;
-    right: 1rem;
-    bottom: 7rem;
-    border-radius: 8px;
-    border: 1px solid #333;
+    border-radius: 12px;
+    border: 2px solid #333;
     background-color: var(--bg-color);
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transition: all var(--animation-duration) var(--animation-easing);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     display: flex;
@@ -473,12 +618,13 @@ body {
 
 .ai-toggle:hover {
     background-color: #f5f5f5;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    transform: scale(1.08);
+    animation: gentleFloat 2s ease-in-out infinite;
 }
 
 .ai-toggle:active {
-    transform: scale(0.98);
+    animation: buttonPressAnimation var(--micro-animation-duration) var(--animation-easing);
 }
 
 .ai-toggle svg {
@@ -486,30 +632,32 @@ body {
     height: 20px;
     stroke: currentColor;
     pointer-events: none;
+    transition: transform var(--micro-animation-duration) var(--animation-easing);
+}
+
+.ai-toggle:hover svg {
+    transform: rotate(5deg) scale(1.1);
 }
 
 .ai-window {
-    position: fixed;
-    bottom: 2rem;
-    right: 6rem;
-    width: min(400px, calc(100vw - 8rem));
-    height: min(500px, calc(100vh - 6rem));
-    max-width: 95vw;
-    max-height: 80vh;
-    background-color: var(--bg-color);
-    border: 1px solid #333;
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     display: none;
+    width: 100%;
+    height: 400px;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-top: 1rem;
     flex-direction: column;
-    /* Ensure window never goes outside viewport */
-    transform: translateY(-50%);
-    top: 50%;
-    z-index: 1600;
+    transition: all var(--animation-duration) var(--animation-easing);
 }
 
 .ai-window.visible {
     display: flex;
+    animation: fadeIn var(--animation-duration) var(--animation-easing);
+}
+
+.ai-window.closing {
+    animation: modalSlideOut var(--animation-duration) var(--animation-easing);
 }
 
 /* Adjust AI window position if it would go outside viewport */
@@ -525,12 +673,21 @@ body {
 
 .ai-header {
     padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
     background-color: var(--highlight-color);
-    flex-shrink: 0; /* Prevent header from shrinking */
+    flex-shrink: 0;
+    border-radius: 10px 10px 0 0;
+    cursor: move;
+    user-select: none;
+}
+
+.ai-header:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    transition: all var(--micro-animation-duration) var(--animation-easing);
 }
 
 .ai-content {
@@ -544,6 +701,28 @@ body {
 .ai-header h3 {
     font-size: 1rem;
     margin: 0;
+}
+
+/* Drag handle for AI window */
+.ai-drag-handle {
+    cursor: grab;
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.25rem 0.5rem;
+    user-select: none;
+    transition: all var(--micro-animation-duration) var(--animation-easing);
+    border-radius: 4px;
+}
+
+.ai-drag-handle:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.8);
+}
+
+.ai-drag-handle:active {
+    cursor: grabbing;
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
 .ai-close {
@@ -606,6 +785,8 @@ body {
 
 /* Enhanced AI Window Styles */
 .ai-window.expanded {
+    display: flex !important;
+    flex-direction: column !important;
     width: 95vw !important;
     height: 90vh !important;
     left: 50% !important;
@@ -687,35 +868,6 @@ body {
     width: 100%;
 }
 
-/* AI Toggle Button Draggable */
-.ai-toggle {
-    position: fixed;
-    width: 48px;
-    height: 48px;
-    background-color: var(--bg-color);
-    border: 1px solid #333;
-    border-radius: 50%;
-    cursor: pointer;
-    z-index: 1500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-color);
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.ai-toggle:hover {
-    background-color: var(--highlight-color);
-    border-color: var(--accent-color);
-    transform: scale(1.05);
-}
-
-.ai-toggle svg {
-    width: 24px;
-    height: 24px;
-}
-
 /* Improved chat container boundaries */
 .ai-chat {
     flex: 1;
@@ -733,7 +885,7 @@ body {
 .ai-message {
     margin-bottom: 1rem;
     padding: 0.75rem;
-    border-radius: 4px;
+    border-radius: 8px;
     background-color: var(--highlight-color);
     font-size: 0.9rem;
     line-height: 1.4;
@@ -741,9 +893,26 @@ body {
     overflow-wrap: break-word;
     max-width: 100%;
     box-sizing: border-box;
+    opacity: 0;
+    animation: fadeIn var(--animation-duration) var(--animation-easing) forwards;
 }
 
-/* Settings Panel */
+/* Typing indicator animation */
+.typing-indicator .typing-dots {
+    opacity: 0.8;
+    animation: typingDots 1.4s infinite;
+}
+
+.typing-indicator .typing-dots::before {
+    content: "●";
+    animation: typingDots 1.4s infinite;
+}
+
+.typing-indicator .typing-dots::after {
+    content: "●●";
+    animation: typingDots 1.4s infinite 0.2s;
+}
+
 /* Settings Panel */
 .settings-panel {
     position: relative;
@@ -752,12 +921,12 @@ body {
 .settings-toggle {
     width: 48px;
     height: 48px;
-    border-radius: 8px;
-    border: 1px solid #333;
+    border-radius: 12px;
+    border: none;
     background-color: var(--bg-color);
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transition: all var(--animation-duration) var(--animation-easing);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     display: flex;
@@ -768,12 +937,12 @@ body {
 
 .settings-toggle:hover {
     background-color: #f5f5f5;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    transform: scale(1.08);
 }
 
 .settings-toggle:active {
-    transform: scale(0.98);
+    animation: buttonPressAnimation var(--micro-animation-duration) var(--animation-easing);
 }
 
 .settings-toggle svg {
@@ -781,30 +950,91 @@ body {
     height: 20px;
     stroke: currentColor;
     pointer-events: none;
+    transition: transform var(--animation-duration) var(--animation-easing);
+}
+
+.settings-toggle:hover svg {
+    transform: rotate(45deg) scale(1.1);
 }
 
 .settings-content {
-    position: fixed;
-    top: 50%;
-    right: 6rem;
-    transform: translateY(-50%);
-    width: min(300px, calc(100vw - 8rem));
-    max-width: 95vw;
-    max-height: calc(100vh - 4rem);
-    background-color: var(--bg-color);
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 1.5rem;
-    z-index: 1600;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     display: none;
+    width: 100%;
+    background-color: var(--bg-color);
+    border-radius: 0;
+    margin-top: 1rem;
     overflow-y: auto;
-    /* Ensure settings never go outside viewport */
-    transform: translateX(0);
+    max-height: calc(100vh - 200px);
+    transition: all var(--animation-duration) var(--animation-easing);
 }
 
 .settings-content.visible {
     display: block;
+    animation: fadeIn var(--animation-duration) var(--animation-easing);
+}
+
+.settings-content.visible {
+    display: block;
+    opacity: 1;
+    animation: modalSlideIn var(--animation-duration) var(--animation-easing);
+}
+
+.settings-content.closing {
+    animation: modalSlideOut var(--animation-duration) var(--animation-easing);
+}
+
+/* Settings header for dragging */
+.settings-header {
+    padding: 1rem;
+    border-bottom: none;
+    background-color: var(--highlight-color);
+    cursor: move;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0;
+}
+
+.settings-header:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    transition: all var(--micro-animation-duration) var(--animation-easing);
+}
+
+.settings-header:active {
+    cursor: grabbing;
+}
+
+.settings-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.settings-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--micro-animation-duration) var(--animation-easing);
+}
+
+.settings-close:hover {
+    background-color: #ff4444;
+    color: white;
+}
+
+.settings-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 8rem);
 }
 
 /* Adjust settings panel position if it would go outside viewport */
@@ -840,23 +1070,43 @@ body {
     padding: 0.5rem;
     border: 1px solid var(--border-color);
     border-radius: 4px;
+    transition: all var(--micro-animation-duration) var(--animation-easing);
+}
+
+.setting-group select:focus,
+.setting-group input[type="range"]:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.1);
 }
 
 .setting-group input[type="checkbox"] {
     margin-right: 0.5rem;
+    transform: scale(1.2);
+    transition: transform var(--micro-animation-duration) var(--animation-easing);
+}
+
+.setting-group input[type="checkbox"]:hover {
+    transform: scale(1.3);
 }
 
 /* Enhanced Responsive Design */
 /* Tablet and smaller */
-@media (max-width: 1024px) {
-    .ai-helper {
+@media (max-width: 1024px) and (min-width: 769px) {
+    /* Fix positioning to prevent overlap */
+    .ai-toggle {
         bottom: 1rem;
         right: 1rem;
     }
     
-    .settings-panel {
-        top: 1rem;
+    /* Position settings button in control-icons container with proper spacing */
+    .control-icons {
         right: 1rem;
+        top: auto;
+        bottom: 6rem; /* Position above AI button with spacing */
+        transform: none;
+        flex-direction: column;
+        gap: 8px;
     }
     
     .ai-window {
@@ -878,6 +1128,8 @@ body {
     
     .nav-panel {
         transform: translateX(-100%);
+        width: 85vw; /* Prevent full-width on medium tablets */
+        max-width: 320px;
     }
     
     .nav-panel.visible {
@@ -887,41 +1139,214 @@ body {
     .main-content {
         margin-left: 0;
         padding: 1rem;
+        min-height: calc(100vh - 2rem); /* Ensure proper height */
     }
     
     .chapter-content {
-        max-width: 100%;
+        width: 90%;
+        padding: 0.5rem 0; /* Better content spacing */
     }
     
     .chapter-nav, .page-nav {
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.75rem; /* Tighter gap for mobile */
+        margin: 1rem 0;
     }
     
+    .nav-btn, .page-btn {
+        min-height: 44px; /* Accessibility touch target */
+        padding: 0.75rem 1rem;
+        font-size: 14px;
+    }
+    
+    /* Improved control icons positioning */
     .control-icons {
-        right: 4px;
-        gap: 8px;
+        right: 8px;
+        bottom: 8rem; /* More space from bottom edge */
+        top: auto;
+        transform: none;
+        gap: 16px; /* Larger gap for easier tapping */
+        flex-direction: column;
+        z-index: 1500;
     }
     
-    .ai-toggle,
+    .ai-toggle {
+        width: 48px; /* Larger touch target */
+        height: 48px;
+        right: 8px;
+        bottom: 1.5rem;
+        z-index: 1600;
+    }
+    
     .settings-toggle {
-        width: 44px;
-        height: 44px;
+        width: 48px; /* Larger touch target */
+        height: 48px;
+        z-index: 1500;
     }
     
     .ai-toggle svg,
     .settings-toggle svg {
-        width: 18px;
-        height: 18px;
+        width: 20px; /* Slightly larger icons */
+        height: 20px;
     }
     
+    /* Full-screen modal for better mobile UX */
     .ai-window {
-        width: calc(100vw - 1rem);
-        height: calc(100vh - 6rem);
-        right: 0.5rem;
-        bottom: 2rem;
-        top: 2rem;
+        width: 100vw;
+        height: 100vh;
+        right: 0;
+        bottom: 0;
+        top: 0;
+        left: 0;
         transform: none;
+        border-radius: 0;
+        border: none;
+        z-index: 1700;
+    }
+    
+    .ai-nav-controls {
+        gap: 8px; /* Better spacing */
+    }
+    
+    .ai-nav-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px; /* Prevent shrinking */
+    }
+    
+    .ai-nav-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .ai-close {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+        min-width: 32px;
+    }
+    
+    .ai-drag-handle {
+        font-size: 16px;
+        padding: 0 8px;
+        min-width: 24px;
+    }
+    
+    .ai-header {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .ai-content {
+        padding: 1rem;
+        height: calc(100vh - 140px); /* Account for header and input */
+    }
+    
+    .ai-chat {
+        height: calc(100% - 60px); /* Account for input area */
+        max-height: none;
+    }
+    
+    .ai-input {
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-color);
+    }
+    
+    /* Full-screen settings modal */
+    .settings-content {
+        width: 100vw;
+        height: 100vh;
+        right: 0;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        transform: none;
+        max-height: none;
+        border-radius: 0;
+        border: none;
+        z-index: 1600;
+        overflow-y: auto;
+    }
+    
+    .settings-header {
+        position: sticky;
+        top: 0;
+        background: var(--bg-color);
+        z-index: 10;
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem;
+    }
+    
+    .settings-body {
+        padding: 1rem;
+        padding-bottom: 2rem; /* Extra bottom padding */
+    }
+}
+
+/* Small mobile phones */
+@media (max-width: 480px) {
+    :root {
+        --nav-width: 100vw;
+        --font-size: 13px;
+        --animation-duration: 0.2s; /* Faster animations on small screens */
+    }
+    
+    .main-content {
+        padding: 0.75rem;
+        font-size: 13px;
+    }
+    
+    .chapter-content {
+        padding: 0.25rem 0;
+    }
+    
+    .chapter-nav, .page-nav {
+        gap: 0.5rem;
+        margin: 0.75rem 0;
+    }
+    
+    .nav-btn, .page-btn {
+        min-height: 44px;
+        padding: 0.5rem 0.75rem;
+        font-size: 13px;
+    }
+    
+    /* Ensure full-screen modals */
+    .ai-window {
+        width: 100vw;
+        height: 100vh;
+        right: 0;
+        bottom: 0;
+        top: 0;
+        left: 0;
+        border-radius: 0;
+        border: none;
+    }
+    
+    .ai-header {
+        padding: 0.75rem;
+    }
+    
+    .ai-content {
+        padding: 0.75rem;
+        height: calc(100vh - 120px);
+    }
+    
+    .ai-chat {
+        height: calc(100% - 50px);
+    }
+    
+    .ai-input {
+        padding: 0.75rem;
+    }
+    
+    .ai-input input {
+        font-size: 16px; /* Prevent zoom on iOS */
     }
     
     .ai-nav-controls {
@@ -931,6 +1356,7 @@ body {
     .ai-nav-btn {
         width: 28px;
         height: 28px;
+        min-width: 28px;
     }
     
     .ai-nav-btn svg {
@@ -942,77 +1368,211 @@ body {
         width: 28px;
         height: 28px;
         font-size: 14px;
+        min-width: 28px;
     }
     
     .ai-drag-handle {
         font-size: 14px;
         padding: 0 4px;
-    }
-    
-    .settings-content {
-        width: calc(100vw - 1rem);
-        right: 0.5rem;
-        top: 2rem;
-        transform: none;
-        max-height: calc(100vh - 4rem);
-    }
-}
-
-/* Small mobile phones */
-@media (max-width: 480px) {
-    :root {
-        --nav-width: 100vw;
-        --font-size: 13px;
-    }
-    
-    .ai-window {
-        width: 100vw;
-        height: calc(100vh - 4rem);
-        right: 0;
-        bottom: 0;
-        border-radius: 8px 8px 0 0;
-    }
-    
-    .ai-nav-controls {
-        gap: 2px;
-    }
-    
-    .ai-nav-btn {
-        width: 24px;
-        height: 24px;
-    }
-    
-    .ai-nav-btn svg {
-        width: 12px;
-        height: 12px;
-    }
-    
-    .ai-close {
-        width: 24px;
-        height: 24px;
-        font-size: 12px;
-    }
-    
-    .ai-drag-handle {
-        font-size: 12px;
-        padding: 0 2px;
+        min-width: 20px;
     }
     
     .settings-content {
         width: 100vw;
+        height: 100vh;
         right: 0;
         top: 0;
-        max-height: 100vh;
+        left: 0;
+        bottom: 0;
+        max-height: none;
         border-radius: 0;
-        padding: 1rem;
+        border: none;
+        padding: 0;
+    }
+    
+    .settings-header {
+        padding: 0.75rem;
+    }
+    
+    .settings-body {
+        padding: 0.75rem;
+        padding-bottom: 2rem;
+    }
+    
+    .setting-group {
+        margin-bottom: 1.5rem; /* More space between settings */
+    }
+    
+    .setting-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .setting-group input,
+    .setting-group select {
+        font-size: 16px; /* Prevent zoom on iOS */
+        min-height: 44px; /* Accessibility */
     }
     
     .nav-panel {
         width: 100vw;
     }
+    
+    .nav-header {
+        padding: 0.75rem;
+    }
+    
+    .nav-content {
+        padding: 0.75rem;
+    }
+    
+    /* Control icons positioning for very small screens */
+    .control-icons {
+        right: 6px;
+        bottom: 6rem;
+        gap: 12px;
+    }
+    
+    .ai-toggle {
+        width: 44px;
+        height: 44px;
+        right: 6px;
+        bottom: 1rem;
+    }
+    
+    .settings-toggle {
+        width: 44px;
+        height: 44px;
+    }
 }
 
-/* Additional UI improvements */
+/* Additional responsive improvements */
+@media (max-width: 360px) {
+    /* Extra small phones */
+    :root {
+        --font-size: 12px;
+    }
+    
+    .main-content {
+        padding: 0.5rem;
+    }
+    
+    .chapter-nav, .page-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .nav-btn, .page-btn {
+        flex: 1;
+        min-width: 120px;
+        max-width: 200px;
+    }
+    
+    .control-icons {
+        right: 4px;
+        bottom: 5rem;
+    }
+    
+    .ai-toggle {
+        right: 4px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .settings-toggle {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 768px) and (orientation: landscape) {
+    .ai-window {
+        width: 70vw;
+        height: 90vh;
+        right: 2rem;
+        bottom: auto;
+        top: 50%;
+        left: auto;
+        transform: translateY(-50%);
+        border-radius: 12px;
+        border: 2px solid var(--border-color);
+    }
+    
+    .settings-content {
+        width: 60vw;
+        height: 80vh;
+        right: 2rem;
+        top: 50%;
+        left: auto;
+        bottom: auto;
+        transform: translateY(-50%);
+        border-radius: 12px;
+        border: 2px solid var(--border-color);
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .main-content {
+        padding: 0.75rem;
+    }
+    
+    .chapter-nav, .page-nav {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+}
+
+/* Tablet portrait */
+@media (min-width: 769px) and (max-width: 1024px) {
+    :root {
+        --nav-width: 300px;
+        --font-size: 15px;
+    }
+    
+    .control-icons {
+        right: 12px;
+        gap: 20px;
+    }
+    
+    .ai-toggle, .settings-toggle {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .ai-toggle svg, .settings-toggle svg {
+        width: 22px;
+        height: 22px;
+    }
+    
+    .ai-window {
+        width: min(450px, 90vw);
+        height: min(600px, 85vh);
+        right: 4rem;
+    }
+    
+    .settings-content {
+        width: min(400px, 85vw);
+        max-height: 80vh;
+        right: 4rem;
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .ai-toggle svg,
+    .settings-toggle svg,
+    .nav-btn,
+    .page-btn {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* Modal backdrop improvements */
 .modal-backdrop {
     position: fixed;
     top: 0;
@@ -1022,10 +1582,31 @@ body {
     background-color: rgba(0, 0, 0, 0.1);
     z-index: 1200;
     display: none;
+    transition: opacity var(--animation-duration) ease;
 }
 
 .modal-backdrop.visible {
     display: block;
+    opacity: 1;
+    animation: fadeIn var(--animation-duration) ease;
+}
+
+/* Improved viewport handling */
+@supports (height: 100dvh) {
+    .ai-window,
+    .settings-content {
+        height: 100dvh; /* Use dynamic viewport height when supported */
+    }
+    
+    @media (max-width: 768px) {
+        .ai-window {
+            height: 100dvh;
+        }
+        
+        .settings-content {
+            height: 100dvh;
+        }
+    }
 }
 
 /* Better touch targets and spacing */
@@ -1034,6 +1615,34 @@ button, .clickable {
     min-height: 44px;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+}
+
+/* Tool button styles */
+.tool-btn {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border: 2px solid var(--accent-color);
+    padding: 0.5rem 1rem;
+    margin: 0.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all var(--animation-duration) var(--animation-easing);
+    display: inline-block;
+    text-align: center;
+    min-width: auto;
+}
+
+.tool-btn:hover {
+    background-color: var(--bg-color);
+    color: var(--accent-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.tool-btn:active {
+    animation: buttonPressAnimation var(--micro-animation-duration) var(--animation-easing);
 }
 
 /* Improved focus indicators */
@@ -1231,4 +1840,47 @@ a:focus-visible {
 /* Hide PWA controls when not supported */
 .no-pwa-support .pwa-install-group {
     display: none;
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .ai-toggle:hover,
+    .settings-toggle:hover {
+        animation: none;
+        transform: scale(1.02);
+    }
+    
+    .toc-list a:hover,
+    .bookmarks-list a:hover,
+    .history-list a:hover {
+        transform: translateX(2px);
+    }
+}
+
+/* Enhanced modal backdrop */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.1);
+    z-index: 1200;
+    opacity: 0;
+    transition: opacity var(--animation-duration) var(--animation-easing);
+}
+
+.modal-backdrop.visible {
+    opacity: 1;
+}
+
+/* Settings specific backdrop with lower z-index */
+.modal-backdrop.settings-backdrop {
+    z-index: 1590;
 }

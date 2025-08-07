@@ -19,6 +19,7 @@ class FASMeBookSettings {
         
         this.settings = {};
         this.isOpen = false;
+        this.isDragging = false; // Track dragging state for backdrop management
         
         // PWA install prompt
         this.deferredPrompt = null;
@@ -58,9 +59,18 @@ class FASMeBookSettings {
     setupEventListeners() {
         const settingsToggle = document.getElementById('settings-toggle');
         const settingsContent = document.querySelector('.settings-content');
+        const settingsClose = document.querySelector('.settings-close');
         
         if (settingsToggle) {
-            settingsToggle.addEventListener('click', () => this.toggle());
+            settingsToggle.addEventListener('click', () => {
+                // Close other modals first
+                this.closeOtherModals();
+                this.toggle();
+            });
+        }
+        
+        if (settingsClose) {
+            settingsClose.addEventListener('click', () => this.close());
         }
         
         // Close settings when clicking outside
@@ -70,7 +80,14 @@ class FASMeBookSettings {
             }
         });
         
-        // Setting controls
+        // ESC key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.close();
+            }
+        });
+        
+        // Setting controls (no longer making content draggable - using sidebar now)
         this.setupDisplayModeControl();
         this.setupFontSizeControl();
         this.setupLineHeightControl();
@@ -80,6 +97,13 @@ class FASMeBookSettings {
         
         // Advanced settings button
         this.createAdvancedSettingsButton();
+    }
+    
+    closeOtherModals() {
+        // Close AI assistant if open
+        if (window.fasmAI && window.fasmAI.isOpen) {
+            window.fasmAI.close();
+        }
     }
     
     setupDisplayModeControl() {
@@ -140,12 +164,12 @@ class FASMeBookSettings {
     
     setupThemeControl() {
         // Create theme selector if it doesn't exist
-        const settingsContent = document.querySelector('.settings-content');
-        if (settingsContent && !document.getElementById('theme-select')) {
+        const settingsBody = document.querySelector('.settings-body');
+        if (settingsBody && !document.getElementById('theme-select')) {
             const themeGroup = document.createElement('div');
             themeGroup.className = 'setting-group';
             themeGroup.innerHTML = `
-                <label>Theme:</label>
+                <label for="theme-select">Theme:</label>
                 <select id="theme-select">
                     <option value="eink">eInk Friendly</option>
                     <option value="standard">Standard</option>
@@ -153,7 +177,7 @@ class FASMeBookSettings {
                     <option value="sepia">Sepia</option>
                 </select>
             `;
-            settingsContent.appendChild(themeGroup);
+            settingsBody.appendChild(themeGroup);
             
             const themeSelect = document.getElementById('theme-select');
             themeSelect.value = this.settings.theme;
@@ -182,9 +206,138 @@ class FASMeBookSettings {
         this.createPWAInstallButton();
     }
     
+    makeDraggable(element) {
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        let hasMoved = false;
+        let startPosition = { x: 0, y: 0 };
+        
+        const header = element.querySelector('.settings-header');
+        if (!header) return;
+        
+        const onMouseDown = (e) => {
+            // Only allow dragging from header area
+            if (!e.target.closest('.settings-header')) return;
+            
+            // Don't drag if clicking close button or other controls
+            if (e.target.closest('.settings-close, input, button, select')) return;
+            
+            // Reset movement tracking
+            hasMoved = false;
+            startPosition = { x: e.clientX, y: e.clientY };
+            
+            isDragging = true;
+            this.isDragging = true; // Set on instance for backdrop detection
+            
+            const rect = element.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            
+            header.style.cursor = 'grabbing';
+            
+            // Disable pointer events on backdrop while dragging
+            const backdrop = document.querySelector('.settings-backdrop');
+            if (backdrop) {
+                backdrop.style.pointerEvents = 'none';
+            }
+            
+            // Disable pointer events on potential interfering elements
+            const interferingElements = element.querySelectorAll('.settings-body, .setting-group');
+            interferingElements.forEach(el => {
+                el.style.pointerEvents = 'none';
+            });
+            
+            e.preventDefault();
+        };
+        
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
+            
+            // Check if we've moved enough to consider this a drag operation
+            const moveDistance = Math.sqrt(
+                Math.pow(e.clientX - startPosition.x, 2) + 
+                Math.pow(e.clientY - startPosition.y, 2)
+            );
+            
+            // Only start dragging if we've moved more than 5 pixels
+            if (moveDistance > 5) {
+                hasMoved = true;
+                
+                const newLeft = e.clientX - dragOffset.x;
+                const newTop = e.clientY - dragOffset.y;
+                
+                // Constrain to viewport
+                const maxLeft = window.innerWidth - element.offsetWidth;
+                const maxTop = window.innerHeight - element.offsetHeight;
+                
+                const constrainedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                const constrainedTop = Math.max(0, Math.min(newTop, maxTop));
+                
+                // Clear transform and use absolute positioning
+                element.style.transform = 'none';
+                element.style.left = `${constrainedLeft}px`;
+                element.style.top = `${constrainedTop}px`;
+                element.style.right = 'auto';
+                element.style.bottom = 'auto';
+            }
+            
+            e.preventDefault();
+        };
+        
+        const onMouseUp = (e) => {
+            if (isDragging) {
+                isDragging = false;
+                this.isDragging = false; // Clear instance flag
+                header.style.cursor = 'move';
+                
+                // Re-enable backdrop pointer events after dragging
+                const backdrop = document.querySelector('.settings-backdrop');
+                if (backdrop) {
+                    backdrop.style.pointerEvents = 'auto';
+                }
+                
+                // Re-enable pointer events on interfering elements
+                const interferingElements = element.querySelectorAll('.settings-body, .setting-group');
+                interferingElements.forEach(el => {
+                    el.style.pointerEvents = 'auto';
+                });
+            }
+        };
+        
+        element.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        
+        // Touch events for mobile
+        element.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            onMouseDown({ 
+                clientX: touch.clientX, 
+                clientY: touch.clientY, 
+                preventDefault: () => e.preventDefault(),
+                target: e.target 
+            });
+        });
+        
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                const touch = e.touches[0];
+                onMouseMove({ 
+                    clientX: touch.clientX, 
+                    clientY: touch.clientY, 
+                    preventDefault: () => e.preventDefault() 
+                });
+            }
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            onMouseUp(e);
+        });
+    }
+    
     createToggleControl(id, settingKey, label) {
-        const settingsContent = document.querySelector('.settings-content');
-        if (!settingsContent || document.getElementById(id)) return;
+        const settingsBody = document.querySelector('.settings-body');
+        if (!settingsBody || document.getElementById(id)) return;
         
         const group = document.createElement('div');
         group.className = 'setting-group';
@@ -195,7 +348,7 @@ class FASMeBookSettings {
             </label>
         `;
         
-        settingsContent.appendChild(group);
+        settingsBody.appendChild(group);
         
         const checkbox = document.getElementById(id);
         checkbox.addEventListener('change', (e) => {
@@ -205,8 +358,8 @@ class FASMeBookSettings {
     }
     
     createAdvancedSettingsButton() {
-        const settingsContent = document.querySelector('.settings-content');
-        if (!settingsContent || document.getElementById('advanced-settings-btn')) return;
+        const settingsBody = document.querySelector('.settings-body');
+        if (!settingsBody || document.getElementById('advanced-settings-btn')) return;
         
         const advancedGroup = document.createElement('div');
         advancedGroup.className = 'setting-group';
@@ -217,7 +370,7 @@ class FASMeBookSettings {
             <button id="reset-settings-btn" class="tool-btn">Reset to Default</button>
         `;
         
-        settingsContent.appendChild(advancedGroup);
+        settingsBody.appendChild(advancedGroup);
         
         // Event listeners
         document.getElementById('advanced-settings-btn')?.addEventListener('click', () => this.openAdvancedSettings());
@@ -245,8 +398,8 @@ class FASMeBookSettings {
     }
     
     createPWAInstallButton() {
-        const settingsContent = document.querySelector('.settings-content');
-        if (!settingsContent || document.getElementById('pwa-install-btn')) return;
+        const settingsBody = document.querySelector('.settings-body');
+        if (!settingsBody || document.getElementById('pwa-install-btn')) return;
         
         const installGroup = document.createElement('div');
         installGroup.className = 'setting-group pwa-install-group';
@@ -266,7 +419,7 @@ class FASMeBookSettings {
             <div id="pwa-install-status" class="pwa-status"></div>
         `;
         
-        settingsContent.appendChild(installGroup);
+        settingsBody.appendChild(installGroup);
         
         // Add click event for install button
         const installBtn = document.getElementById('pwa-install-btn');
@@ -378,44 +531,107 @@ class FASMeBookSettings {
     
     open() {
         const settingsContent = document.querySelector('.settings-content');
-        if (settingsContent) {
-            // Add viewport boundary detection
-            this.adjustPanelPosition(settingsContent);
+        const controlIcons = document.querySelector('.control-icons');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (settingsContent && controlIcons) {
+            // Close other panels first
+            this.closeOtherModals();
+            
+            // Show sidebar and settings content
+            document.body.classList.add('sidebar-open');
+            controlIcons.classList.add('sidebar-open');
             settingsContent.classList.add('visible');
+            
+            // Adjust main content padding
+            if (mainContent) {
+                mainContent.classList.add('sidebar-open');
+            }
+            
             this.isOpen = true;
-        }
-    }
-    
-    adjustPanelPosition(panel) {
-        // Reset position classes
-        panel.classList.remove('adjust-left', 'adjust-down');
-        
-        // Get viewport dimensions
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        
-        // Get panel dimensions (use computed or fallback values)
-        const panelWidth = 300; // min(300px, calc(100vw - 2rem))
-        const panelHeight = 400; // estimated height
-        
-        // Check if panel would go outside right edge (considering right: 1rem positioning)
-        const availableWidth = viewportWidth - 32; // Account for margins
-        if (panelWidth > availableWidth * 0.8) {
-            panel.classList.add('adjust-left');
-        }
-        
-        // Check if panel would go outside bottom edge (considering top: 5rem positioning)
-        const availableHeight = viewportHeight - 160; // Account for top position and margins
-        if (panelHeight > availableHeight) {
-            panel.classList.add('adjust-down');
+            
+            // Focus management for accessibility
+            const firstFocusable = settingsContent.querySelector('select, input, button');
+            if (firstFocusable) {
+                firstFocusable.focus();
+            }
         }
     }
     
     close() {
         const settingsContent = document.querySelector('.settings-content');
-        if (settingsContent) {
+        const controlIcons = document.querySelector('.control-icons');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (settingsContent && controlIcons) {
+            // Hide settings content
             settingsContent.classList.remove('visible');
+            
+            // Check if any other panels are open
+            const aiWindow = document.querySelector('.ai-window');
+            const isAIOpen = aiWindow && aiWindow.classList.contains('visible');
+            
+            if (!isAIOpen) {
+                // No other panels open, close sidebar completely
+                document.body.classList.remove('sidebar-open');
+                controlIcons.classList.remove('sidebar-open');
+                if (mainContent) {
+                    mainContent.classList.remove('sidebar-open');
+                }
+            }
+            
             this.isOpen = false;
+            
+            // Return focus to toggle button
+            const settingsToggle = document.getElementById('settings-toggle');
+            if (settingsToggle) {
+                settingsToggle.focus();
+            }
+        }
+    }
+    
+    showBackdrop() {
+        let backdrop = document.querySelector('.settings-backdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop settings-backdrop';
+            backdrop.style.zIndex = '1590'; // Below settings panel
+            backdrop.style.pointerEvents = 'none'; // Don't block dragging
+            document.body.appendChild(backdrop);
+            
+            // Allow clicking backdrop to close, but enable pointer events only for clicks
+            backdrop.addEventListener('click', (e) => {
+                if (e.target === backdrop) {
+                    this.close();
+                }
+            });
+            
+            // Enable pointer events only when not dragging
+            backdrop.addEventListener('mouseenter', () => {
+                if (!this.isDragging) {
+                    backdrop.style.pointerEvents = 'auto';
+                }
+            });
+            
+            backdrop.addEventListener('mouseleave', () => {
+                backdrop.style.pointerEvents = 'none';
+            });
+        }
+        
+        // Force reflow to ensure animation works
+        backdrop.offsetHeight;
+        backdrop.classList.add('visible');
+    }
+    
+    hideBackdrop() {
+        const backdrop = document.querySelector('.settings-backdrop');
+        if (backdrop) {
+            backdrop.classList.remove('visible');
+            setTimeout(() => {
+                if (backdrop.parentNode) {
+                    backdrop.parentNode.removeChild(backdrop);
+                }
+            }, 300);
         }
     }
     
@@ -580,8 +796,56 @@ class FASMeBookSettings {
     }
     
     openAdvancedSettings() {
-        // Create advanced settings modal
-        const modal = this.createAdvancedSettingsModal();
+        // Use DOM cache for advanced settings modal
+        let modal;
+        
+        if (window.domCache) {
+            modal = window.domCache.getOrCreateSettingsModal({
+                displayMode: this.settings.displayMode,
+                fontSize: this.settings.fontSize,
+                lineHeight: this.settings.lineHeight,
+                drawingEnabled: this.settings.drawingEnabled,
+                autoBookmark: this.settings.autoBookmark,
+                soundEnabled: this.settings.soundEnabled,
+                animations: this.settings.animations,
+                showProgress: this.settings.showProgress,
+                readingGoal: this.settings.readingGoal,
+                autoSave: this.settings.autoSave,
+                keyboardShortcuts: this.settings.keyboardShortcuts,
+                syncEnabled: this.settings.syncEnabled
+            });
+            
+            if (modal) {
+                // Setup event listeners for the cached modal
+                this.setupAdvancedModalEvents(modal);
+                
+                // Make modal draggable using shared utility
+                if (window.dragUtility && !modal.hasAttribute('data-draggable')) {
+                    window.dragUtility.makeDraggable(modal, {
+                        isToggle: false,
+                        handle: '.modal-header',
+                        storageKey: 'advancedSettingsPosition',
+                        onEscape: () => {
+                            modal.remove();
+                        }
+                    });
+                    modal.setAttribute('data-draggable', 'true');
+                }
+                
+                document.body.appendChild(modal);
+                
+                // Focus first input for accessibility
+                const firstInput = modal.querySelector('select, input, button');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+                
+                return;
+            }
+        }
+        
+        // Fallback to creating modal if cache not available
+        modal = this.createAdvancedSettingsModal();
         document.body.appendChild(modal);
     }
     
@@ -637,6 +901,156 @@ class FASMeBookSettings {
         modal.querySelector('#recalculate-progress').addEventListener('click', () => this.recalculateProgress());
         
         return modal;
+    }
+    
+    setupAdvancedModalEvents(modal) {
+        // Remove any existing listeners to prevent duplicates
+        const existingListeners = modal.querySelectorAll('[data-listener-added]');
+        existingListeners.forEach(el => {
+            el.removeAttribute('data-listener-added');
+            // Note: We can't easily remove specific listeners, so we rely on preventing duplicates
+        });
+        
+        // Close modal events
+        const closeBtn = modal.querySelector('.modal-close');
+        const cancelBtn = modal.querySelector('#cancel-settings');
+        const saveBtn = modal.querySelector('#save-settings');
+        
+        if (closeBtn && !closeBtn.hasAttribute('data-listener-added')) {
+            closeBtn.addEventListener('click', () => modal.remove());
+            closeBtn.setAttribute('data-listener-added', 'true');
+        }
+        
+        if (cancelBtn && !cancelBtn.hasAttribute('data-listener-added')) {
+            cancelBtn.addEventListener('click', () => modal.remove());
+            cancelBtn.setAttribute('data-listener-added', 'true');
+        }
+        
+        if (saveBtn && !saveBtn.hasAttribute('data-listener-added')) {
+            saveBtn.addEventListener('click', () => {
+                this.saveModalSettings(modal);
+                modal.remove();
+            });
+            saveBtn.setAttribute('data-listener-added', 'true');
+        }
+        
+        // Settings control events
+        this.setupModalFormControls(modal);
+        
+        // Reset and export buttons
+        const resetBtn = modal.querySelector('#reset-settings');
+        const exportBtn = modal.querySelector('#export-settings');
+        const importBtn = modal.querySelector('#import-settings');
+        
+        if (resetBtn && !resetBtn.hasAttribute('data-listener-added')) {
+            resetBtn.addEventListener('click', () => this.resetSettingsConfirm());
+            resetBtn.setAttribute('data-listener-added', 'true');
+        }
+        
+        if (exportBtn && !exportBtn.hasAttribute('data-listener-added')) {
+            exportBtn.addEventListener('click', () => this.exportSettings());
+            exportBtn.setAttribute('data-listener-added', 'true');
+        }
+        
+        if (importBtn && !importBtn.hasAttribute('data-listener-added')) {
+            importBtn.addEventListener('click', () => this.importSettings());
+            importBtn.setAttribute('data-listener-added', 'true');
+        }
+    }
+    
+    setupModalFormControls(modal) {
+        // Display mode control
+        const displayMode = modal.querySelector('#display-mode');
+        if (displayMode && !displayMode.hasAttribute('data-listener-added')) {
+            displayMode.addEventListener('change', (e) => {
+                this.updateSetting('displayMode', e.target.value);
+                this.applyDisplayMode(e.target.value);
+                this.announceSettingChange('Display mode', e.target.value);
+            });
+            displayMode.setAttribute('data-listener-added', 'true');
+        }
+        
+        // Font size slider
+        const fontSize = modal.querySelector('#font-size');
+        const fontSizeValue = modal.querySelector('#font-size-value');
+        if (fontSize && !fontSize.hasAttribute('data-listener-added')) {
+            fontSize.addEventListener('input', (e) => {
+                const size = parseInt(e.target.value);
+                if (fontSizeValue) fontSizeValue.textContent = `${size}px`;
+                this.updateSetting('fontSize', size);
+                this.applyFontSize(size);
+                this.announceSettingChange('Font size', `${size} pixels`);
+            });
+            fontSize.setAttribute('data-listener-added', 'true');
+        }
+        
+        // Line height slider
+        const lineHeight = modal.querySelector('#line-height');
+        const lineHeightValue = modal.querySelector('#line-height-value');
+        if (lineHeight && !lineHeight.hasAttribute('data-listener-added')) {
+            lineHeight.addEventListener('input', (e) => {
+                const height = parseFloat(e.target.value);
+                if (lineHeightValue) lineHeightValue.textContent = height.toFixed(1);
+                this.updateSetting('lineHeight', height);
+                this.applyLineHeight(height);
+                this.announceSettingChange('Line height', height.toFixed(1));
+            });
+            lineHeight.setAttribute('data-listener-added', 'true');
+        }
+        
+        // Reading goal slider
+        const readingGoal = modal.querySelector('#reading-goal');
+        const readingGoalValue = modal.querySelector('#reading-goal-value');
+        if (readingGoal && !readingGoal.hasAttribute('data-listener-added')) {
+            readingGoal.addEventListener('input', (e) => {
+                const goal = parseInt(e.target.value);
+                if (readingGoalValue) readingGoalValue.textContent = `${goal} min`;
+                this.updateSetting('readingGoal', goal);
+                this.announceSettingChange('Reading goal', `${goal} minutes`);
+            });
+            readingGoal.setAttribute('data-listener-added', 'true');
+        }
+        
+        // Checkbox controls
+        const checkboxes = [
+            { id: 'drawing-enabled', setting: 'drawingEnabled', label: 'Drawing tools' },
+            { id: 'auto-bookmark', setting: 'autoBookmark', label: 'Auto-bookmark' },
+            { id: 'sound-enabled', setting: 'soundEnabled', label: 'Sound effects' },
+            { id: 'animations', setting: 'animations', label: 'Animations' },
+            { id: 'show-progress', setting: 'showProgress', label: 'Progress display' },
+            { id: 'auto-save', setting: 'autoSave', label: 'Auto-save' },
+            { id: 'keyboard-shortcuts', setting: 'keyboardShortcuts', label: 'Keyboard shortcuts' },
+            { id: 'sync-enabled', setting: 'syncEnabled', label: 'Device sync' }
+        ];
+        
+        checkboxes.forEach(({ id, setting, label }) => {
+            const checkbox = modal.querySelector(`#${id}`);
+            if (checkbox && !checkbox.hasAttribute('data-listener-added')) {
+                checkbox.addEventListener('change', (e) => {
+                    this.updateSetting(setting, e.target.checked);
+                    this.announceSettingChange(label, e.target.checked ? 'enabled' : 'disabled');
+                });
+                checkbox.setAttribute('data-listener-added', 'true');
+            }
+        });
+    }
+    
+    announceSettingChange(settingName, value) {
+        // Announce changes to screen readers
+        if (window.dragUtility) {
+            window.dragUtility.announceToScreenReader(`${settingName} changed to ${value}`);
+        }
+    }
+    
+    saveModalSettings(modal) {
+        // This method saves all settings from the modal form
+        const formData = new FormData(modal.querySelector('form') || modal);
+        
+        // Save all changed settings
+        this.saveSettings();
+        
+        // Announce completion
+        this.announceSettingChange('Settings', 'saved successfully');
     }
     
     saveAdvancedSettings(modal) {

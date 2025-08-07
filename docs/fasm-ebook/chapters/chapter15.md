@@ -1185,7 +1185,7 @@ generate_ci_report:
       - name: Performance analysis
         run: |
           # Extract cycle count annotations and validate
-          grep -r "📊 Cycles:" . | while read -r line; do
+          grep -r "▦ Cycles:" . | while read -r line; do
             echo "Found performance annotation: $line"
           done
           
@@ -1194,7 +1194,7 @@ generate_ci_report:
           # Ensure all assembly instructions are documented
           instructions=$(grep -ho -E '\b(mov|push|call|add|sub|ret|jmp|inc|dec|cmp|test)\b' **/*.asm | sort -u)
           for inst in $instructions; do
-            if ! grep -r "## 📚.*$inst" docs/; then
+            if ! grep -r "## ▣.*$inst" docs/; then
               echo "⚠️ Missing documentation for instruction: $inst"
             fi
           done

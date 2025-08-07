@@ -11,6 +11,7 @@ class FASMeBookAI {
         // Dragging functionality
         this.isDragging = false;
         this.isDraggingToggle = false;
+        this.justFinishedDragging = false;
         this.dragOffset = { x: 0, y: 0 };
         this.togglePosition = this.loadTogglePosition();
         
@@ -26,25 +27,56 @@ class FASMeBookAI {
     }
     
     init() {
+        // Ensure AI window starts hidden
+        const aiWindow = document.getElementById('ai-window');
+        if (aiWindow) {
+            aiWindow.classList.remove('visible');
+            this.isOpen = false;
+        }
+        
         this.setupEventListeners();
         this.loadConversationHistory();
         this.detectCurrentChapter();
         this.initializeContextualHelp();
         this.initializeDraggableToggle();
         this.initializeVirtualScrolling();
-        this.setupChatBoundaries();
+        // Note: setupChatBoundaries is now called only when window opens
     }
     
     loadTogglePosition() {
         const saved = localStorage.getItem('aiTogglePosition');
         if (saved) {
-            return JSON.parse(saved);
+            try {
+                const position = JSON.parse(saved);
+                // Validate the position values to prevent corruption
+                if (position && typeof position.right === 'string' && typeof position.bottom === 'string') {
+                    // Check if values are reasonable (not negative huge numbers or invalid)
+                    const rightNum = parseInt(position.right);
+                    const bottomNum = parseInt(position.bottom);
+                    if (!isNaN(rightNum) && !isNaN(bottomNum) && rightNum >= 0 && bottomNum >= 0 && rightNum < window.innerWidth && bottomNum < window.innerHeight) {
+                        return position;
+                    }
+                }
+            } catch (e) {
+                console.warn('Invalid stored AI toggle position, using default');
+            }
         }
         return { right: '1rem', bottom: '7rem' }; // Default position
     }
     
     saveTogglePosition() {
         localStorage.setItem('aiTogglePosition', JSON.stringify(this.togglePosition));
+    }
+    
+    updateTogglePosition() {
+        const aiToggle = document.getElementById('ai-toggle');
+        if (aiToggle) {
+            this.togglePosition = {
+                right: aiToggle.style.right,
+                bottom: aiToggle.style.bottom
+            };
+            this.saveTogglePosition();
+        }
     }
     
     initializeDraggableToggle() {
@@ -54,23 +86,47 @@ class FASMeBookAI {
             aiToggle.style.right = this.togglePosition.right;
             aiToggle.style.bottom = this.togglePosition.bottom;
             
-            // Add direct click handler for toggle functionality
-            if (!aiToggle.hasAttribute('data-click-handler')) {
-                aiToggle.addEventListener('click', (e) => {
-                    // Prevent event if we're dragging
-                    if (this.isDraggingToggle) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return;
+            // Make draggable using shared drag utility
+            if (!aiToggle.hasAttribute('data-draggable') && window.dragUtility) {
+                window.dragUtility.makeDraggable(aiToggle, {
+                    isToggle: true,
+                    storageKey: 'aiTogglePosition',
+                    onClick: (e) => {
+                        this.toggleWindow();
+                    },
+                    onDragStart: (element) => {
+                        this.isDraggingToggle = true;
+                        this.justFinishedDragging = false;
+                        // Disable pointer events on modal if open
+                        if (this.isOpen) {
+                            const aiWindow = document.getElementById('ai-window');
+                            if (aiWindow) {
+                                aiWindow.style.pointerEvents = 'none';
+                            }
+                        }
+                    },
+                    onDragEnd: (element) => {
+                        this.isDraggingToggle = false;
+                        this.justFinishedDragging = true;
+                        this.updateTogglePosition();
+                        
+                        // Re-enable pointer events
+                        const aiWindow = document.getElementById('ai-window');
+                        if (aiWindow) {
+                            aiWindow.style.pointerEvents = '';
+                        }
+                        
+                        // Clear justFinishedDragging after delay
+                        setTimeout(() => {
+                            this.justFinishedDragging = false;
+                        }, 100);
+                    },
+                    onEscape: () => {
+                        if (this.isOpen) {
+                            this.closeWindow();
+                        }
                     }
-                    this.toggleWindow();
                 });
-                aiToggle.setAttribute('data-click-handler', 'true');
-            }
-            
-            // Make draggable only once
-            if (!aiToggle.hasAttribute('data-draggable')) {
-                this.makeDraggable(aiToggle, true);
                 aiToggle.setAttribute('data-draggable', 'true');
             }
         }
@@ -107,12 +163,8 @@ class FASMeBookAI {
             aiContent.style.overflow = 'hidden';
         }
         
-        // Ensure AI window has proper flex layout
-        const aiWindow = document.getElementById('ai-window');
-        if (aiWindow) {
-            aiWindow.style.display = 'flex';
-            aiWindow.style.flexDirection = 'column';
-        }
+        // Don't modify AI window display - this is controlled by CSS classes
+        // The .ai-window has display:none by default and display:flex when .visible is added
     }
     
     detectCurrentChapter() {
@@ -217,10 +269,48 @@ class FASMeBookAI {
         `);
     }
     
-    showInstructionHelp(instruction) {
+    async showInstructionHelp(instruction) {
         const cleanInstruction = instruction.trim().toLowerCase();
         
-        // Check if we have detailed instruction information
+        // Use dynamic glossary first
+        if (window.dynamicGlossary && window.dynamicGlossary.isLoaded) {
+            const instructionInfo = window.dynamicGlossary.getInstruction(cleanInstruction);
+            if (instructionInfo) {
+                this.openWindow();
+                const relatedInstructions = window.dynamicGlossary.getRelatedInstructions(cleanInstruction);
+                const aiSyncData = window.dynamicGlossary.syncWithAI(cleanInstruction);
+                
+                this.addMessage('assistant', `
+                    **${instruction.toUpperCase()} Instruction**
+                    
+                    **Description:** ${instructionInfo.description}
+                    
+                    **Syntax:** ${instructionInfo.syntax}
+                    
+                    **Category:** ${instructionInfo.category}
+                    
+                    **Difficulty:** ${instructionInfo.difficulty}
+                    
+                    **Flags Affected:** ${instructionInfo.flags || 'None specified'}
+                    
+                    **Performance:** ${instructionInfo.cycles || 'Variable'}
+                    
+                    **Examples:**
+                    ${(instructionInfo.examples || []).map(ex => `• \`${ex}\``).join('\n')}
+                    
+                    ${instructionInfo.notes ? `**Notes:** ${instructionInfo.notes}` : ''}
+                    
+                    ${aiSyncData.usageHints.length > 0 ? `**Tips:** ${aiSyncData.usageHints.join(', ')}` : ''}
+                    
+                    ${relatedInstructions.length > 0 ? `**Related:** ${relatedInstructions.map(r => r.name).join(', ')}` : ''}
+                    
+                    Would you like me to show examples or explain optimization techniques for this instruction?
+                `);
+                return;
+            }
+        }
+        
+        // Fallback to static glossary if dynamic not available
         if (window.instructionGlossary) {
             const instructionInfo = window.instructionGlossary.getInstruction(cleanInstruction);
             if (instructionInfo) {
@@ -244,7 +334,7 @@ class FASMeBookAI {
             }
         }
         
-        // Fallback explanation
+        // Final fallback explanation
         const explanation = this.getBasicInstructionHelp(cleanInstruction);
         this.openWindow();
         this.addMessage('assistant', explanation);
@@ -574,135 +664,6 @@ Smaller instructions are better because:
         });
     }
     
-    makeDraggable(element, isToggleButton = false) {
-        let isDragging = false;
-        let dragOffset = { x: 0, y: 0 };
-        let hasMoved = false;
-        let startPosition = { x: 0, y: 0 };
-        
-        const onMouseDown = (e) => {
-            // Only allow dragging from header area for window, anywhere for toggle button
-            if (!isToggleButton && !e.target.closest('.ai-header, .ai-drag-handle')) return;
-            
-            // Reset movement tracking
-            hasMoved = false;
-            startPosition = { x: e.clientX, y: e.clientY };
-            
-            isDragging = true;
-            if (isToggleButton) {
-                this.isDraggingToggle = true;
-            }
-            
-            const rect = element.getBoundingClientRect();
-            dragOffset.x = e.clientX - rect.left;
-            dragOffset.y = e.clientY - rect.top;
-            
-            element.style.cursor = 'grabbing';
-            e.preventDefault();
-        };
-        
-        const onMouseMove = (e) => {
-            if (!isDragging) return;
-            
-            // Check if we've moved enough to consider this a drag operation
-            const moveDistance = Math.sqrt(
-                Math.pow(e.clientX - startPosition.x, 2) + 
-                Math.pow(e.clientY - startPosition.y, 2)
-            );
-            
-            // Only start dragging if we've moved more than 5 pixels
-            if (moveDistance > 5) {
-                hasMoved = true;
-                
-                const newLeft = e.clientX - dragOffset.x;
-                const newTop = e.clientY - dragOffset.y;
-                
-                // Constrain to viewport
-                const maxLeft = window.innerWidth - element.offsetWidth;
-                const maxTop = window.innerHeight - element.offsetHeight;
-                
-                const constrainedLeft = Math.max(0, Math.min(newLeft, maxLeft));
-                const constrainedTop = Math.max(0, Math.min(newTop, maxTop));
-                
-                if (isToggleButton) {
-                    // For toggle button, use right/bottom positioning
-                    const right = window.innerWidth - constrainedLeft - element.offsetWidth;
-                    const bottom = window.innerHeight - constrainedTop - element.offsetHeight;
-                    
-                    element.style.right = `${right}px`;
-                    element.style.bottom = `${bottom}px`;
-                    element.style.left = 'auto';
-                    element.style.top = 'auto';
-                    
-                    this.togglePosition = { 
-                        right: `${right}px`, 
-                        bottom: `${bottom}px` 
-                    };
-                } else {
-                    // For AI window, clear transform and use absolute positioning
-                    element.style.transform = 'none';
-                    element.style.left = `${constrainedLeft}px`;
-                    element.style.top = `${constrainedTop}px`;
-                    element.style.right = 'auto';
-                    element.style.bottom = 'auto';
-                }
-            }
-            
-            e.preventDefault();
-        };
-        
-        const onMouseUp = (e) => {
-            if (isDragging) {
-                isDragging = false;
-                if (isToggleButton) {
-                    this.isDraggingToggle = false;
-                }
-                
-                element.style.cursor = isToggleButton ? 'pointer' : 'default';
-                
-                // If we haven't moved much, this was a click, not a drag
-                if (!hasMoved && isToggleButton) {
-                    // For toggle button, click is handled by separate click event listener
-                    // Don't trigger toggle here to avoid double-triggering
-                }
-                
-                if (isToggleButton && hasMoved) {
-                    this.saveTogglePosition();
-                }
-            }
-        };
-        
-        element.addEventListener('mousedown', onMouseDown);
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-        
-        // Touch events for mobile
-        element.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            onMouseDown({ 
-                clientX: touch.clientX, 
-                clientY: touch.clientY, 
-                preventDefault: () => e.preventDefault(),
-                target: e.target 
-            });
-        });
-        
-        document.addEventListener('touchmove', (e) => {
-            if (isDragging) {
-                const touch = e.touches[0];
-                onMouseMove({ 
-                    clientX: touch.clientX, 
-                    clientY: touch.clientY, 
-                    preventDefault: () => e.preventDefault() 
-                });
-            }
-        });
-        
-        document.addEventListener('touchend', (e) => {
-            onMouseUp(e);
-        });
-    }
-    
     toggleExpansion() {
         const aiWindow = document.getElementById('ai-window');
         if (!aiWindow) return;
@@ -717,26 +678,23 @@ Smaller instructions are better because:
                 left: aiWindow.style.left,
                 top: aiWindow.style.top,
                 right: aiWindow.style.right,
-                bottom: aiWindow.style.bottom
+                bottom: aiWindow.style.bottom,
+                transform: aiWindow.style.transform
             };
             
-            // Expand to fullscreen
-            aiWindow.style.width = '95vw';
-            aiWindow.style.height = '90vh';
-            aiWindow.style.left = '50%';
-            aiWindow.style.top = '50%';
-            aiWindow.style.right = 'auto';
-            aiWindow.style.bottom = 'auto';
-            aiWindow.style.transform = 'translate(-50%, -50%)';
+            // Let CSS handle the expanded state
             aiWindow.classList.add('expanded');
         } else {
             // Restore previous size and position
             if (this.savedWindowState) {
                 Object.keys(this.savedWindowState).forEach(prop => {
-                    aiWindow.style[prop] = this.savedWindowState[prop];
+                    if (this.savedWindowState[prop]) {
+                        aiWindow.style[prop] = this.savedWindowState[prop];
+                    } else {
+                        aiWindow.style[prop] = '';
+                    }
                 });
             }
-            aiWindow.style.transform = '';
             aiWindow.classList.remove('expanded');
         }
     }
@@ -937,6 +895,9 @@ Smaller instructions are better because:
     }
     
     toggleWindow() {
+        // Close other modals first
+        this.closeOtherModals();
+        
         if (this.isOpen) {
             this.closeWindow();
         } else {
@@ -944,24 +905,48 @@ Smaller instructions are better because:
         }
     }
     
+    closeOtherModals() {
+        // Close settings if open
+        if (window.fasmSettings && window.fasmSettings.isOpen) {
+            window.fasmSettings.close();
+        }
+    }
+    
+    close() {
+        this.closeWindow();
+    }
+    
     openWindow() {
         const aiWindow = document.getElementById('ai-window');
-        if (aiWindow) {
-            // Add viewport boundary detection
-            this.adjustWindowPosition(aiWindow);
-            aiWindow.classList.add('visible');
-            this.isOpen = true;
+        const controlIcons = document.querySelector('.control-icons');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (aiWindow && controlIcons) {
+            // Close other panels first
+            this.closeOtherModals();
             
-            // Enable dragging for the window only once
-            if (!aiWindow.hasAttribute('data-draggable')) {
-                this.makeDraggable(aiWindow, false);
-                aiWindow.setAttribute('data-draggable', 'true');
+            // Show sidebar and AI window
+            document.body.classList.add('sidebar-open');
+            controlIcons.classList.add('sidebar-open');
+            aiWindow.classList.add('visible');
+            
+            // Adjust main content padding
+            if (mainContent) {
+                mainContent.classList.add('sidebar-open');
             }
             
-            // Setup enhanced header only once
+            this.isOpen = true;
+            
+            // Setup enhanced header only once (removing drag functionality)
             if (!aiWindow.hasAttribute('data-enhanced')) {
                 this.setupEnhancedHeader();
                 aiWindow.setAttribute('data-enhanced', 'true');
+            }
+            
+            // Restore conversation history to UI when first opened
+            if (!aiWindow.hasAttribute('data-history-loaded')) {
+                this.restoreConversationHistory();
+                aiWindow.setAttribute('data-history-loaded', 'true');
             }
             
             // Focus on input
@@ -1029,9 +1014,33 @@ Smaller instructions are better because:
     
     closeWindow() {
         const aiWindow = document.getElementById('ai-window');
-        if (aiWindow) {
+        const controlIcons = document.querySelector('.control-icons');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (aiWindow && controlIcons) {
+            // Hide AI window
             aiWindow.classList.remove('visible');
+            
+            // Check if any other panels are open
+            const settingsContent = document.querySelector('.settings-content');
+            const isSettingsOpen = settingsContent && settingsContent.classList.contains('visible');
+            
+            if (!isSettingsOpen) {
+                // No other panels open, close sidebar completely
+                document.body.classList.remove('sidebar-open');
+                controlIcons.classList.remove('sidebar-open');
+                if (mainContent) {
+                    mainContent.classList.remove('sidebar-open');
+                }
+            }
+            
             this.isOpen = false;
+            
+            // Return focus to toggle button
+            const aiToggle = document.getElementById('ai-toggle');
+            if (aiToggle) {
+                aiToggle.focus();
+            }
         }
     }
     
@@ -1312,7 +1321,7 @@ Smaller instructions are better because:
     }
     
     getHelpMessage() {
-        return `**I can help you with:**\n\n🔧 **Technical Support:**\n• Instruction explanations and usage\n• Register management strategies\n• Memory addressing modes\n• Assembly syntax and conventions\n\n💡 **Learning Assistance:**\n• Code examples and tutorials\n• Best practices and patterns\n• Architecture-specific guidance\n• Performance optimization tips\n\n🐛 **Debugging Help:**\n• Error analysis and solutions\n• Common pitfall identification\n• Debugging technique suggestions\n• Code review and improvements\n\n📚 **Educational Content:**\n• Concept explanations\n• Historical context\n• Real-world applications\n• Advanced topics\n\n**Just ask me anything about FASM, assembly programming, or computer architecture!**`;
+        return `**I can help you with:**\n\n⚙ **Technical Support:**\n• Instruction explanations and usage\n• Register management strategies\n• Memory addressing modes\n• Assembly syntax and conventions\n\n◯ **Learning Assistance:**\n• Code examples and tutorials\n• Best practices and patterns\n• Architecture-specific guidance\n• Performance optimization tips\n\n▲ **Debugging Help:**\n• Error analysis and solutions\n• Common pitfall identification\n• Debugging technique suggestions\n• Code review and improvements\n\n▣ **Educational Content:**\n• Concept explanations\n• Historical context\n• Real-world applications\n• Advanced topics\n\n**Just ask me anything about FASM, assembly programming, or computer architecture!**`;
     }
     
     getContextualResponse(message) {
@@ -1362,12 +1371,36 @@ Smaller instructions are better because:
         if (window.fasmStorage) {
             this.conversationHistory = window.fasmStorage.get('ai-conversation', []);
             
-            // Restore conversation in UI
-            this.conversationHistory.forEach(msg => {
-                if (msg.sender !== 'assistant' || msg.content !== 'Hello! I\'m your FASM programming assistant...') {
-                    this.addMessage(msg.sender, msg.content);
-                }
-            });
+            // Note: Don't restore conversation in UI during initial load
+            // Messages will be displayed when the AI window is opened
+        }
+    }
+    
+    restoreConversationHistory() {
+        // Restore conversation in UI when window opens
+        if (this.conversationHistory.length > 0) {
+            const aiChat = document.getElementById('ai-chat');
+            if (aiChat) {
+                // Clear any existing content first
+                aiChat.innerHTML = '';
+                
+                // Add each message to the UI
+                this.conversationHistory.forEach(msg => {
+                    if (msg.sender !== 'assistant' || msg.content !== 'Hello! I\'m your FASM programming assistant...') {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = `ai-message ${msg.sender}`;
+                        
+                        const senderName = msg.sender === 'user' ? 'You' : 'Assistant';
+                        const messageContent = this.formatMessageContent(msg.content);
+                        
+                        messageDiv.innerHTML = `<strong>${senderName}:</strong> ${messageContent}`;
+                        aiChat.appendChild(messageDiv);
+                    }
+                });
+                
+                // Scroll to bottom
+                aiChat.scrollTop = aiChat.scrollHeight;
+            }
         }
     }
     

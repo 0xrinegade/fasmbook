@@ -103,7 +103,10 @@ class FASMMarkdownParser {
             return `<div class="code-block interactive-code-block">
                 <div class="code-header">
                     <span class="code-language">${lang.toUpperCase()}</span>
-                    <button class="code-copy" onclick="copyCodeToClipboard(this)" title="Copy to clipboard">📋</button>
+                    <div class="code-actions">
+                        <button class="code-copy" onclick="copyCodeToClipboard(this)" title="Copy to clipboard">⧉ Copy</button>
+                        <button class="code-download" onclick="downloadCodeSnippet(this)" title="Download as file">⧄ Download</button>
+                    </div>
                 </div>
                 <pre><code class="language-${lang}">${highlightedCode}</code></pre>
             </div>`;
@@ -350,28 +353,29 @@ class FASMMarkdownParser {
             return this.escapeHtml(code);
         }
         
-        const escapedCode = this.escapeHtml(code);
-        
+        // Don't escape HTML before highlighting - highlighting functions will handle safety
+        // Only escape for non-highlighted languages
         switch (language.toLowerCase()) {
             case 'assembly':
             case 'asm':
             case 'fasm':
-                return this.highlightAssembly(escapedCode, chapterInfo);
+                return this.highlightAssembly(code, chapterInfo);
             case 'javascript':
             case 'js':
-                return this.highlightJavaScript(escapedCode);
+                return this.highlightJavaScript(code);
             case 'html':
-                return this.highlightHTML(escapedCode);
+                return this.highlightHTML(code);
             case 'css':
-                return this.highlightCSS(escapedCode);
+                return this.highlightCSS(code);
             default:
-                return escapedCode;
+                return this.escapeHtml(code);
         }
     }
     
     highlightAssembly(code, chapterInfo = null) {
         // FASM/Assembly syntax highlighting with interactive features
-        let highlighted = code;
+        // First escape the raw code to prevent XSS
+        let highlighted = this.escapeHtml(code);
         
         // Extended instructions list including all glossary entries
         const instructions = [
@@ -434,12 +438,13 @@ class FASMMarkdownParser {
         highlighted = highlighted.replace(/\b\d+[hdbo]?\b/g, '<span class="asm-number">$&</span>');
         highlighted = highlighted.replace(/\b0x[0-9a-f]+\b/gi, '<span class="asm-number">$&</span>');
         
-        // Comments
+        // Comments - must come after other highlighting to avoid interfering
         highlighted = highlighted.replace(/;.*$/gm, '<span class="asm-comment">$&</span>');
         
-        // Strings
-        highlighted = highlighted.replace(/'([^']*?)'/g, '<span class="asm-string">\'$1\'</span>');
-        highlighted = highlighted.replace(/"([^"]*?)"/g, '<span class="asm-string">"$1"</span>');
+        // Strings - IMPORTANT: Use HTML entity form to match what was escaped
+        // Match &#039; (escaped single quote) instead of ' to avoid matching span class names
+        highlighted = highlighted.replace(/&#039;([^&]*?)&#039;/g, '<span class="asm-string">&#039;$1&#039;</span>');
+        highlighted = highlighted.replace(/&quot;([^&]*?)&quot;/g, '<span class="asm-string">&quot;$1&quot;</span>');
         
         return highlighted;
     }
@@ -545,12 +550,12 @@ class FASMMarkdownParser {
         html = html.replace(/(<div class="exercise-box">[\s\S]*?)(?=<div|<h[1-6]|$)/g, '$1</div>');
         
         // Example boxes
-        html = html.replace(/^💡 \*\*(Example[^*]*)\*\*:/gm, 
+        html = html.replace(/^◯ \*\*(Example[^*]*)\*\*:/gm, 
             '<div class="example-box"><strong>$1:</strong>');
         html = html.replace(/(<div class="example-box">[\s\S]*?)(?=<div|<h[1-6]|$)/g, '$1</div>');
         
         // Tip boxes
-        html = html.replace(/^💡 \*\*(Tip[^*]*)\*\*:/gm, 
+        html = html.replace(/^◯ \*\*(Tip[^*]*)\*\*:/gm, 
             '<div class="tip-box"><strong>$1:</strong>');
         html = html.replace(/(<div class="tip-box">[\s\S]*?)(?=<div|<h[1-6]|$)/g, '$1</div>');
         
@@ -661,9 +666,81 @@ function copyCodeToClipboard(button) {
             
             button.textContent = '✓';
             setTimeout(() => {
-                button.textContent = '📋';
+                button.textContent = '⧉';
             }, 2000);
         });
+    }
+}
+
+function downloadCodeSnippet(button) {
+    const codeBlock = button.closest('.code-block').querySelector('code');
+    const languageElement = button.closest('.code-block').querySelector('.code-language');
+    
+    if (codeBlock) {
+        // Get plain text without HTML tags
+        const text = codeBlock.textContent || codeBlock.innerText;
+        const language = languageElement ? languageElement.textContent.toLowerCase() : 'assembly';
+        
+        // Determine file extension based on language
+        let extension = 'asm';
+        if (language.includes('assembly') || language.includes('asm') || language.includes('fasm')) {
+            extension = 'asm';
+        } else if (language.includes('javascript') || language.includes('js')) {
+            extension = 'js';
+        } else if (language.includes('html')) {
+            extension = 'html';
+        } else if (language.includes('css')) {
+            extension = 'css';
+        } else {
+            extension = 'txt';
+        }
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+        const filename = `code-snippet-${timestamp}.${extension}`;
+        
+        try {
+            // Create blob and download
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create temporary download link
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = filename;
+            downloadLink.style.display = 'none';
+            
+            // Trigger download
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            // Clean up
+            URL.revokeObjectURL(url);
+            
+            // Update button text temporarily
+            const originalText = button.textContent;
+            button.textContent = '✓ Downloaded';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Failed to download code:', error);
+            
+            // Fallback: show the text in a new window
+            const newWindow = window.open('', '_blank');
+            if (newWindow) {
+                newWindow.document.write(`<pre>${text}</pre>`);
+                newWindow.document.title = filename;
+            }
+            
+            const originalText = button.textContent;
+            button.textContent = '✓ Downloaded';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 2000);
+        }
     }
 }
 
@@ -809,12 +886,12 @@ function searchInstructions(query) {
 // CSS for syntax highlighting
 const syntaxHighlightingCSS = `
 /* Assembly syntax highlighting */
-.asm-instruction { color: #0066cc; font-weight: bold; }
-.asm-register { color: #cc6600; font-weight: bold; }
-.asm-directive { color: #9900cc; font-weight: bold; }
-.asm-number { color: #cc0000; }
-.asm-comment { color: #666666; font-style: italic; }
-.asm-string { color: #009900; }
+.asm-instruction { color: #1e40af; font-weight: bold; }
+.asm-register { color: #dc2626; font-weight: bold; }
+.asm-directive { color: #7c2d12; font-weight: bold; }
+.asm-number { color: #166534; }
+.asm-comment { color: #374151; font-style: italic; }
+.asm-string { color: #92400e; }
 
 /* JavaScript syntax highlighting */
 .js-keyword { color: #0066cc; font-weight: bold; }
