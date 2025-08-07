@@ -886,12 +886,12 @@ function searchInstructions(query) {
 // CSS for syntax highlighting
 const syntaxHighlightingCSS = `
 /* Assembly syntax highlighting */
-.asm-instruction { color: #0066cc; font-weight: bold; }
-.asm-register { color: #cc6600; font-weight: bold; }
-.asm-directive { color: #9900cc; font-weight: bold; }
-.asm-number { color: #cc0000; }
-.asm-comment { color: #666666; font-style: italic; }
-.asm-string { color: #009900; }
+.asm-instruction { color: #1e40af; font-weight: bold; }
+.asm-register { color: #dc2626; font-weight: bold; }
+.asm-directive { color: #7c2d12; font-weight: bold; }
+.asm-number { color: #166534; }
+.asm-comment { color: #374151; font-style: italic; }
+.asm-string { color: #92400e; }
 
 /* JavaScript syntax highlighting */
 .js-keyword { color: #0066cc; font-weight: bold; }

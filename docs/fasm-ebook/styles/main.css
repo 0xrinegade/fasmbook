@@ -449,7 +449,7 @@ input, textarea, select, pre code, .code-block {
 
 /* Chapter Content */
 .chapter-content {
-    max-width: 800px;
+    width: 75%;
     margin: 0 auto;
     line-height: var(--line-height);
 }
@@ -519,7 +519,7 @@ input, textarea, select, pre code, .code-block {
 .chapter-content pre code {
     background: none;
     padding: 0;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     line-height: 1.2;
 }
 
@@ -1155,7 +1155,7 @@ input, textarea, select, pre code, .code-block {
     }
     
     .chapter-content {
-        max-width: 100%;
+        width: 90%;
         padding: 0.5rem 0; /* Better content spacing */
     }
     

@@ -413,6 +413,7 @@
     padding: 1.5rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    font-size: 0.75rem;
 }
 
 /* Clickable assembly instructions */
@@ -612,31 +613,31 @@
 /* Assembly syntax highlighting for dark theme code blocks */
 .interactive-code-block .asm-instruction,
 .interactive-code-block .clickable-instruction {
-    color: #82c5ff; /* Light blue for instructions */
+    color: #1e40af; /* Much darker blue for instructions */
     font-weight: 600;
 }
 
 .interactive-code-block .asm-register {
-    color: #ff9d7a; /* Light orange for registers */
+    color: #dc2626; /* Much darker red for registers */
     font-weight: 500;
 }
 
 .interactive-code-block .asm-directive {
-    color: #b794f6; /* Light purple for directives */
+    color: #7c2d12; /* Much darker brown for directives */
     font-weight: 600;
 }
 
 .interactive-code-block .asm-number {
-    color: #90e59a; /* Light green for numbers */
+    color: #166534; /* Much darker green for numbers */
 }
 
 .interactive-code-block .asm-comment {
-    color: #a0aec0; /* Muted light gray for comments */
+    color: #374151; /* Much darker gray for comments */
     font-style: italic;
 }
 
 .interactive-code-block .asm-string {
-    color: #fed7aa; /* Light peach for strings */
+    color: #92400e; /* Much darker orange for strings */
 }
 
 /* Mobile responsive improvements for code blocks */
@@ -725,7 +726,7 @@
     
     .interactive-code-block pre {
         padding: 1rem;
-        font-size: 0.8rem;
+        font-size: 0.7rem;
     }
 }
 
